@@ -216,123 +216,104 @@
 
   <!-- ===== PAGE: AUTO DM ===== -->
   <div class="page" id="page-autodm">
-
     <div class="stats-grid" id="autodmStats"></div>
 
-    <!-- LANGKAH-LANGKAH -->
-    <div class="card" style="margin-bottom:20px;">
-      <div class="card-header"><span class="card-title">📋 Cara Pakai Bot TikTok DM</span></div>
-      <div class="card-body">
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;">
+    <div class="grid-2" style="margin-bottom:20px;align-items:start;">
 
-          <div style="background:var(--bg3);border-radius:10px;padding:16px;border:1px solid var(--border);">
-            <div style="font-size:24px;margin-bottom:8px;">1️⃣</div>
-            <div style="font-weight:700;font-size:13px;margin-bottom:6px;">Upload Cookies TikTok</div>
-            <div style="font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:10px;">
-              Install ekstensi <strong style="color:var(--text)">EditThisCookie</strong> atau <strong style="color:var(--text)">Cookie-Editor</strong> di Chrome →
-              Login TikTok → klik ekstensi → <strong style="color:var(--accent2)">Export</strong> → upload file di sini.
-            </div>
-            <div class="drop-zone" id="dzCookies" style="padding:14px;"
+      <!-- KIRI: COOKIES + JALANKAN -->
+      <div style="display:flex;flex-direction:column;gap:16px;">
+
+        <!-- COOKIES CARD -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">🍪 Sesi TikTok</span>
+            <div id="cookiesStatusBadge"></div>
+          </div>
+          <div class="card-body">
+            <div class="drop-zone" id="dzCookies" style="padding:20px;"
               onclick="document.getElementById('cookiesFileInput').click()"
               ondragover="onDragOver(event,'dzCookies')" ondragleave="onDragLeave('dzCookies')"
               ondrop="onDrop(event,'dzCookies',handleCookiesUpload)">
               <input type="file" id="cookiesFileInput" accept=".json" onchange="handleCookiesUpload(this.files[0])">
-              <div style="font-size:20px;">🍪</div>
-              <div style="font-size:12px;font-weight:600;margin-top:4px;">Upload cookies.json</div>
-            </div>
-            <div id="cookiesStatus" style="margin-top:10px;"></div>
-          </div>
-
-          <div style="background:var(--bg3);border-radius:10px;padding:16px;border:1px solid var(--border);">
-            <div style="font-size:24px;margin-bottom:8px;">2️⃣</div>
-            <div style="font-weight:700;font-size:13px;margin-bottom:6px;">Simpan Cookies ke Bot</div>
-            <div style="font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:10px;">
-              Setelah upload di step 1, klik tombol ini → file <code style="color:var(--accent2);">cookies.json</code> didownload → simpan ke folder <code style="color:var(--accent2);">bot/</code>
-            </div>
-            <button class="btn btn-primary btn-sm" style="width:100%;" onclick="downloadCookiesForBot()">⬇ Download cookies.json → taruh di bot/</button>
-          </div>
-
-          <div style="background:var(--bg3);border-radius:10px;padding:16px;border:1px solid var(--border);">
-            <div style="font-size:24px;margin-bottom:8px;">3️⃣</div>
-            <div style="font-weight:700;font-size:13px;margin-bottom:6px;">Export Daftar KOL</div>
-            <div style="font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:10px;">
-              Export KOL yang belum dihubungi → simpan CSV ke folder <code style="color:var(--accent2);">bot/</code>
-            </div>
-            <button class="btn btn-primary btn-sm" style="width:100%;" onclick="exportBotCSV()">⬇ Export CSV untuk Bot</button>
-          </div>
-
-          <div style="background:var(--bg3);border-radius:10px;padding:16px;border:1px solid var(--border);">
-            <div style="font-size:24px;margin-bottom:8px;">4️⃣</div>
-            <div style="font-weight:700;font-size:13px;margin-bottom:6px;">Jalankan Bot</div>
-            <div style="font-size:12px;color:var(--muted);line-height:1.6;">
-              Pastikan di folder <code style="color:var(--accent2);">bot/</code> sudah ada:<br>
-              ✓ <code style="color:var(--green);">cookies.json</code><br>
-              ✓ <code style="color:var(--green);">bot-kol-xxx.csv</code><br><br>
-              Double-click <code style="color:var(--accent2);">bot/run.bat</code> → bot jalan otomatis.
+              <div class="drop-zone-icon">🍪</div>
+              <div class="drop-zone-text">Upload cookies.json</div>
+              <div class="drop-zone-sub">Export dari EditThisCookie / Cookie-Editor di Chrome</div>
             </div>
           </div>
+        </div>
 
-          <div style="background:var(--bg3);border-radius:10px;padding:16px;border:1px solid var(--border);">
-            <div style="font-size:24px;margin-bottom:8px;">5️⃣</div>
-            <div style="font-weight:700;font-size:13px;margin-bottom:6px;">Import Hasil</div>
-            <div style="font-size:12px;color:var(--muted);line-height:1.6;">
-              Setelah bot selesai, upload <code style="color:var(--accent2);">bot/log/results.csv</code> di bawah → status KOL otomatis terupdate ke "Dihubungi".
+        <!-- TOMBOL JALANKAN -->
+        <div class="card">
+          <div class="card-header"><span class="card-title">🚀 Jalankan Bot</span></div>
+          <div class="card-body">
+            <div style="font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:14px;">
+              Pilih KOL dari daftar di kanan → klik tombol di bawah →
+              2 file otomatis didownload ke folder <code style="color:var(--accent2);">Downloads</code> →
+              pindah ke folder <code style="color:var(--accent2);">bot/</code> → klik <code style="color:var(--accent2);">run.bat</code>.
+            </div>
+            <button class="btn btn-primary" id="btnRunBot" onclick="prepareBot()" disabled style="width:100%;padding:12px;font-size:14px;opacity:.5;">
+              🚀 Siapkan Bot
+            </button>
+            <!-- Panel setelah siap -->
+            <div id="botReadyPanel" style="display:none;margin-top:14px;padding:14px;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);border-radius:8px;">
+              <div style="font-weight:700;color:var(--green);margin-bottom:8px;">✓ <span id="botReadyCount">0</span> KOL siap! 2 file didownload.</div>
+              <div style="font-size:12px;color:var(--muted);line-height:1.8;">
+                1. Pindah <code style="color:var(--accent2);">cookies.json</code> ke folder <code style="color:var(--accent2);">bot/</code><br>
+                2. Pindah <code style="color:var(--accent2);">bot-kol-xxx.csv</code> ke folder <code style="color:var(--accent2);">bot/</code><br>
+                3. Double-click <code style="color:var(--accent2);">bot/run.bat</code> → bot jalan!
+              </div>
             </div>
           </div>
+        </div>
 
+        <!-- IMPORT HASIL -->
+        <div class="card">
+          <div class="card-header"><span class="card-title">📥 Import Hasil Bot</span></div>
+          <div class="card-body">
+            <div style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.6;">
+              Setelah bot selesai, upload <code style="color:var(--accent2);">bot/log/results.csv</code> →
+              status KOL otomatis berubah ke <strong style="color:var(--yellow);">Dihubungi</strong>.
+            </div>
+            <div class="drop-zone" id="dzBotResult" style="padding:18px;"
+              onclick="document.getElementById('botResultFile').click()"
+              ondragover="onDragOver(event,'dzBotResult')" ondragleave="onDragLeave('dzBotResult')"
+              ondrop="onDrop(event,'dzBotResult',handleBotResultFile)">
+              <input type="file" id="botResultFile" accept=".csv" onchange="handleBotResultFile(this.files[0])">
+              <div class="drop-zone-icon" style="font-size:24px;">📂</div>
+              <div class="drop-zone-text" style="font-size:13px;">Upload results.csv</div>
+              <div class="drop-zone-sub">bot/log/results.csv</div>
+            </div>
+            <div id="botImportResult" style="display:none;margin-top:12px;padding:11px 14px;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);border-radius:8px;font-size:13px;"></div>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- EXPORT + PREVIEW -->
-    <div class="grid-2" style="margin-bottom:20px;">
-      <div class="card">
+      <!-- KANAN: PILIH KOL -->
+      <div class="card" style="height:fit-content;">
         <div class="card-header">
-          <span class="card-title">🎯 KOL Siap di-DM</span>
-          <button class="btn btn-primary btn-sm" onclick="exportBotCSV()">⬇ Export CSV</button>
+          <span class="card-title">👥 Pilih KOL</span>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <button class="btn btn-outline btn-sm" onclick="selectAllKOLs()">Pilih Semua</button>
+            <button class="btn btn-outline btn-sm" onclick="clearSelectionKOLs()">Reset</button>
+          </div>
         </div>
-        <div class="card-body" id="autodmKOLPreview"></div>
-      </div>
-
-      <!-- IMPORT HASIL -->
-      <div class="card">
-        <div class="card-header"><span class="card-title">📥 Import Hasil Bot</span></div>
-        <div class="card-body">
-          <div style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.6;">
-            Upload file <code style="color:var(--accent2);">bot/log/results.csv</code> setelah bot selesai jalan.<br>
-            Status KOL yang berhasil di-DM akan otomatis berubah ke <strong style="color:var(--yellow)">Dihubungi</strong>.
-          </div>
-          <div class="drop-zone" id="dzBotResult"
-            onclick="document.getElementById('botResultFile').click()"
-            ondragover="onDragOver(event,'dzBotResult')" ondragleave="onDragLeave('dzBotResult')"
-            ondrop="onDrop(event,'dzBotResult',handleBotResultFile)">
-            <input type="file" id="botResultFile" accept=".csv" onchange="handleBotResultFile(this.files[0])">
-            <div class="drop-zone-icon">📂</div>
-            <div class="drop-zone-text">Upload results.csv dari bot</div>
-            <div class="drop-zone-sub">bot/log/results.csv</div>
-          </div>
-          <div id="botImportResult" style="display:none;margin-top:12px;padding:11px 14px;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);border-radius:8px;font-size:13px;"></div>
+        <div style="padding:10px 14px;border-bottom:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+          <input class="search-box" id="dmSearch" placeholder="🔍 Cari nama / username..." oninput="renderKOLSelector()" style="flex:1;min-width:140px;padding:7px 12px;">
+          <select class="filter-select" id="dmFilterTier" onchange="renderKOLSelector()" style="padding:7px 10px;font-size:12px;">
+            <option value="">Semua Tier</option>
+            <option value="nano">Nano</option>
+            <option value="micro">Micro</option>
+            <option value="macro">Macro</option>
+            <option value="mega">Mega</option>
+          </select>
+          <label style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:5px;cursor:pointer;">
+            <input type="checkbox" id="dmShowAll" onchange="renderKOLSelector()" style="accent-color:var(--accent);">
+            Tampilkan semua status
+          </label>
         </div>
-      </div>
-    </div>
-
-    <!-- TIPS -->
-    <div class="card">
-      <div class="card-header"><span class="card-title">💡 Tips & Batas Aman</span></div>
-      <div class="card-body">
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;font-size:13px;">
-          <div style="padding:12px;background:var(--bg3);border-radius:8px;">
-            <div style="font-weight:700;margin-bottom:4px;color:var(--green);">✓ Rekomendasi</div>
-            <div style="color:var(--muted);line-height:1.7;">Maksimal <strong style="color:var(--text);">30 DM/sesi</strong><br>Jeda 30-60 detik antar DM<br>Maksimal 2 sesi per hari<br>Gunakan akun yang aktif</div>
-          </div>
-          <div style="padding:12px;background:var(--bg3);border-radius:8px;">
-            <div style="font-weight:700;margin-bottom:4px;color:var(--red);">✗ Hindari</div>
-            <div style="color:var(--muted);line-height:1.7;">Jangan kirim 100+ DM/hari<br>Jangan kirim pesan sama persis<br>Jangan jalan 24 jam nonstop<br>Jangan pakai akun baru</div>
-          </div>
-          <div style="padding:12px;background:var(--bg3);border-radius:8px;">
-            <div style="font-weight:700;margin-bottom:4px;color:var(--yellow);">⚠ Perlu Tahu</div>
-            <div style="color:var(--muted);line-height:1.7;">Tombol DM hanya muncul jika kreator mengizinkan pesan<br>Cookies expired ~2-4 minggu, perlu export ulang</div>
-          </div>
+        <div id="kolSelectorList" style="max-height:520px;overflow-y:auto;"></div>
+        <div style="padding:12px 14px;border-top:1px solid var(--border);font-size:12px;color:var(--muted);">
+          💡 Tips: Maksimal 30 KOL per sesi · Jeda 30-60 detik antar DM · Cookies valid ~2-4 minggu
         </div>
       </div>
     </div>
