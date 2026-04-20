@@ -30,6 +30,10 @@
     <button class="nav-item" data-page="outreach" onclick="navigate('outreach')">
       <span class="nav-icon">📤</span> Outreach Pipeline
     </button>
+    <div class="nav-section">Otomasi</div>
+    <button class="nav-item" data-page="autodm" onclick="navigate('autodm')">
+      <span class="nav-icon">🤖</span> Auto DM TikTok
+    </button>
     <div class="nav-section">Pengaturan</div>
     <button class="nav-item" data-page="templates" onclick="navigate('templates')">
       <span class="nav-icon">✉️</span> Template Pesan
@@ -208,6 +212,107 @@
       </div>
     </div>
     <div class="tmpl-cards" id="tmplList"></div>
+  </div>
+
+  <!-- ===== PAGE: AUTO DM ===== -->
+  <div class="page" id="page-autodm">
+
+    <div class="stats-grid" id="autodmStats"></div>
+
+    <!-- LANGKAH-LANGKAH -->
+    <div class="card" style="margin-bottom:20px;">
+      <div class="card-header"><span class="card-title">📋 Cara Pakai Bot TikTok DM</span></div>
+      <div class="card-body">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;">
+
+          <div style="background:var(--bg3);border-radius:10px;padding:16px;border:1px solid var(--border);">
+            <div style="font-size:24px;margin-bottom:8px;">1️⃣</div>
+            <div style="font-weight:700;font-size:13px;margin-bottom:6px;">Install Ekstensi</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.6;">Install <strong style="color:var(--text)">EditThisCookie</strong> atau <strong style="color:var(--text)">Cookie-Editor</strong> di Chrome.<br>Login ke TikTok.com → klik ekstensi → <strong style="color:var(--accent2)">Export</strong> → simpan sebagai <code style="color:var(--accent2);">cookies.json</code></div>
+          </div>
+
+          <div style="background:var(--bg3);border-radius:10px;padding:16px;border:1px solid var(--border);">
+            <div style="font-size:24px;margin-bottom:8px;">2️⃣</div>
+            <div style="font-weight:700;font-size:13px;margin-bottom:6px;">Export Daftar KOL</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.6;">Klik tombol di bawah untuk export KOL yang belum dihubungi. Simpan CSV ke folder <code style="color:var(--accent2);">bot/</code></div>
+            <button class="btn btn-primary btn-sm" style="margin-top:10px;width:100%;" onclick="exportBotCSV()">⬇ Export CSV untuk Bot</button>
+          </div>
+
+          <div style="background:var(--bg3);border-radius:10px;padding:16px;border:1px solid var(--border);">
+            <div style="font-size:24px;margin-bottom:8px;">3️⃣</div>
+            <div style="font-weight:700;font-size:13px;margin-bottom:6px;">Edit config.json</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.6;">Buka file <code style="color:var(--accent2);">bot/config.json</code> → isi brand, produk, komisi, dan template pesan sesuai kebutuhan.</div>
+          </div>
+
+          <div style="background:var(--bg3);border-radius:10px;padding:16px;border:1px solid var(--border);">
+            <div style="font-size:24px;margin-bottom:8px;">4️⃣</div>
+            <div style="font-weight:700;font-size:13px;margin-bottom:6px;">Jalankan Bot</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.6;">Double-click <code style="color:var(--accent2);">bot/run.bat</code> → pilih file CSV → bot otomatis kirim DM satu per satu.</div>
+          </div>
+
+          <div style="background:var(--bg3);border-radius:10px;padding:16px;border:1px solid var(--border);grid-column:span 1;">
+            <div style="font-size:24px;margin-bottom:8px;">5️⃣</div>
+            <div style="font-weight:700;font-size:13px;margin-bottom:6px;">Import Hasil</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.6;">Setelah bot selesai, upload file <code style="color:var(--accent2);">bot/log/results.csv</code> di bawah → status KOL otomatis terupdate.</div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- EXPORT + PREVIEW -->
+    <div class="grid-2" style="margin-bottom:20px;">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">🎯 KOL Siap di-DM</span>
+          <button class="btn btn-primary btn-sm" onclick="exportBotCSV()">⬇ Export CSV</button>
+        </div>
+        <div class="card-body" id="autodmKOLPreview"></div>
+      </div>
+
+      <!-- IMPORT HASIL -->
+      <div class="card">
+        <div class="card-header"><span class="card-title">📥 Import Hasil Bot</span></div>
+        <div class="card-body">
+          <div style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.6;">
+            Upload file <code style="color:var(--accent2);">bot/log/results.csv</code> setelah bot selesai jalan.<br>
+            Status KOL yang berhasil di-DM akan otomatis berubah ke <strong style="color:var(--yellow)">Dihubungi</strong>.
+          </div>
+          <div class="drop-zone" id="dzBotResult"
+            onclick="document.getElementById('botResultFile').click()"
+            ondragover="onDragOver(event,'dzBotResult')" ondragleave="onDragLeave('dzBotResult')"
+            ondrop="onDrop(event,'dzBotResult',handleBotResultFile)">
+            <input type="file" id="botResultFile" accept=".csv" onchange="handleBotResultFile(this.files[0])">
+            <div class="drop-zone-icon">📂</div>
+            <div class="drop-zone-text">Upload results.csv dari bot</div>
+            <div class="drop-zone-sub">bot/log/results.csv</div>
+          </div>
+          <div id="botImportResult" style="display:none;margin-top:12px;padding:11px 14px;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);border-radius:8px;font-size:13px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TIPS -->
+    <div class="card">
+      <div class="card-header"><span class="card-title">💡 Tips & Batas Aman</span></div>
+      <div class="card-body">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;font-size:13px;">
+          <div style="padding:12px;background:var(--bg3);border-radius:8px;">
+            <div style="font-weight:700;margin-bottom:4px;color:var(--green);">✓ Rekomendasi</div>
+            <div style="color:var(--muted);line-height:1.7;">Maksimal <strong style="color:var(--text);">30 DM/sesi</strong><br>Jeda 30-60 detik antar DM<br>Maksimal 2 sesi per hari<br>Gunakan akun yang aktif</div>
+          </div>
+          <div style="padding:12px;background:var(--bg3);border-radius:8px;">
+            <div style="font-weight:700;margin-bottom:4px;color:var(--red);">✗ Hindari</div>
+            <div style="color:var(--muted);line-height:1.7;">Jangan kirim 100+ DM/hari<br>Jangan kirim pesan sama persis<br>Jangan jalan 24 jam nonstop<br>Jangan pakai akun baru</div>
+          </div>
+          <div style="padding:12px;background:var(--bg3);border-radius:8px;">
+            <div style="font-weight:700;margin-bottom:4px;color:var(--yellow);">⚠ Perlu Tahu</div>
+            <div style="color:var(--muted);line-height:1.7;">Tombol DM hanya muncul jika kreator mengizinkan pesan<br>Cookies expired ~2-4 minggu, perlu export ulang</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <!-- ===== PAGE: SETTINGS ===== -->
@@ -469,6 +574,7 @@
 <script src="js/database.js"></script>
 <script src="js/analysis.js"></script>
 <script src="js/outreach.js"></script>
+<script src="js/autodm.js"></script>
 <script src="js/templates.js"></script>
 <script src="js/settings.js"></script>
 <script src="js/app.js"></script>
