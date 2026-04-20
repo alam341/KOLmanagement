@@ -2,6 +2,91 @@
 function initAutodm() {
   renderAutodmStats();
   renderAutodmKOLPreview();
+  renderCookiesStatus();
+}
+
+// ===== COOKIES MANAGEMENT =====
+function renderCookiesStatus() {
+  const el = document.getElementById('cookiesStatus');
+  if (!el) return;
+  const raw = localStorage.getItem('kol_cookies');
+  if (!raw) {
+    el.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="width:10px;height:10px;border-radius:50%;background:var(--red);flex-shrink:0;"></div>
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--red);">Belum ada cookies</div>
+          <div style="font-size:12px;color:var(--muted);">Upload file cookies.json dari ekstensi browser</div>
+        </div>
+      </div>`;
+    return;
+  }
+  try {
+    const cookies = JSON.parse(raw);
+    const savedAt = localStorage.getItem('kol_cookies_saved_at') || '';
+    const d = savedAt ? new Date(savedAt).toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '-';
+    el.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:10px;height:10px;border-radius:50%;background:var(--green);flex-shrink:0;"></div>
+          <div>
+            <div style="font-size:13px;font-weight:600;color:var(--green);">Cookies tersimpan ✓</div>
+            <div style="font-size:12px;color:var(--muted);">${cookies.length} cookies · Disimpan: ${d}</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-primary btn-sm" onclick="downloadCookiesForBot()">⬇ Simpan ke folder bot/</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteCookies()">🗑 Hapus</button>
+        </div>
+      </div>`;
+  } catch {
+    el.innerHTML = `<div style="color:var(--red);font-size:13px;">File cookies tidak valid.</div>`;
+  }
+}
+
+function handleCookiesUpload(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const raw = e.target.result;
+      const parsed = JSON.parse(raw);
+      const arr = Array.isArray(parsed) ? parsed : Object.values(parsed);
+      if (!arr.length || !arr[0].name) throw new Error('Format tidak valid');
+
+      // Filter hanya cookies TikTok
+      const tiktokCookies = arr.filter(c =>
+        (c.domain||'').includes('tiktok') || (c.domain||'').includes('tiktok.com')
+      );
+      const toSave = tiktokCookies.length > 0 ? tiktokCookies : arr;
+
+      localStorage.setItem('kol_cookies', JSON.stringify(toSave));
+      localStorage.setItem('kol_cookies_saved_at', new Date().toISOString());
+      renderCookiesStatus();
+      toast(`${toSave.length} cookies TikTok tersimpan!`, 'success');
+    } catch (err) {
+      toast('File cookies tidak valid: ' + err.message, 'error');
+    }
+  };
+  reader.readAsText(file);
+}
+
+function downloadCookiesForBot() {
+  const raw = localStorage.getItem('kol_cookies');
+  if (!raw) { toast('Belum ada cookies!', 'error'); return; }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([raw], {type:'application/json'}));
+  a.download = 'cookies.json';
+  a.click();
+  toast('cookies.json didownload — simpan ke folder bot/', 'success');
+}
+
+function deleteCookies() {
+  if (!confirm('Hapus cookies yang tersimpan?')) return;
+  localStorage.removeItem('kol_cookies');
+  localStorage.removeItem('kol_cookies_saved_at');
+  renderCookiesStatus();
+  toast('Cookies dihapus.', 'success');
 }
 
 function renderAutodmStats() {
