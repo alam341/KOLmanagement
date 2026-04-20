@@ -218,87 +218,98 @@
   <div class="page" id="page-autodm">
     <div class="stats-grid" id="autodmStats"></div>
 
-    <div class="grid-2" style="margin-bottom:20px;align-items:start;">
+    <!-- STATUS SERVER -->
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-body" style="padding:12px 18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span style="font-size:13px;font-weight:600;">Status Bot Server:</span>
+          <span id="serverStatus"><span style="color:var(--muted);">Mengecek...</span></span>
+        </div>
+        <div style="font-size:12px;color:var(--muted);">
+          Belum punya server? Jalankan <code style="color:var(--accent2);">bot/server.bat</code> sekali → biarkan terbuka di background.
+        </div>
+      </div>
+    </div>
 
-      <!-- KIRI: COOKIES + JALANKAN -->
+    <div class="grid-2" style="align-items:start;gap:16px;">
+
+      <!-- KIRI -->
       <div style="display:flex;flex-direction:column;gap:16px;">
 
-        <!-- COOKIES CARD -->
+        <!-- COOKIES -->
         <div class="card">
           <div class="card-header">
-            <span class="card-title">🍪 Sesi TikTok</span>
-            <div id="cookiesStatusBadge"></div>
+            <span class="card-title">🍪 Sesi Login TikTok</span>
+            <span id="cookiesStatusBadge"></span>
           </div>
           <div class="card-body">
-            <div class="drop-zone" id="dzCookies" style="padding:20px;"
+            <div class="drop-zone" id="dzCookies" style="padding:18px;"
               onclick="document.getElementById('cookiesFileInput').click()"
               ondragover="onDragOver(event,'dzCookies')" ondragleave="onDragLeave('dzCookies')"
               ondrop="onDrop(event,'dzCookies',handleCookiesUpload)">
               <input type="file" id="cookiesFileInput" accept=".json" onchange="handleCookiesUpload(this.files[0])">
               <div class="drop-zone-icon">🍪</div>
               <div class="drop-zone-text">Upload cookies.json</div>
-              <div class="drop-zone-sub">Export dari EditThisCookie / Cookie-Editor di Chrome</div>
+              <div class="drop-zone-sub">Export dari EditThisCookie / Cookie-Editor → login TikTok dulu</div>
             </div>
           </div>
         </div>
 
-        <!-- TOMBOL JALANKAN -->
+        <!-- TEMPLATE + DELAY -->
         <div class="card">
-          <div class="card-header"><span class="card-title">🚀 Jalankan Bot</span></div>
+          <div class="card-header"><span class="card-title">✉️ Pengaturan Pesan</span></div>
           <div class="card-body">
-            <div style="font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:14px;">
-              Pilih KOL dari daftar di kanan → klik tombol di bawah →
-              2 file otomatis didownload ke folder <code style="color:var(--accent2);">Downloads</code> →
-              pindah ke folder <code style="color:var(--accent2);">bot/</code> → klik <code style="color:var(--accent2);">run.bat</code>.
+            <div class="form-group">
+              <label class="form-label">Template Pesan</label>
+              <select class="form-control" id="dmTemplateSelect"></select>
             </div>
-            <button class="btn btn-primary" id="btnRunBot" onclick="prepareBot()" disabled style="width:100%;padding:12px;font-size:14px;opacity:.5;">
-              🚀 Siapkan Bot
-            </button>
-            <!-- Panel setelah siap -->
-            <div id="botReadyPanel" style="display:none;margin-top:14px;padding:14px;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);border-radius:8px;">
-              <div style="font-weight:700;color:var(--green);margin-bottom:8px;">✓ <span id="botReadyCount">0</span> KOL siap! 2 file didownload.</div>
-              <div style="font-size:12px;color:var(--muted);line-height:1.8;">
-                1. Pindah <code style="color:var(--accent2);">cookies.json</code> ke folder <code style="color:var(--accent2);">bot/</code><br>
-                2. Pindah <code style="color:var(--accent2);">bot-kol-xxx.csv</code> ke folder <code style="color:var(--accent2);">bot/</code><br>
-                3. Double-click <code style="color:var(--accent2);">bot/run.bat</code> → bot jalan!
+            <div class="form-row">
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label">Delay Min (detik)</label>
+                <input class="form-control" id="dmDelayMin" type="number" value="30" min="10">
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label">Delay Max (detik)</label>
+                <input class="form-control" id="dmDelayMax" type="number" value="60" min="10">
               </div>
             </div>
           </div>
         </div>
 
-        <!-- IMPORT HASIL -->
-        <div class="card">
-          <div class="card-header"><span class="card-title">📥 Import Hasil Bot</span></div>
+        <!-- TOMBOL JALANKAN -->
+        <button class="btn btn-primary" id="btnRunBot" onclick="runBot()" disabled
+          style="width:100%;padding:14px;font-size:15px;font-weight:700;opacity:.5;border-radius:10px;">
+          🚀 Jalankan Bot
+        </button>
+
+        <!-- PROGRESS -->
+        <div class="card" id="progressPanel" style="display:none;">
+          <div class="card-header">
+            <span class="card-title">📡 Progress</span>
+            <button class="btn btn-danger btn-sm" id="btnStopBot" onclick="stopBot()" style="display:none;">⏹ Stop</button>
+          </div>
           <div class="card-body">
-            <div style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.6;">
-              Setelah bot selesai, upload <code style="color:var(--accent2);">bot/log/results.csv</code> →
-              status KOL otomatis berubah ke <strong style="color:var(--yellow);">Dihubungi</strong>.
+            <div style="background:var(--bg4);border-radius:6px;height:8px;overflow:hidden;margin-bottom:10px;">
+              <div id="progressBar" style="height:100%;background:var(--accent);border-radius:6px;width:0%;transition:width .4s;"></div>
             </div>
-            <div class="drop-zone" id="dzBotResult" style="padding:18px;"
-              onclick="document.getElementById('botResultFile').click()"
-              ondragover="onDragOver(event,'dzBotResult')" ondragleave="onDragLeave('dzBotResult')"
-              ondrop="onDrop(event,'dzBotResult',handleBotResultFile)">
-              <input type="file" id="botResultFile" accept=".csv" onchange="handleBotResultFile(this.files[0])">
-              <div class="drop-zone-icon" style="font-size:24px;">📂</div>
-              <div class="drop-zone-text" style="font-size:13px;">Upload results.csv</div>
-              <div class="drop-zone-sub">bot/log/results.csv</div>
-            </div>
-            <div id="botImportResult" style="display:none;margin-top:12px;padding:11px 14px;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);border-radius:8px;font-size:13px;"></div>
+            <div id="progressInfo" style="font-size:13px;margin-bottom:12px;color:var(--muted);"></div>
+            <div id="progressLogs" style="max-height:200px;overflow-y:auto;font-size:12px;"></div>
           </div>
         </div>
+
       </div>
 
       <!-- KANAN: PILIH KOL -->
-      <div class="card" style="height:fit-content;">
+      <div class="card">
         <div class="card-header">
           <span class="card-title">👥 Pilih KOL</span>
-          <div style="display:flex;gap:6px;align-items:center;">
+          <div style="display:flex;gap:6px;">
             <button class="btn btn-outline btn-sm" onclick="selectAllKOLs()">Pilih Semua</button>
             <button class="btn btn-outline btn-sm" onclick="clearSelectionKOLs()">Reset</button>
           </div>
         </div>
         <div style="padding:10px 14px;border-bottom:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-          <input class="search-box" id="dmSearch" placeholder="🔍 Cari nama / username..." oninput="renderKOLSelector()" style="flex:1;min-width:140px;padding:7px 12px;">
+          <input class="search-box" id="dmSearch" placeholder="🔍 Cari..." oninput="renderKOLSelector()" style="flex:1;min-width:120px;padding:7px 12px;">
           <select class="filter-select" id="dmFilterTier" onchange="renderKOLSelector()" style="padding:7px 10px;font-size:12px;">
             <option value="">Semua Tier</option>
             <option value="nano">Nano</option>
@@ -306,18 +317,17 @@
             <option value="macro">Macro</option>
             <option value="mega">Mega</option>
           </select>
-          <label style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:5px;cursor:pointer;">
+          <label style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:5px;cursor:pointer;white-space:nowrap;">
             <input type="checkbox" id="dmShowAll" onchange="renderKOLSelector()" style="accent-color:var(--accent);">
-            Tampilkan semua status
+            Semua status
           </label>
         </div>
-        <div id="kolSelectorList" style="max-height:520px;overflow-y:auto;"></div>
-        <div style="padding:12px 14px;border-top:1px solid var(--border);font-size:12px;color:var(--muted);">
-          💡 Tips: Maksimal 30 KOL per sesi · Jeda 30-60 detik antar DM · Cookies valid ~2-4 minggu
+        <div id="kolSelectorList" style="max-height:560px;overflow-y:auto;"></div>
+        <div style="padding:10px 14px;border-top:1px solid var(--border);font-size:11px;color:var(--muted);">
+          💡 Maks 30 KOL/sesi · Jeda 30-60 detik · Cookies valid ~2-4 minggu
         </div>
       </div>
     </div>
-
   </div>
 
   <!-- ===== PAGE: SETTINGS ===== -->
