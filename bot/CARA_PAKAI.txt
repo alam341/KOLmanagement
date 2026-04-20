@@ -1,0 +1,54 @@
+======================================
+  TikTok DM Bot — Cara Pakai
+======================================
+
+LANGKAH PERTAMA (sekali saja):
+--------------------------------
+1. Install Python dari https://www.python.org/downloads/
+   → Centang "Add Python to PATH" saat install!
+
+2. Double-click file: install.bat
+   → Tunggu sampai selesai
+
+3. Edit file config.json:
+   → Isi brand, produk, komisi
+   → Edit template pesan sesuai kebutuhan
+
+4. Ambil cookies TikTok dari browser:
+   → Install ekstensi Chrome: "EditThisCookie" atau "Cookie-Editor"
+   → Buka Chrome → login ke TikTok.com
+   → Klik ikon ekstensi → pilih Export
+   → Simpan sebagai cookies.json di folder bot/
+   → (Cukup dilakukan sekali, ulangi kalau cookies expired)
+
+
+CARA PAKAI SETIAP SESI:
+------------------------
+1. Buka web app KOL Manager → Database KOL
+2. Klik "Export CSV" → simpan file CSV ke folder bot/
+3. Double-click file: run.bat  (Chrome TIDAK perlu ditutup!)
+4. Pilih file CSV → bot langsung jalan
+
+
+CATATAN PENTING:
+-----------------
+- Bot pakai akun TikTok dari Chrome kamu yang sudah login
+- Jangan buka Chrome saat bot sedang jalan
+- Rekomendasi: maksimal 30 DM per sesi
+- Ada jeda otomatis 30-60 detik antar DM (biar aman)
+- Hasil tersimpan di folder log/results.csv
+- KOL yang sudah pernah dikirim otomatis dilewati
+
+
+TOMBOL DARURAT:
+----------------
+- Ctrl+C di jendela hitam = hentikan bot segera
+
+
+FILE PENTING:
+--------------
+config.json      → pengaturan bot (wajib diedit)
+tiktok_dm.py     → script utama
+log/results.csv  → hasil pengiriman
+log/sent.txt     → daftar username yang sudah dikirim
+log/session_xxx.log → log detail tiap sesi
