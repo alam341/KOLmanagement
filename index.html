@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KOL Manager</title>
+<link rel="stylesheet" href="css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+
+<!-- ===== SIDEBAR ===== -->
+<nav id="sidebar">
+  <div class="sidebar-logo">
+    <div class="sidebar-logo-title">KOL Manager</div>
+    <div class="sidebar-logo-sub">Outreach & Analisis</div>
+  </div>
+  <div class="sidebar-nav">
+    <div class="nav-section">Menu Utama</div>
+    <button class="nav-item active" data-page="dashboard" onclick="navigate('dashboard')">
+      <span class="nav-icon">📊</span> Dashboard
+    </button>
+    <button class="nav-item" data-page="database" onclick="navigate('database')">
+      <span class="nav-icon">👥</span> Database KOL
+    </button>
+    <button class="nav-item" data-page="analysis" onclick="navigate('analysis')">
+      <span class="nav-icon">🔬</span> Analisis KOL
+    </button>
+    <button class="nav-item" data-page="outreach" onclick="navigate('outreach')">
+      <span class="nav-icon">📤</span> Outreach Pipeline
+    </button>
+    <div class="nav-section">Pengaturan</div>
+    <button class="nav-item" data-page="templates" onclick="navigate('templates')">
+      <span class="nav-icon">✉️</span> Template Pesan
+    </button>
+    <button class="nav-item" data-page="settings" onclick="navigate('settings')">
+      <span class="nav-icon">⚙️</span> Pengaturan
+    </button>
+  </div>
+  <div class="sidebar-footer">
+    <div class="sidebar-brand">KOL Manager v2.0</div>
+  </div>
+</nav>
+
+<!-- ===== MAIN ===== -->
+<div id="main">
+  <div id="topbar">
+    <div>
+      <div class="topbar-title" id="topbarTitle">Dashboard</div>
+      <div class="topbar-subtitle" id="topbarSubtitle">Ringkasan aktivitas outreach</div>
+    </div>
+    <div class="topbar-actions" id="topbarActions"></div>
+  </div>
+
+  <!-- ===== PAGE: DASHBOARD ===== -->
+  <div class="page active" id="page-dashboard">
+    <div class="stats-grid" id="dashStats"></div>
+    <div class="grid-2" style="margin-bottom:20px;">
+      <div class="chart-card">
+        <div class="chart-title">Pipeline Status</div>
+        <canvas id="chartPipeline" height="220"></canvas>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Distribusi Tier Kreator</div>
+        <canvas id="chartTier" height="220"></canvas>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">🏆 Top KOL by Skor</span>
+          <button class="btn btn-outline btn-sm" onclick="navigate('analysis')">Lihat Semua →</button>
+        </div>
+        <div class="card-body" id="dashTopKOL" style="padding:0 18px;"></div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">🕐 Aktivitas Terbaru</span>
+          <button class="btn btn-outline btn-sm" onclick="navigate('outreach')">Pipeline →</button>
+        </div>
+        <div class="card-body" id="dashActivity" style="padding:0 18px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== PAGE: DATABASE ===== -->
+  <div class="page" id="page-database">
+    <div class="toolbar">
+      <input class="search-box" id="dbSearch" placeholder="🔍 Cari nama, username, niche..." oninput="renderTable()">
+      <select class="filter-select" id="dbFilterStatus" onchange="renderTable()">
+        <option value="">Semua Status</option>
+        <option value="new">Belum Dihubungi</option>
+        <option value="contacted">Dihubungi</option>
+        <option value="replied">Reply</option>
+        <option value="deal">Deal ✓</option>
+        <option value="followup">Follow Up</option>
+        <option value="rejected">Rejected</option>
+      </select>
+      <select class="filter-select" id="dbFilterPlatform" onchange="renderTable()">
+        <option value="">Semua Platform</option>
+        <option value="wa">WhatsApp</option>
+        <option value="tiktok">TikTok DM</option>
+        <option value="both">Keduanya</option>
+      </select>
+      <select class="filter-select" id="dbFilterTier" onchange="renderTable()">
+        <option value="">Semua Tier</option>
+        <option value="nano">Nano (&lt;10K)</option>
+        <option value="micro">Micro (10K-100K)</option>
+        <option value="macro">Macro (100K-1M)</option>
+        <option value="mega">Mega (&gt;1M)</option>
+      </select>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Kreator</th><th>Kontak</th><th>Followers</th>
+            <th>Niche</th><th>Platform</th><th>Status</th><th>Skor</th><th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="dbTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ===== PAGE: ANALYSIS ===== -->
+  <div class="page" id="page-analysis">
+    <div class="stats-grid" id="analysisStats"></div>
+    <div class="analysis-grid" style="margin-bottom:20px;">
+      <div class="chart-card" style="height:320px;">
+        <div class="chart-title">🏆 Top 10 KOL by Skor</div>
+        <canvas id="chartTopScore"></canvas>
+      </div>
+      <div class="chart-card" style="height:320px;">
+        <div class="chart-title">🎯 Distribusi Tier</div>
+        <canvas id="chartTierPie"></canvas>
+      </div>
+      <div class="chart-card" style="height:320px;">
+        <div class="chart-title">⚡ Engagement vs Followers</div>
+        <canvas id="chartScatter"></canvas>
+      </div>
+      <div class="chart-card" style="height:320px;">
+        <div class="chart-title">💰 Top 10 by Pendapatan</div>
+        <canvas id="chartTopRevenue"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">📋 Ranking KOL</span>
+        <div style="display:flex;gap:8px;">
+          <select class="filter-select" id="analysisSortBy" onchange="renderScoreTable()" style="padding:6px 10px;font-size:12px;">
+            <option value="score">Sort: Skor</option>
+            <option value="followers">Sort: Followers</option>
+            <option value="engagement">Sort: Engagement</option>
+            <option value="pendapatan">Sort: Pendapatan</option>
+            <option value="views">Sort: Views</option>
+          </select>
+          <select class="filter-select" id="analysisFilterTier" onchange="renderScoreTable()" style="padding:6px 10px;font-size:12px;">
+            <option value="">Semua Tier</option>
+            <option value="nano">Nano</option>
+            <option value="micro">Micro</option>
+            <option value="macro">Macro</option>
+            <option value="mega">Mega</option>
+          </select>
+        </div>
+      </div>
+      <div class="table-wrap" style="border:none;border-radius:0;">
+        <table>
+          <thead>
+            <tr><th>#</th><th>Kreator</th><th>Tier</th><th>Followers</th><th>Engagement</th><th>Views</th><th>Pendapatan</th><th>Skor</th><th>Prioritas</th></tr>
+          </thead>
+          <tbody id="analysisTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== PAGE: OUTREACH ===== -->
+  <div class="page" id="page-outreach">
+    <div class="toolbar">
+      <input class="search-box" id="outreachSearch" placeholder="🔍 Cari kreator..." oninput="renderKanban()" style="max-width:300px;">
+    </div>
+    <div class="kanban" id="kanbanBoard"></div>
+  </div>
+
+  <!-- ===== PAGE: TEMPLATES ===== -->
+  <div class="page" id="page-templates">
+    <div class="card" style="margin-bottom:16px;padding:14px 18px;">
+      <div style="font-size:12px;color:var(--muted);line-height:1.7;">
+        Variabel yang tersedia:
+        <code style="color:var(--accent2);background:rgba(6,182,212,.1);padding:1px 6px;border-radius:4px;">{nama}</code>
+        <code style="color:var(--accent2);background:rgba(6,182,212,.1);padding:1px 6px;border-radius:4px;">{brand}</code>
+        <code style="color:var(--accent2);background:rgba(6,182,212,.1);padding:1px 6px;border-radius:4px;">{produk}</code>
+        <code style="color:var(--accent2);background:rgba(6,182,212,.1);padding:1px 6px;border-radius:4px;">{komisi}</code>
+        <code style="color:var(--accent2);background:rgba(6,182,212,.1);padding:1px 6px;border-radius:4px;">{username}</code>
+        <code style="color:var(--accent2);background:rgba(6,182,212,.1);padding:1px 6px;border-radius:4px;">{followers}</code>
+        <code style="color:var(--accent2);background:rgba(6,182,212,.1);padding:1px 6px;border-radius:4px;">{niche}</code>
+        — diisi otomatis dari data KOL & Pengaturan.
+      </div>
+    </div>
+    <div class="tmpl-cards" id="tmplList"></div>
+  </div>
+
+  <!-- ===== PAGE: SETTINGS ===== -->
+  <div class="page" id="page-settings">
+    <div style="max-width:560px;">
+      <div class="settings-section">
+        <div class="settings-section-title">Identitas Brand</div>
+        <div class="form-group">
+          <label class="form-label">Nama Brand</label>
+          <input class="form-control" id="setBrandName" placeholder="Nama brand atau perusahaan kamu">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Produk Default</label>
+            <input class="form-control" id="setDefaultProduct" placeholder="Nama produk yang sering ditawarkan">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Komisi Default (%)</label>
+            <input class="form-control" id="setDefaultCommission" type="number" placeholder="10">
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="saveSettings()">Simpan Pengaturan</button>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-section-title">Data & Backup</div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:14px;" id="setDataInfo"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-outline" onclick="exportAllData()">⬇ Export Backup (JSON)</button>
+          <button class="btn btn-outline" onclick="importAllData()">⬆ Restore dari Backup</button>
+          <button class="btn btn-outline" onclick="clearHistory()">🗑 Hapus Riwayat</button>
+          <button class="btn btn-danger" onclick="clearAllData()">⚠️ Hapus Semua Data KOL</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div><!-- /main -->
+
+<!-- ===== MODAL: TAMBAH/EDIT KOL ===== -->
+<div class="overlay" id="modalKOL">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="kolModalTitle">Tambah KOL</span>
+      <button class="modal-close" onclick="closeModal('modalKOL')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="kolEditId">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Nama *</label>
+          <input class="form-control" id="kolName" placeholder="Nama kreator">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Username TikTok</label>
+          <input class="form-control" id="kolTiktok" placeholder="@username">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">No. WhatsApp</label>
+          <input class="form-control" id="kolWA" placeholder="628xxxxxxxxx">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input class="form-control" id="kolEmail" placeholder="email@example.com">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Instagram</label>
+          <input class="form-control" id="kolIG" placeholder="@username">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Platform Kontak</label>
+          <select class="form-control" id="kolPlatform">
+            <option value="wa">WhatsApp</option>
+            <option value="tiktok">TikTok DM</option>
+            <option value="both">Keduanya</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Niche / Kategori</label>
+          <input class="form-control" id="kolNiche" placeholder="Beauty, Fashion, Food...">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Followers</label>
+          <input class="form-control" id="kolFollowers" placeholder="150K, 1.2M...">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Produk Ditawarkan</label>
+          <input class="form-control" id="kolProduct" placeholder="Nama produk">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select class="form-control" id="kolStatus">
+            <option value="new">Belum Dihubungi</option>
+            <option value="contacted">Dihubungi</option>
+            <option value="replied">Reply</option>
+            <option value="deal">Deal ✓</option>
+            <option value="followup">Follow Up</option>
+            <option value="rejected">Rejected</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Catatan</label>
+        <textarea class="form-control" id="kolNote" placeholder="Catatan tambahan..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modalKOL')">Batal</button>
+      <button class="btn btn-primary" onclick="saveKOL()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: KIRIM PESAN ===== -->
+<div class="overlay" id="modalSend">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <span class="modal-title">Kirim Pesan ke <span id="sendModalName" style="color:var(--accent2);"></span></span>
+      <button class="modal-close" onclick="closeModal('modalSend')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Pilih Template</label>
+        <div class="tmpl-tabs-row" id="sendTemplateTabs"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Preview & Edit Pesan</label>
+        <textarea class="form-control" id="sendMsgPreview" style="min-height:180px;line-height:1.75;"></textarea>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-outline btn-sm" onclick="copyMsg()">📋 Copy Pesan</button>
+        <button class="btn btn-wa btn-sm" id="btnSendWA" onclick="doSendWA()">💬 Buka WhatsApp</button>
+        <button class="btn btn-tiktok btn-sm" id="btnSendTT" onclick="doSendTT()">🎵 Buka TikTok</button>
+      </div>
+      <div style="margin-top:14px;padding:11px 13px;background:var(--bg3);border-radius:8px;font-size:12px;color:var(--muted);">
+        💡 Copy pesan → buka platform → paste & kirim. Lalu klik tombol di bawah untuk update status.
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modalSend')">Tutup</button>
+      <button class="btn btn-green" onclick="markSendContacted()">✓ Tandai Sudah Dihubungi</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: IMPORT ===== -->
+<div class="overlay" id="modalImport">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <span class="modal-title">Import KOL Massal</span>
+      <button class="modal-close" onclick="closeModal('modalImport');resetImport();">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="import-tabs">
+        <button class="import-tab active" onclick="switchImportTab('kalodata',this)">🔥 Kalodata XLSX</button>
+        <button class="import-tab" onclick="switchImportTab('cSV',this)">📄 Upload CSV</button>
+        <button class="import-tab" onclick="switchImportTab('paste',this)">📋 Paste Excel</button>
+      </div>
+
+      <!-- Kalodata -->
+      <div class="import-panel active" id="dbImportPanelKalodata">
+        <div class="import-info">
+          Upload langsung file <code>.xlsx</code> export dari <strong>Kalodata Creator</strong>.<br>
+          Kolom yang diambil: <code>Nama Kreator</code> <code>Handle</code> <code>Pengikut</code> <code>Engagement</code> <code>Views</code> <code>Pendapatan</code> <code>WhatsApp</code> <code>Email</code> <code>Instagram</code>
+        </div>
+        <div class="drop-zone" id="dzKalodata"
+          onclick="document.getElementById('dbKalodataFile').click()"
+          ondragover="onDragOver(event,'dzKalodata')" ondragleave="onDragLeave('dzKalodata')"
+          ondrop="onDrop(event,'dzKalodata',handleKalodataFile)">
+          <input type="file" id="dbKalodataFile" accept=".xlsx,.xls" onchange="handleKalodataFile(this.files[0])">
+          <div class="drop-zone-icon">🔥</div>
+          <div class="drop-zone-text">Klik atau drag & drop file Excel Kalodata</div>
+          <div class="drop-zone-sub">Kalodata_Creator_xxxxx_ID.xlsx</div>
+        </div>
+        <div id="dbKalodataPreview"></div>
+      </div>
+
+      <!-- CSV -->
+      <div class="import-panel" id="dbImportPanelCSV">
+        <div class="import-info">
+          Urutan kolom: <code>Nama</code> <code>TikTok</code> <code>WhatsApp</code> <code>Platform</code> <code>Niche</code> <code>Followers</code> <code>Produk</code> <code>Catatan</code>
+          <div style="margin-top:6px;"><button class="btn btn-outline btn-sm" onclick="downloadCSVTemplate()">⬇ Download Template CSV</button></div>
+        </div>
+        <div class="drop-zone" id="dzCSV"
+          onclick="document.getElementById('dbCSVFile').click()"
+          ondragover="onDragOver(event,'dzCSV')" ondragleave="onDragLeave('dzCSV')"
+          ondrop="onDrop(event,'dzCSV',handleCSVFile)">
+          <input type="file" id="dbCSVFile" accept=".csv,.txt" onchange="handleCSVFile(this.files[0])">
+          <div class="drop-zone-icon">📄</div>
+          <div class="drop-zone-text">Klik atau drag & drop file CSV</div>
+          <div class="drop-zone-sub">Format .csv — maks 5.000 baris</div>
+        </div>
+        <div id="dbCSVPreview"></div>
+      </div>
+
+      <!-- Paste -->
+      <div class="import-panel" id="dbImportPanelPaste">
+        <div class="import-info">
+          Copy dari Excel/Google Sheets lalu paste di bawah. Kolom (tab-separated):<br>
+          <code>Nama</code> <code>TikTok</code> <code>WhatsApp</code> <code>Platform</code> <code>Niche</code> <code>Followers</code> <code>Produk</code> <code>Catatan</code>
+        </div>
+        <textarea class="form-control" id="dbPasteArea" style="min-height:140px;font-family:monospace;font-size:12px;" placeholder="Paste data dari Excel/Sheets di sini..." oninput="parsePaste()"></textarea>
+        <div id="dbPastePreview"></div>
+      </div>
+
+      <div id="dbImportSummary" style="display:none;margin-top:12px;padding:11px 14px;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);border-radius:8px;font-size:13px;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modalImport');resetImport();">Batal</button>
+      <button class="btn btn-primary" id="btnDoImport" onclick="doImport()" disabled style="opacity:.5;">⬆ Import Data</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: TEMPLATE EDITOR ===== -->
+<div class="overlay" id="modalTmpl">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="tmplModalTitle">Buat Template</span>
+      <button class="modal-close" onclick="closeModal('modalTmpl')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="tmplEditId">
+      <div class="form-group">
+        <label class="form-label">Nama Template</label>
+        <input class="form-control" id="tmplName" placeholder="e.g. Pesan Pertama WA">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Platform</label>
+        <select class="form-control" id="tmplPlatform">
+          <option value="wa">WhatsApp</option>
+          <option value="tiktok">TikTok DM</option>
+          <option value="both">Keduanya</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Isi Pesan</label>
+        <textarea class="form-control" id="tmplBody" style="min-height:200px;" placeholder="Gunakan {nama}, {brand}, {produk}, {komisi}, {niche}..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modalTmpl')">Batal</button>
+      <button class="btn btn-primary" onclick="saveTmpl()">Simpan Template</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script src="js/db.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/database.js"></script>
+<script src="js/analysis.js"></script>
+<script src="js/outreach.js"></script>
+<script src="js/templates.js"></script>
+<script src="js/settings.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
