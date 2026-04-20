@@ -227,33 +227,57 @@
 
           <div style="background:var(--bg3);border-radius:10px;padding:16px;border:1px solid var(--border);">
             <div style="font-size:24px;margin-bottom:8px;">1️⃣</div>
-            <div style="font-weight:700;font-size:13px;margin-bottom:6px;">Install Ekstensi</div>
-            <div style="font-size:12px;color:var(--muted);line-height:1.6;">Install <strong style="color:var(--text)">EditThisCookie</strong> atau <strong style="color:var(--text)">Cookie-Editor</strong> di Chrome.<br>Login ke TikTok.com → klik ekstensi → <strong style="color:var(--accent2)">Export</strong> → simpan sebagai <code style="color:var(--accent2);">cookies.json</code></div>
+            <div style="font-weight:700;font-size:13px;margin-bottom:6px;">Upload Cookies TikTok</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:10px;">
+              Install ekstensi <strong style="color:var(--text)">EditThisCookie</strong> atau <strong style="color:var(--text)">Cookie-Editor</strong> di Chrome →
+              Login TikTok → klik ekstensi → <strong style="color:var(--accent2)">Export</strong> → upload file di sini.
+            </div>
+            <div class="drop-zone" id="dzCookies" style="padding:14px;"
+              onclick="document.getElementById('cookiesFileInput').click()"
+              ondragover="onDragOver(event,'dzCookies')" ondragleave="onDragLeave('dzCookies')"
+              ondrop="onDrop(event,'dzCookies',handleCookiesUpload)">
+              <input type="file" id="cookiesFileInput" accept=".json" onchange="handleCookiesUpload(this.files[0])">
+              <div style="font-size:20px;">🍪</div>
+              <div style="font-size:12px;font-weight:600;margin-top:4px;">Upload cookies.json</div>
+            </div>
+            <div id="cookiesStatus" style="margin-top:10px;"></div>
           </div>
 
           <div style="background:var(--bg3);border-radius:10px;padding:16px;border:1px solid var(--border);">
             <div style="font-size:24px;margin-bottom:8px;">2️⃣</div>
-            <div style="font-weight:700;font-size:13px;margin-bottom:6px;">Export Daftar KOL</div>
-            <div style="font-size:12px;color:var(--muted);line-height:1.6;">Klik tombol di bawah untuk export KOL yang belum dihubungi. Simpan CSV ke folder <code style="color:var(--accent2);">bot/</code></div>
-            <button class="btn btn-primary btn-sm" style="margin-top:10px;width:100%;" onclick="exportBotCSV()">⬇ Export CSV untuk Bot</button>
+            <div style="font-weight:700;font-size:13px;margin-bottom:6px;">Simpan Cookies ke Bot</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:10px;">
+              Setelah upload di step 1, klik tombol ini → file <code style="color:var(--accent2);">cookies.json</code> didownload → simpan ke folder <code style="color:var(--accent2);">bot/</code>
+            </div>
+            <button class="btn btn-primary btn-sm" style="width:100%;" onclick="downloadCookiesForBot()">⬇ Download cookies.json → taruh di bot/</button>
           </div>
 
           <div style="background:var(--bg3);border-radius:10px;padding:16px;border:1px solid var(--border);">
             <div style="font-size:24px;margin-bottom:8px;">3️⃣</div>
-            <div style="font-weight:700;font-size:13px;margin-bottom:6px;">Edit config.json</div>
-            <div style="font-size:12px;color:var(--muted);line-height:1.6;">Buka file <code style="color:var(--accent2);">bot/config.json</code> → isi brand, produk, komisi, dan template pesan sesuai kebutuhan.</div>
+            <div style="font-weight:700;font-size:13px;margin-bottom:6px;">Export Daftar KOL</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:10px;">
+              Export KOL yang belum dihubungi → simpan CSV ke folder <code style="color:var(--accent2);">bot/</code>
+            </div>
+            <button class="btn btn-primary btn-sm" style="width:100%;" onclick="exportBotCSV()">⬇ Export CSV untuk Bot</button>
           </div>
 
           <div style="background:var(--bg3);border-radius:10px;padding:16px;border:1px solid var(--border);">
             <div style="font-size:24px;margin-bottom:8px;">4️⃣</div>
             <div style="font-weight:700;font-size:13px;margin-bottom:6px;">Jalankan Bot</div>
-            <div style="font-size:12px;color:var(--muted);line-height:1.6;">Double-click <code style="color:var(--accent2);">bot/run.bat</code> → pilih file CSV → bot otomatis kirim DM satu per satu.</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.6;">
+              Pastikan di folder <code style="color:var(--accent2);">bot/</code> sudah ada:<br>
+              ✓ <code style="color:var(--green);">cookies.json</code><br>
+              ✓ <code style="color:var(--green);">bot-kol-xxx.csv</code><br><br>
+              Double-click <code style="color:var(--accent2);">bot/run.bat</code> → bot jalan otomatis.
+            </div>
           </div>
 
-          <div style="background:var(--bg3);border-radius:10px;padding:16px;border:1px solid var(--border);grid-column:span 1;">
+          <div style="background:var(--bg3);border-radius:10px;padding:16px;border:1px solid var(--border);">
             <div style="font-size:24px;margin-bottom:8px;">5️⃣</div>
             <div style="font-weight:700;font-size:13px;margin-bottom:6px;">Import Hasil</div>
-            <div style="font-size:12px;color:var(--muted);line-height:1.6;">Setelah bot selesai, upload file <code style="color:var(--accent2);">bot/log/results.csv</code> di bawah → status KOL otomatis terupdate.</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.6;">
+              Setelah bot selesai, upload <code style="color:var(--accent2);">bot/log/results.csv</code> di bawah → status KOL otomatis terupdate ke "Dihubungi".
+            </div>
           </div>
 
         </div>
