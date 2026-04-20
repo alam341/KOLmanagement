@@ -67,7 +67,26 @@ function toggleSidebar() {
   document.getElementById('sidebar')?.classList.toggle('open');
 }
 
+// ===== THEME =====
+function applyTheme(light) {
+  document.body.classList.toggle('light', light);
+  const track = document.getElementById('themeTrack');
+  const icon  = document.getElementById('themeToggleIcon');
+  const label = document.getElementById('themeToggleLabel');
+  if (track)  track.classList.toggle('on', light);
+  if (icon)   icon.textContent  = light ? '🌙' : '☀️';
+  if (label)  label.textContent = light ? 'Tema Gelap' : 'Tema Terang';
+}
+
+function toggleTheme() {
+  const isLight = !document.body.classList.contains('light');
+  localStorage.setItem('kol_theme', isLight ? 'light' : 'dark');
+  applyTheme(isLight);
+}
+
 // Boot
 document.addEventListener('DOMContentLoaded', () => {
+  const saved = localStorage.getItem('kol_theme');
+  applyTheme(saved === 'light');
   navigate('dashboard');
 });
