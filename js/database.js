@@ -32,7 +32,7 @@ function renderTable() {
         <div style="font-size:11px;color:var(--muted);">${k.note ? esc(k.note.slice(0,50))+(k.note.length>50?'…':'') : ''}</div>
       </td>
       <td>
-        ${k.tiktok ? `<div style="font-size:12px;">🎵 ${esc(k.tiktok)}</div>` : ''}
+        ${k.tiktok ? `<div style="font-size:12px;">🎵 <a href="https://www.tiktok.com/@${esc(k.tiktok.replace('@',''))}" target="_blank" style="color:var(--accent);text-decoration:none;" title="Lihat profil TikTok">${esc(k.tiktok)}</a></div>` : ''}
         ${k.wa     ? `<div style="font-size:12px;">📱 ${esc(k.wa)}</div>` : ''}
         ${k.email  ? `<div style="font-size:11px;color:var(--muted);">✉️ ${esc(k.email)}</div>` : ''}
       </td>

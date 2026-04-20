@@ -41,7 +41,7 @@ function kanbanCard(k, currentStatus) {
   <div class="kanban-card" onclick="openSend('${k.id}')">
     <div class="kanban-card-name">${esc(k.name)}</div>
     <div class="kanban-card-meta">
-      ${k.tiktok ? `<span>🎵 ${esc(k.tiktok)}</span>` : ''}
+      ${k.tiktok ? `<span>🎵 <a href="https://www.tiktok.com/@${esc(k.tiktok.replace('@',''))}" target="_blank" onclick="event.stopPropagation()" style="color:var(--accent);text-decoration:none;">${esc(k.tiktok)}</a></span>` : ''}
       ${k.followers ? `<span>👥 ${esc(k.followers)}</span>` : ''}
       ${tierBadge(k.tier)}
     </div>
