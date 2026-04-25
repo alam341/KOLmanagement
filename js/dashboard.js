@@ -72,7 +72,7 @@ function renderDashCharts() {
         labels: ['Belum','Dihubungi','Reply','Follow Up','Deal','Rejected'],
         datasets: [{ data: statusCounts, backgroundColor: ['#475569','#f59e0b','#7c3aed','#f97316','#10b981','#ef4444'], borderWidth: 0 }]
       },
-      options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', font: { size: 11 }, padding: 10 } } }, cutout: '65%' }
+      options: { maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: '#94a3b8', font: { size: 11 }, padding: 12, boxWidth: 12 } } }, cutout: '65%' }
     });
   }
 
