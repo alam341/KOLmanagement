@@ -136,6 +136,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (AUTH.isAdmin()) {
     const navAdmin = document.getElementById('navAdminSection');
     if (navAdmin) navAdmin.style.display = '';
+    updatePendingBadge();
   }
   navigate('dashboard');
 });

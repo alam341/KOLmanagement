@@ -24,11 +24,20 @@ const AUTH = {
     const user = {
       id: Date.now().toString(36) + Math.random().toString(36).slice(2),
       name, email: email.toLowerCase(), password, role,
+      status: 'active', // admin yang tambah manual = langsung aktif
       createdAt: new Date().toISOString()
     };
     users.push(user);
     this.users = users;
     return { ok: true };
+  },
+
+  approveUser(id) {
+    const users = this.users;
+    const u = users.find(x => x.id === id);
+    if (!u) return;
+    u.status = 'active';
+    this.users = users;
   },
 
   changeRole(id, role) {
