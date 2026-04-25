@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KOL Manager — Login</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #0d0d14; --bg2: #13131e; --bg3: #1c1c2b; --bg4: #242436;
+    --border: #2a2a3d; --accent: #7c3aed; --accent-hover: #6d28d9;
+    --accent2: #06b6d4; --green: #10b981; --red: #ef4444;
+    --text: #e2e8f0; --text2: #94a3b8; --muted: #475569;
+  }
+
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100vh; display: flex; align-items: center;
+    justify-content: center; padding: 20px;
+  }
+
+  .auth-wrap { width: 100%; max-width: 450px; }
+
+  .auth-logo { text-align: center; margin-bottom: 28px; }
+  .auth-logo-icon { font-size: 40px; margin-bottom: 10px; }
+  .auth-logo-title {
+    font-size: 26px; font-weight: 800;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .auth-logo-sub { font-size: 13px; color: var(--muted); margin-top: 5px; }
+
+  .auth-card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 16px; overflow: hidden;
+  }
+
+  .auth-tabs { display: flex; border-bottom: 1px solid var(--border); }
+  .auth-tab {
+    flex: 1; padding: 14px; text-align: center; font-size: 13px;
+    font-weight: 700; cursor: pointer; border: none; background: transparent;
+    color: var(--muted); transition: all .15s;
+    border-bottom: 2px solid transparent;
+  }
+  .auth-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .auth-tab:hover:not(.active) { color: var(--text2); background: var(--bg3); }
+
+  .auth-panel { display: none; padding: 24px; }
+  .auth-panel.active { display: block; }
+
+  .form-group { margin-bottom: 15px; }
+  .form-label {
+    display: block; font-size: 11px; font-weight: 700; color: var(--muted);
+    margin-bottom: 5px; text-transform: uppercase; letter-spacing: .04em;
+  }
+  .form-control {
+    width: 100%; background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 13px; color: var(--text); font-size: 13px;
+    outline: none; transition: border .15s; font-family: inherit;
+  }
+  .form-control:focus { border-color: var(--accent); }
+
+  .role-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 6px; }
+  .role-card {
+    border: 2px solid var(--border); border-radius: 10px; padding: 14px 12px;
+    cursor: pointer; transition: all .15s; text-align: center; background: var(--bg3);
+  }
+  .role-card:hover { border-color: var(--accent); background: rgba(124,58,237,.06); }
+  .role-card.selected { border-color: var(--accent); background: rgba(124,58,237,.12); }
+  .role-card-icon { font-size: 26px; margin-bottom: 7px; }
+  .role-card-name { font-size: 12px; font-weight: 700; margin-bottom: 3px; color: var(--text); }
+  .role-card-desc { font-size: 11px; color: var(--muted); line-height: 1.4; }
+
+  .btn-submit {
+    width: 100%; padding: 12px; border-radius: 8px; border: none; cursor: pointer;
+    font-size: 14px; font-weight: 700; transition: all .15s; margin-top: 4px;
+    background: var(--accent); color: #fff;
+  }
+  .btn-submit:hover { background: var(--accent-hover); transform: translateY(-1px); }
+  .btn-submit:active { transform: translateY(0); }
+
+  .alert {
+    padding: 10px 13px; border-radius: 8px; font-size: 13px;
+    margin-bottom: 15px; display: none; line-height: 1.5;
+  }
+  .alert.show { display: block; }
+  .alert-error { background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.3); color: #fca5a5; }
+  .alert-info  { background: rgba(6,182,212,.1); border: 1px solid rgba(6,182,212,.3); color: #67e8f9; }
+
+  .auth-footer { text-align: center; margin-top: 18px; font-size: 12px; color: var(--muted); }
+  .auth-footer strong { color: var(--text2); }
+</style>
+</head>
+<body>
+
+<div class="auth-wrap">
+  <div class="auth-logo">
+    <div class="auth-logo-icon">🎯</div>
+    <div class="auth-logo-title">KOL Manager</div>
+    <div class="auth-logo-sub">Outreach & Analisis Kreator</div>
+  </div>
+
+  <div class="auth-card">
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tabMasuk"  onclick="switchTab('masuk')">Masuk</button>
+      <button class="auth-tab"        id="tabDaftar" onclick="switchTab('daftar')">Daftar</button>
+    </div>
+
+    <!-- ===== LOGIN ===== -->
+    <div class="auth-panel active" id="panelMasuk">
+      <div class="alert alert-error" id="loginError"></div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input class="form-control" id="loginEmail" type="email" placeholder="email@contoh.com"
+               onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <div class="form-group" style="margin-bottom:20px;">
+        <label class="form-label">Password</label>
+        <input class="form-control" id="loginPass" type="password" placeholder="Password"
+               onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <button class="btn-submit" onclick="doLogin()">Masuk</button>
+    </div>
+
+    <!-- ===== REGISTER ===== -->
+    <div class="auth-panel" id="panelDaftar">
+      <div class="alert alert-info show" id="firstUserNote" style="display:none!important;">
+        💡 Belum ada akun terdaftar. Akun pertama otomatis menjadi <strong>Admin</strong>.
+      </div>
+      <div class="alert alert-error" id="regError"></div>
+      <div class="form-group">
+        <label class="form-label">Nama Lengkap</label>
+        <input class="form-control" id="regName" type="text" placeholder="Nama lengkap kamu">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input class="form-control" id="regEmail" type="email" placeholder="email@contoh.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input class="form-control" id="regPass" type="password" placeholder="Minimal 6 karakter">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Konfirmasi Password</label>
+        <input class="form-control" id="regPassConfirm" type="password" placeholder="Ulangi password">
+      </div>
+      <div class="form-group" id="roleGroup">
+        <label class="form-label">Role</label>
+        <div class="role-grid">
+          <div class="role-card" id="roleCardAdmin" onclick="selectRole('admin')">
+            <div class="role-card-icon">👑</div>
+            <div class="role-card-name">Admin</div>
+            <div class="role-card-desc">Akses penuh & kelola pengguna</div>
+          </div>
+          <div class="role-card selected" id="roleCardSpecialist" onclick="selectRole('specialist')">
+            <div class="role-card-icon">🎯</div>
+            <div class="role-card-name">KOL Spesialis</div>
+            <div class="role-card-desc">Kelola database & outreach KOL</div>
+          </div>
+        </div>
+      </div>
+      <button class="btn-submit" onclick="doRegister()">Buat Akun</button>
+    </div>
+  </div>
+
+  <div class="auth-footer">
+    KOL Manager v2.0 &nbsp;·&nbsp; <strong>Data tersimpan di browser</strong>
+  </div>
+</div>
+
+<script>
+const AUTH_KEY = 'kol_users';
+const SES_KEY  = 'kol_session';
+
+function getUsers()   { return JSON.parse(localStorage.getItem(AUTH_KEY) || '[]'); }
+function setUsers(v)  { localStorage.setItem(AUTH_KEY, JSON.stringify(v)); }
+function setSession(v){ v ? sessionStorage.setItem(SES_KEY, JSON.stringify(v)) : sessionStorage.removeItem(SES_KEY); }
+function getSession() { return JSON.parse(sessionStorage.getItem(SES_KEY) || 'null'); }
+function _uid()       { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
+
+// Redirect if already logged in
+if (getSession()) location.href = 'index.html';
+
+// Auto-switch to register if no users exist
+const _existingUsers = getUsers();
+if (_existingUsers.length === 0) {
+  switchTab('daftar');
+  const note = document.getElementById('firstUserNote');
+  if (note) note.style.cssText = '';
+}
+
+let selectedRole = 'specialist';
+
+function switchTab(tab) {
+  ['masuk','daftar'].forEach(t => {
+    const capT = t.charAt(0).toUpperCase() + t.slice(1);
+    document.getElementById('tab' + capT).classList.toggle('active', t === tab);
+    document.getElementById('panel' + capT).classList.toggle('active', t === tab);
+  });
+  document.getElementById('loginError').classList.remove('show');
+  document.getElementById('regError').classList.remove('show');
+}
+
+function selectRole(role) {
+  selectedRole = role;
+  document.getElementById('roleCardAdmin').classList.toggle('selected', role === 'admin');
+  document.getElementById('roleCardSpecialist').classList.toggle('selected', role === 'specialist');
+}
+
+function showErr(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg; el.classList.add('show');
+}
+
+function doLogin() {
+  const err = document.getElementById('loginError');
+  err.classList.remove('show');
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass  = document.getElementById('loginPass').value;
+  if (!email || !pass) { showErr('loginError', 'Email dan password wajib diisi.'); return; }
+  const user = getUsers().find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === pass);
+  if (!user) { showErr('loginError', 'Email atau password salah.'); return; }
+  setSession({ id: user.id, name: user.name, email: user.email, role: user.role });
+  location.href = 'index.html';
+}
+
+function doRegister() {
+  document.getElementById('regError').classList.remove('show');
+  const name  = document.getElementById('regName').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const pass  = document.getElementById('regPass').value;
+  const pass2 = document.getElementById('regPassConfirm').value;
+
+  if (!name || !email || !pass || !pass2) { showErr('regError', 'Semua kolom wajib diisi.'); return; }
+  if (pass.length < 6) { showErr('regError', 'Password minimal 6 karakter.'); return; }
+  if (pass !== pass2)  { showErr('regError', 'Konfirmasi password tidak cocok.'); return; }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showErr('regError', 'Format email tidak valid.'); return; }
+
+  const users = getUsers();
+  if (users.find(u => u.email.toLowerCase() === email.toLowerCase())) {
+    showErr('regError', 'Email sudah terdaftar.'); return;
+  }
+
+  const isFirst = users.length === 0;
+  const finalRole = isFirst ? 'admin' : selectedRole;
+  const user = { id: _uid(), name, email: email.toLowerCase(), password: pass, role: finalRole, createdAt: new Date().toISOString() };
+  users.push(user);
+  setUsers(users);
+  setSession({ id: user.id, name: user.name, email: user.email, role: user.role });
+  location.href = 'index.html';
+}
+</script>
+</body>
+</html>

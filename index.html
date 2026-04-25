@@ -41,8 +41,16 @@
     <button class="nav-item" data-page="settings" onclick="navigate('settings')">
       <span class="nav-icon">⚙️</span> Pengaturan
     </button>
+    </div>
+    <div id="navAdminSection" style="display:none;">
+      <div class="nav-section">Admin</div>
+      <button class="nav-item" data-page="users" onclick="navigate('users')">
+        <span class="nav-icon">👤</span> Manajemen User
+      </button>
+    </div>
   </div>
   <div class="sidebar-footer">
+    <div id="sidebarUser"></div>
     <button class="theme-toggle" onclick="toggleTheme()" id="themeToggleBtn">
       <span id="themeToggleIcon">☀️</span>
       <span id="themeToggleLabel">Tema Terang</span>
@@ -61,7 +69,10 @@
       <div class="topbar-title" id="topbarTitle">Dashboard</div>
       <div class="topbar-subtitle" id="topbarSubtitle">Ringkasan aktivitas outreach</div>
     </div>
-    <div class="topbar-actions" id="topbarActions"></div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div class="topbar-actions" id="topbarActions"></div>
+      <div id="topbarUser"></div>
+    </div>
   </div>
 
   <!-- ===== PAGE: DASHBOARD ===== -->
@@ -364,7 +375,57 @@
       </div>
     </div>
   </div>
+  <!-- ===== PAGE: USERS ===== -->
+  <div class="page" id="page-users">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Nama</th><th>Email</th><th>Role</th><th>Terdaftar</th><th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="usersTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
 </div><!-- /main -->
+
+<!-- ===== MODAL: TAMBAH USER ===== -->
+<div class="overlay" id="modalAddUser">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Tambah User Baru</span>
+      <button class="modal-close" onclick="closeModal('modalAddUser')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="addUserError" style="display:none;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#fca5a5;padding:10px 13px;border-radius:8px;font-size:13px;margin-bottom:14px;"></div>
+      <div class="form-group">
+        <label class="form-label">Nama Lengkap</label>
+        <input class="form-control" id="addUserName" placeholder="Nama user">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input class="form-control" id="addUserEmail" type="email" placeholder="email@contoh.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input class="form-control" id="addUserPass" type="password" placeholder="Minimal 6 karakter">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Role</label>
+        <select class="form-control" id="addUserRole">
+          <option value="admin">👑 Admin</option>
+          <option value="specialist" selected>🎯 KOL Spesialis</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modalAddUser')">Batal</button>
+      <button class="btn btn-primary" onclick="doAddUser()">Buat Akun</button>
+    </div>
+  </div>
+</div>
 
 <!-- ===== MODAL: TAMBAH/EDIT KOL ===== -->
 <div class="overlay" id="modalKOL">
@@ -584,6 +645,7 @@
 
 <div class="toast-wrap" id="toastWrap"></div>
 
+<script src="js/auth.js"></script>
 <script src="js/db.js"></script>
 <script src="js/dashboard.js"></script>
 <script src="js/database.js"></script>
@@ -592,6 +654,7 @@
 <script src="js/autodm.js"></script>
 <script src="js/templates.js"></script>
 <script src="js/settings.js"></script>
+<script src="js/users.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>
