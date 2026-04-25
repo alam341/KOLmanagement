@@ -133,10 +133,19 @@
         <option value="mega">Mega (&gt;1M)</option>
       </select>
     </div>
+    <div id="dbBulkBar" style="display:none;align-items:center;gap:10px;padding:8px 14px;margin-bottom:8px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);border-radius:8px;">
+      <span style="font-size:13px;color:var(--text);"><strong id="dbSelectedCount">0</strong> KOL dipilih</span>
+      <button class="btn btn-danger btn-sm" onclick="deleteSelectedKOLs()">🗑 Hapus yang Dipilih</button>
+      <button class="btn btn-outline btn-sm" onclick="clearDBSelection()" style="margin-left:auto;">✕ Batalkan</button>
+    </div>
     <div class="table-wrap">
       <table>
         <thead>
           <tr>
+            <th style="width:36px;padding:8px 6px;text-align:center;">
+              <input type="checkbox" id="dbCheckAll" onchange="toggleSelectAllDB(this.checked)"
+                style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer;">
+            </th>
             <th>Kreator</th><th>Kontak</th><th>Followers</th>
             <th>Niche</th><th>Platform</th><th>Status</th><th>Skor</th><th>Aksi</th>
           </tr>
