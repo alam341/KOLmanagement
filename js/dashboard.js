@@ -72,7 +72,7 @@ function renderDashCharts() {
         labels: ['Belum','Dihubungi','Reply','Follow Up','Deal','Rejected'],
         datasets: [{ data: statusCounts, backgroundColor: ['#475569','#f59e0b','#7c3aed','#f97316','#10b981','#ef4444'], borderWidth: 0 }]
       },
-      options: { plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', font: { size: 11 }, padding: 10 } } }, cutout: '65%' }
+      options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', font: { size: 11 }, padding: 10 } } }, cutout: '65%' }
     });
   }
 
@@ -87,6 +87,7 @@ function renderDashCharts() {
         datasets: [{ data: tierCounts, backgroundColor: ['#475569','#06b6d4','#7c3aed','#f59e0b'], borderRadius: 6, borderWidth: 0 }]
       },
       options: {
+        maintainAspectRatio: false,
         plugins: { legend: { display: false } },
         scales: {
           x: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { color: '#2a2a3d' } },
