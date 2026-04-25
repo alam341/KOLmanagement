@@ -7,12 +7,17 @@ const PAGES = {
   autodm:    { title:'Auto DM TikTok', subtitle:'Otomasi kirim DM ke kreator via bot', init: initAutodm },
   templates: { title:'Template Pesan', subtitle:'Kelola template WA & TikTok DM', init: initTemplates },
   settings:  { title:'Pengaturan', subtitle:'Konfigurasi brand & data', init: initSettings },
+  users:     { title:'Manajemen User', subtitle:'Kelola akun & hak akses pengguna', init: initUsers },
 };
 
 let currentPage = 'dashboard';
 
 function navigate(page) {
   if (!PAGES[page]) return;
+  if (page === 'users' && !AUTH.isAdmin()) {
+    toast('Akses ditolak. Halaman ini hanya untuk Admin.', 'error');
+    return;
+  }
   currentPage = page;
 
   // Update nav
@@ -52,6 +57,9 @@ function topbarActions(page) {
     <button class="btn btn-outline btn-sm" onclick="exportAllData()">⬇ Backup</button>
     <button class="btn btn-outline btn-sm" onclick="importAllData()">⬆ Restore</button>
   `;
+  if (page === 'users') return `
+    <button class="btn btn-primary btn-sm" onclick="openAddUserModal()">+ Tambah User</button>
+  `;
   return '';
 }
 
@@ -85,9 +93,49 @@ function toggleTheme() {
   applyTheme(isLight);
 }
 
+// ===== USER INFO =====
+function renderUserInfo() {
+  const user = AUTH.session;
+  if (!user) return;
+  const isAdmin   = user.role === 'admin';
+  const roleLabel = isAdmin ? 'Admin' : 'KOL Spesialis';
+  const roleStyle = isAdmin
+    ? 'background:var(--accent);color:#fff;'
+    : 'background:rgba(6,182,212,.15);color:var(--accent2);';
+
+  // Topbar
+  const tbUser = document.getElementById('topbarUser');
+  if (tbUser) tbUser.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div style="text-align:right;line-height:1.3;">
+        <div style="font-size:12px;font-weight:700;">${esc(user.name)}</div>
+        <div style="font-size:10px;${isAdmin ? 'color:var(--accent);' : 'color:var(--accent2);'}">${roleLabel}</div>
+      </div>
+      <button class="btn btn-outline btn-sm" onclick="AUTH.logout()"
+              title="Keluar" style="color:var(--red);border-color:rgba(239,68,68,.3);padding:6px 9px;">⏻</button>
+    </div>`;
+
+  // Sidebar
+  const sbUser = document.getElementById('sidebarUser');
+  if (sbUser) sbUser.innerHTML = `
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:8px;">
+      <div style="font-size:12px;font-weight:700;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(user.name)}</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;">
+        <span style="${roleStyle}font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;white-space:nowrap;">${roleLabel}</span>
+        <button onclick="AUTH.logout()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:11px;padding:0;white-space:nowrap;" title="Keluar">Keluar ⏻</button>
+      </div>
+    </div>`;
+}
+
 // Boot
 document.addEventListener('DOMContentLoaded', () => {
+  if (!AUTH.requireAuth()) return;
   const saved = localStorage.getItem('kol_theme');
   applyTheme(saved === 'light');
+  renderUserInfo();
+  if (AUTH.isAdmin()) {
+    const navAdmin = document.getElementById('navAdminSection');
+    if (navAdmin) navAdmin.style.display = '';
+  }
   navigate('dashboard');
 });
