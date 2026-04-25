@@ -191,13 +191,12 @@ function renderScoreTable() {
 }
 
 function refreshAnalysis() {
-  // Recompute scores for all KOLs
-  const kols = DB.kols.map(k => {
-    k.tier = computeTier(k.followersRaw || parseFollowersRaw(k.followers));
-    k.score = computeScore(k);
-    return k;
-  });
-  DB.kols = kols;
+  const kols = DB.kols.map(k => ({
+    ...k,
+    tier:  computeTier(k.followersRaw || parseFollowersRaw(k.followers)),
+    score: computeScore(k),
+  }));
+  DB.kols = kols; // update memory + async flush ke Supabase
   initAnalysis();
   toast('Analisis diperbarui!', 'success');
 }

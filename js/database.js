@@ -369,24 +369,22 @@ function showImportPreview(containerId, rows) {
 
 function doImport() {
   if (!importRows.length) return;
-  const existing = DB.kols;
-  const existingNames = new Set(existing.map(k => k.name.toLowerCase()));
-  let added = 0, skipped = 0;
-  const now = new Date().toISOString();
+  const existingNames = new Set(DB.kols.map(k => k.name.toLowerCase()));
+  const toInsert = [];
+  let skipped = 0;
   importRows.forEach(r => {
     if (!r.name || existingNames.has(r.name.toLowerCase())) { skipped++; return; }
-    existing.push({ ...r, id: uid(), createdAt: now, updatedAt: now });
+    toInsert.push({ ...r, id: uid() });
     existingNames.add(r.name.toLowerCase());
-    added++;
   });
-  DB.kols = existing;
+  if (toInsert.length) DB.insertKols(toInsert); // sync memory + async Supabase
   const sumEl = document.getElementById('dbImportSummary');
   if (sumEl) {
     sumEl.style.display = 'block';
-    sumEl.innerHTML = `✓ Berhasil import <strong>${added}</strong> KOL.${skipped?` <span style="color:var(--yellow)">${skipped} dilewati (duplikat).</span>`:''}`;
+    sumEl.innerHTML = `✓ Berhasil import <strong>${toInsert.length}</strong> KOL.${skipped?` <span style="color:var(--yellow)">${skipped} dilewati (duplikat).</span>`:''}`;
   }
   renderTable();
-  toast(`${added} KOL berhasil diimport!`, 'success');
+  toast(`${toInsert.length} KOL berhasil diimport!`, 'success');
   importRows = [];
   setImportBtn(false);
 }

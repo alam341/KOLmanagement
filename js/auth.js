@@ -1,56 +1,77 @@
-// ===== AUTH MODULE =====
+// ===== AUTH MODULE (Supabase) =====
 const AUTH = {
-  get users()   { return JSON.parse(localStorage.getItem('kol_users') || '[]'); },
-  set users(v)  { localStorage.setItem('kol_users', JSON.stringify(v)); },
-  get session() { return JSON.parse(sessionStorage.getItem('kol_session') || 'null'); },
-  set session(v){ v ? sessionStorage.setItem('kol_session', JSON.stringify(v)) : sessionStorage.removeItem('kol_session'); },
+  _profile: null,
 
-  requireAuth() {
-    if (!this.session) { window.location.href = 'login.html'; return false; }
+  async getProfile(force = false) {
+    if (this._profile && !force) return this._profile;
+    const { data: { user } } = await _sb.auth.getUser();
+    if (!user) return null;
+    const { data } = await _sb.from('profiles').select('*').eq('id', user.id).single();
+    this._profile = data;
+    return data;
+  },
+
+  async requireAuth() {
+    const { data: { session } } = await _sb.auth.getSession();
+    if (!session) { window.location.href = 'login.html'; return false; }
+    const profile = await this.getProfile();
+    if (!profile || profile.status === 'pending') {
+      await _sb.auth.signOut();
+      window.location.href = 'login.html?pending=1';
+      return false;
+    }
     return true;
   },
 
-  isAdmin() { return this.session?.role === 'admin'; },
+  async isAdmin() {
+    const p = await this.getProfile();
+    return p?.role === 'admin';
+  },
 
-  logout() {
-    this.session = null;
+  async logout() {
+    await _sb.auth.signOut();
+    this._profile = null;
     window.location.href = 'login.html';
   },
 
-  addUser(name, email, password, role) {
-    const users = this.users;
-    if (users.find(u => u.email.toLowerCase() === email.toLowerCase()))
-      return { ok: false, msg: 'Email sudah terdaftar.' };
-    const user = {
-      id: Date.now().toString(36) + Math.random().toString(36).slice(2),
-      name, email: email.toLowerCase(), password, role,
-      status: 'active', // admin yang tambah manual = langsung aktif
-      createdAt: new Date().toISOString()
-    };
-    users.push(user);
-    this.users = users;
+  // ===== Admin: kelola profiles =====
+  async getProfiles() {
+    const { data } = await _sb.from('profiles').select('*').order('created_at');
+    return data || [];
+  },
+
+  async approveUser(id) {
+    const { error } = await _sb.from('profiles').update({ status: 'active' }).eq('id', id);
+    if (error) throw error;
+  },
+
+  async changeRole(id, role) {
+    const { error } = await _sb.from('profiles').update({ role }).eq('id', id);
+    if (error) throw error;
+  },
+
+  async deleteUser(id) {
+    const profile = await this.getProfile();
+    if (id === profile?.id) return { ok: false, msg: 'Tidak bisa menghapus akun sendiri.' };
+    // Hapus profile → user tidak bisa login lagi (requireAuth cek profile)
+    const { error } = await _sb.from('profiles').delete().eq('id', id);
+    if (error) return { ok: false, msg: error.message };
     return { ok: true };
   },
 
-  approveUser(id) {
-    const users = this.users;
-    const u = users.find(x => x.id === id);
-    if (!u) return;
-    u.status = 'active';
-    this.users = users;
-  },
-
-  changeRole(id, role) {
-    const users = this.users;
-    const u = users.find(x => x.id === id);
-    if (!u) return;
-    u.role = role;
-    this.users = users;
-  },
-
-  deleteUser(id) {
-    if (id === this.session?.id) return { ok: false, msg: 'Tidak bisa menghapus akun sendiri.' };
-    this.users = this.users.filter(u => u.id !== id);
+  // Admin tambah user pakai temp client agar tidak logout admin
+  async addUser(name, email, password, role) {
+    const tempClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: {
+        persistSession: false, autoRefreshToken: false,
+        storage: { getItem: () => null, setItem: () => {}, removeItem: () => {} }
+      }
+    });
+    const { error } = await tempClient.auth.signUp({
+      email, password,
+      options: { data: { name, role, status: 'active' } } // langsung aktif
+    });
+    if (error) return { ok: false, msg: error.message };
     return { ok: true };
   },
 };

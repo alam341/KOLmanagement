@@ -1,5 +1,5 @@
 // ===== AUTO DM PAGE =====
-const BOT_URL   = "http://127.0.0.1:5678";
+const BOT_URL = location.protocol === 'file:' ? "http://127.0.0.1:5678" : "";
 let selectedKOLs = new Set();
 let progressInterval = null;
 
@@ -21,8 +21,8 @@ async function checkBotServer() {
     el.innerHTML = `<span style="color:var(--green);font-weight:700;">● Server aktif</span>`;
     if (data.running) startProgressPolling();
   } catch {
-    el.innerHTML = `<span style="color:var(--red);font-weight:700;">● Server tidak aktif</span>
-      <span style="color:var(--muted);font-size:11px;"> — jalankan <code>bot/server.bat</code></span>`;
+    el.innerHTML = `<span style="color:var(--red);font-weight:700;">● Tidak terhubung</span>
+      <span style="color:var(--muted);font-size:11px;margin-left:6px;">— buka via <code>Mulai.bat</code></span>`;
   }
   setTimeout(checkBotServer, 5000);
 }
@@ -299,21 +299,17 @@ async function updateKOLStatusFromResults() {
     const data = await res.json();
     if (!data.rows?.length) return;
 
-    const kols = DB.kols;
     let updated = 0;
     data.rows.forEach(row => {
       if (row.status !== 'SUKSES') return;
       const username = (row.username||'').toLowerCase();
-      const kol = kols.find(k => (k.tiktok||'').replace('@','').toLowerCase() === username);
+      const kol = DB.kols.find(k => (k.tiktok||'').replace('@','').toLowerCase() === username);
       if (kol && kol.status === 'new') {
-        kol.status = 'contacted';
-        kol.updatedAt = new Date().toISOString();
-        DB.addHistory(kol, 'Auto DM via bot TikTok');
+        DB.updateStatus(kol.id, 'contacted', 'Auto DM via bot TikTok');
         updated++;
       }
     });
     if (updated) {
-      DB.kols = kols;
       selectedKOLs.clear();
       renderKOLSelector();
       renderAutodmStats();

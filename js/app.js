@@ -14,7 +14,7 @@ let currentPage = 'dashboard';
 
 function navigate(page) {
   if (!PAGES[page]) return;
-  if (page === 'users' && !AUTH.isAdmin()) {
+  if (page === 'users' && !await AUTH.isAdmin()) {
     toast('Akses ditolak. Halaman ini hanya untuk Admin.', 'error');
     return;
   }
@@ -94,9 +94,10 @@ function toggleTheme() {
 }
 
 // ===== USER INFO =====
-function renderUserInfo() {
-  const user = AUTH.session;
-  if (!user) return;
+async function renderUserInfo() {
+  const profile = await AUTH.getProfile();
+  if (!profile) return;
+  const user = { name: profile.name, role: profile.role };
   const isAdmin   = user.role === 'admin';
   const roleLabel = isAdmin ? 'Admin' : 'KOL Spesialis';
   const roleStyle = isAdmin
@@ -128,15 +129,26 @@ function renderUserInfo() {
 }
 
 // Boot
-document.addEventListener('DOMContentLoaded', () => {
-  if (!AUTH.requireAuth()) return;
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!await AUTH.requireAuth()) return;
+
   const saved = localStorage.getItem('kol_theme');
   applyTheme(saved === 'light');
-  renderUserInfo();
-  if (AUTH.isAdmin()) {
+
+  // Load semua data dari Supabase ke memory
+  try {
+    await DB.loadAll();
+  } catch (e) {
+    toast('Gagal memuat data: ' + e.message, 'error');
+  }
+
+  await renderUserInfo();
+
+  if (await AUTH.isAdmin()) {
     const navAdmin = document.getElementById('navAdminSection');
     if (navAdmin) navAdmin.style.display = '';
     updatePendingBadge();
   }
+
   navigate('dashboard');
 });
