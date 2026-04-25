@@ -129,6 +129,7 @@
         💡 Belum ada akun terdaftar. Akun pertama otomatis menjadi <strong>Admin</strong>.
       </div>
       <div class="alert alert-error" id="regError"></div>
+      <div class="alert" id="regSuccess" style="display:none;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);color:#6ee7b7;"></div>
       <div class="form-group">
         <label class="form-label">Nama Lengkap</label>
         <input class="form-control" id="regName" type="text" placeholder="Nama lengkap kamu">
@@ -214,13 +215,16 @@ function showErr(id, msg) {
 }
 
 function doLogin() {
-  const err = document.getElementById('loginError');
-  err.classList.remove('show');
+  document.getElementById('loginError').classList.remove('show');
   const email = document.getElementById('loginEmail').value.trim();
   const pass  = document.getElementById('loginPass').value;
   if (!email || !pass) { showErr('loginError', 'Email dan password wajib diisi.'); return; }
   const user = getUsers().find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === pass);
   if (!user) { showErr('loginError', 'Email atau password salah.'); return; }
+  if (user.status === 'pending') {
+    showErr('loginError', '⏳ Akun kamu masih menunggu persetujuan Admin. Hubungi Admin untuk aktivasi.');
+    return;
+  }
   setSession({ id: user.id, name: user.name, email: user.email, role: user.role });
   location.href = 'index.html';
 }
@@ -243,12 +247,26 @@ function doRegister() {
   }
 
   const isFirst = users.length === 0;
-  const finalRole = isFirst ? 'admin' : selectedRole;
-  const user = { id: _uid(), name, email: email.toLowerCase(), password: pass, role: finalRole, createdAt: new Date().toISOString() };
+  const finalRole   = isFirst ? 'admin' : selectedRole;
+  const finalStatus = isFirst ? 'active' : 'pending';
+  const user = { id: _uid(), name, email: email.toLowerCase(), password: pass, role: finalRole, status: finalStatus, createdAt: new Date().toISOString() };
   users.push(user);
   setUsers(users);
-  setSession({ id: user.id, name: user.name, email: user.email, role: user.role });
-  location.href = 'index.html';
+
+  if (isFirst) {
+    setSession({ id: user.id, name: user.name, email: user.email, role: user.role });
+    location.href = 'index.html';
+  } else {
+    // Tampilkan pesan, jangan auto-login
+    document.getElementById('regError').classList.remove('show');
+    const ok = document.getElementById('regSuccess');
+    ok.textContent = '✅ Akun berhasil dibuat! Tunggu persetujuan Admin sebelum bisa login.';
+    ok.style.display = 'block';
+    document.getElementById('regName').value = '';
+    document.getElementById('regEmail').value = '';
+    document.getElementById('regPass').value = '';
+    document.getElementById('regPassConfirm').value = '';
+  }
 }
 </script>
 </body>
