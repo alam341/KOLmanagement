@@ -12,7 +12,7 @@ const PAGES = {
 
 let currentPage = 'dashboard';
 
-function navigate(page) {
+async function navigate(page) {
   if (!PAGES[page]) return;
   if (page === 'users' && !await AUTH.isAdmin()) {
     toast('Akses ditolak. Halaman ini hanya untuk Admin.', 'error');
