@@ -89,19 +89,19 @@
       <div id="regForm">
         <div class="form-group">
           <label class="form-label">Nama Lengkap</label>
-          <input class="form-control" id="regName" type="text" placeholder="Nama lengkap kamu">
+          <input class="form-control" id="regName" type="text" placeholder="Nama lengkap kamu" onkeydown="if(event.key==='Enter')doRegister()">
         </div>
         <div class="form-group">
           <label class="form-label">Email</label>
-          <input class="form-control" id="regEmail" type="email" placeholder="email@contoh.com">
+          <input class="form-control" id="regEmail" type="email" placeholder="email@contoh.com" onkeydown="if(event.key==='Enter')doRegister()">
         </div>
         <div class="form-group">
           <label class="form-label">Password</label>
-          <input class="form-control" id="regPass" type="password" placeholder="Minimal 6 karakter">
+          <input class="form-control" id="regPass" type="password" placeholder="Minimal 6 karakter" onkeydown="if(event.key==='Enter')doRegister()">
         </div>
         <div class="form-group">
           <label class="form-label">Konfirmasi Password</label>
-          <input class="form-control" id="regPassConfirm" type="password" placeholder="Ulangi password">
+          <input class="form-control" id="regPassConfirm" type="password" placeholder="Ulangi password" onkeydown="if(event.key==='Enter')doRegister()">
         </div>
         <div class="form-group" id="roleGroup">
           <label class="form-label">Role</label>
