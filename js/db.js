@@ -18,19 +18,34 @@ const DB = {
 
   // ===== INIT: load semua data dari Supabase =====
   async loadAll() {
-    const [kolsRes, tmplRes, histRes, setRes] = await Promise.all([
-      _sb.from('kols').select('*').order('created_at', { ascending: false }),
+    const [allKols, tmplRes, histRes, setRes] = await Promise.all([
+      this._fetchAllKols(),
       _sb.from('templates').select('*').order('created_at'),
       _sb.from('kol_history').select('*').order('created_at', { ascending: false }).limit(500),
       _sb.from('app_settings').select('*').eq('key', 'brand_settings').maybeSingle(),
     ]);
-    this._data.kols      = (kolsRes.data  || []).map(fromDbRow);
+    this._data.kols      = allKols.map(fromDbRow);
     this._data.history   = (histRes.data  || []).map(fromHistoryRow);
     this._data.templates = tmplRes.data?.length ? tmplRes.data : this._defaultTemplates();
     this._data.settings  = setRes.data?.value   ?? { brandName:'', defaultProduct:'', defaultCommission:'10' };
 
     // Seed templates jika belum ada
     if (!tmplRes.data?.length) this._flushTemplates(this._data.templates);
+  },
+
+  async _fetchAllKols() {
+    const PAGE = 1000;
+    let all = [], from = 0;
+    while (true) {
+      const { data, error } = await _sb.from('kols').select('*')
+        .order('created_at', { ascending: false })
+        .range(from, from + PAGE - 1);
+      if (error) throw error;
+      all = all.concat(data || []);
+      if (!data || data.length < PAGE) break;
+      from += PAGE;
+    }
+    return all;
   },
 
   // ===== KOL CRUD =====
