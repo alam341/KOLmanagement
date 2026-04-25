@@ -58,6 +58,15 @@ const DB = {
       .then(({ error }) => { if (error) toast('Sync error: '+error.message,'error'); });
   },
 
+  deleteKOLs(ids) {
+    const idsSet = new Set(ids);
+    const removed = this._data.kols.filter(x => idsSet.has(x.id));
+    this._data.kols = this._data.kols.filter(x => !idsSet.has(x.id));
+    removed.forEach(k => this.addHistory(k, 'KOL dihapus'));
+    _sb.from('kols').delete().in('id', ids)
+      .then(({ error }) => { if (error) toast('Sync error: '+error.message,'error'); });
+  },
+
   updateStatus(id, status, customAction) {
     const k = this._data.kols.find(x => x.id === id);
     if (!k) return;

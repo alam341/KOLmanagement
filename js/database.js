@@ -1,5 +1,6 @@
 // ===== DATABASE KOL PAGE =====
 let importRows = [];
+let selectedDBKOLs = new Set();
 
 function initDatabase() {
   renderTable();
@@ -21,12 +22,17 @@ function renderTable() {
   if (!body) return;
 
   if (!kols.length) {
-    body.innerHTML = '<tr class="empty-row"><td colspan="8">Tidak ada data. Import dari Kalodata atau tambah manual.</td></tr>';
-    return;
+    body.innerHTML = '<tr class="empty-row"><td colspan="9">Tidak ada data. Import dari Kalodata atau tambah manual.</td></tr>';
+    updateBulkBar(); return;
   }
 
   body.innerHTML = kols.map(k => `
     <tr>
+      <td style="padding:8px 6px;text-align:center;width:36px;">
+        <input type="checkbox" data-id="${k.id}" ${selectedDBKOLs.has(k.id)?'checked':''}
+          onchange="toggleDBKOL('${k.id}',this.checked)"
+          style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer;">
+      </td>
       <td>
         <div style="font-weight:600;font-size:13px;">${esc(k.name)}</div>
         <div style="font-size:11px;color:var(--muted);">${k.note ? esc(k.note.slice(0,50))+(k.note.length>50?'…':'') : ''}</div>
@@ -65,6 +71,51 @@ function renderTable() {
       </td>
     </tr>
   `).join('');
+
+  updateBulkBar();
+}
+
+function toggleDBKOL(id, checked) {
+  if (checked) selectedDBKOLs.add(id); else selectedDBKOLs.delete(id);
+  updateBulkBar();
+}
+
+function toggleSelectAllDB(checked) {
+  document.querySelectorAll('#dbTableBody input[type=checkbox]').forEach(cb => {
+    cb.checked = checked;
+    if (checked) selectedDBKOLs.add(cb.dataset.id);
+    else selectedDBKOLs.delete(cb.dataset.id);
+  });
+  updateBulkBar();
+}
+
+function clearDBSelection() {
+  selectedDBKOLs.clear();
+  renderTable();
+}
+
+function updateBulkBar() {
+  const bar   = document.getElementById('dbBulkBar');
+  const count = document.getElementById('dbSelectedCount');
+  if (bar)   bar.style.display = selectedDBKOLs.size > 0 ? 'flex' : 'none';
+  if (count) count.textContent = selectedDBKOLs.size;
+  const cbs  = document.querySelectorAll('#dbTableBody input[type=checkbox]');
+  const allCb = document.getElementById('dbCheckAll');
+  if (allCb && cbs.length) {
+    const checked = [...cbs].filter(c => c.checked).length;
+    allCb.checked = checked === cbs.length;
+    allCb.indeterminate = checked > 0 && checked < cbs.length;
+  }
+}
+
+function deleteSelectedKOLs() {
+  if (!selectedDBKOLs.size) return;
+  if (!confirm(`Hapus ${selectedDBKOLs.size} KOL yang dipilih?\nTindakan ini tidak bisa dibatalkan.`)) return;
+  const ids = [...selectedDBKOLs];
+  DB.deleteKOLs(ids);
+  selectedDBKOLs.clear();
+  renderTable();
+  toast(`${ids.length} KOL berhasil dihapus.`, 'success');
 }
 
 function quickStatus(id, status) {
