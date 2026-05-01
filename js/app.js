@@ -147,7 +147,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (await AUTH.isAdmin()) {
     const navAdmin = document.getElementById('navAdminSection');
     if (navAdmin) navAdmin.style.display = '';
-    updatePendingBadge();
+    await updatePendingBadge();
   }
 
   navigate('dashboard');

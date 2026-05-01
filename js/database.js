@@ -3,6 +3,7 @@ let importRows = [];
 let selectedDBKOLs = new Set();
 
 function initDatabase() {
+  selectedDBKOLs.clear();
   renderTable();
 }
 
@@ -224,6 +225,13 @@ function doSendTT() {
 
 function markSendContacted() {
   if (!activeSendKOLId) return;
+  const kol = DB.kols.find(k => k.id === activeSendKOLId);
+  const advancedStatuses = ['contacted', 'replied', 'deal', 'followup', 'rejected'];
+  if (kol && advancedStatuses.includes(kol.status)) {
+    toast(`Status tidak diubah — KOL sudah berstatus "${kol.status}".`, 'info');
+    closeModal('modalSend');
+    return;
+  }
   DB.updateStatus(activeSendKOLId, 'contacted');
   closeModal('modalSend');
   renderTable();
