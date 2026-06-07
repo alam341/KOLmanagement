@@ -4,6 +4,7 @@
 
 const DB = {
   _data: { kols: null, templates: null, history: null, settings: null },
+  _userId: null,
 
   // ===== SYNC GETTERS =====
   get kols()      { return this._data.kols      ?? []; },
@@ -18,18 +19,23 @@ const DB = {
 
   // ===== INIT: load semua data dari Supabase =====
   async loadAll() {
+    const { data: { user } } = await _sb.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+    this._userId = user.id;
+
+    const settingsKey = `brand_settings_${this._userId}`;
     const [allKols, tmplRes, histRes, setRes] = await Promise.all([
       this._fetchAllKols(),
-      _sb.from('templates').select('*').order('created_at'),
-      _sb.from('kol_history').select('*').order('created_at', { ascending: false }).limit(500),
-      _sb.from('app_settings').select('*').eq('key', 'brand_settings').maybeSingle(),
+      _sb.from('templates').select('*').eq('user_id', this._userId).order('created_at'),
+      _sb.from('kol_history').select('*').eq('user_id', this._userId).order('created_at', { ascending: false }).limit(500),
+      _sb.from('app_settings').select('*').eq('key', settingsKey).maybeSingle(),
     ]);
     this._data.kols      = allKols.map(fromDbRow);
     this._data.history   = (histRes.data  || []).map(fromHistoryRow);
     this._data.templates = tmplRes.data?.length ? tmplRes.data : this._defaultTemplates();
     this._data.settings  = setRes.data?.value   ?? { brandName:'', defaultProduct:'', defaultCommission:'10' };
 
-    // Seed templates jika belum ada
+    // Seed templates jika belum ada (per user)
     if (!tmplRes.data?.length) this._flushTemplates(this._data.templates);
   },
 
@@ -38,6 +44,7 @@ const DB = {
     let all = [], from = 0;
     while (true) {
       const { data, error } = await _sb.from('kols').select('*')
+        .eq('user_id', this._userId)
         .order('created_at', { ascending: false })
         .range(from, from + PAGE - 1);
       if (error) throw error;
@@ -107,7 +114,7 @@ const DB = {
 
   clearKols() {
     this._data.kols = [];
-    _sb.from('kols').delete().not('id','is',null)
+    _sb.from('kols').delete().eq('user_id', this._userId)
       .then(({ error }) => { if (error) toast('Sync error: '+error.message,'error'); });
   },
 
@@ -128,7 +135,7 @@ const DB = {
 
   clearHistory() {
     this._data.history = [];
-    _sb.from('kol_history').delete().not('id','is',null)
+    _sb.from('kol_history').delete().eq('user_id', this._userId)
       .then(({ error }) => { if (error) toast('Sync error: '+error.message,'error'); });
   },
 
@@ -147,13 +154,13 @@ const DB = {
 
   async _flushTemplates(tmpls) {
     if (!tmpls.length) return;
-    const rows = tmpls.map(t => ({ id: t.id, name: t.name, platform: t.platform, body: t.body }));
+    const rows = tmpls.map(t => ({ id: t.id, name: t.name, platform: t.platform, body: t.body, user_id: this._userId }));
     const { error } = await _sb.from('templates').upsert(rows);
     if (error) toast('Sync error: '+error.message,'error');
   },
 
   async _flushSettings(s) {
-    const { error } = await _sb.from('app_settings').upsert({ key: 'brand_settings', value: s });
+    const { error } = await _sb.from('app_settings').upsert({ key: `brand_settings_${this._userId}`, value: s });
     if (error) toast('Sync error: '+error.message,'error');
   },
 
@@ -185,6 +192,7 @@ function toDbRow(k) {
     engagement: k.engagement||'', engagement_raw: k.engagementRaw||0,
     views_raw: k.viewsRaw||0, pendapatan_raw: k.pendapatanRaw||0,
     penjualan: k.penjualan||0,
+    user_id: DB._userId,
     updated_at: k.updatedAt||new Date().toISOString(),
     created_at: k.createdAt||new Date().toISOString(),
   };
