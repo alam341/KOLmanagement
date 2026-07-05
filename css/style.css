@@ -302,6 +302,32 @@ select.form-control { cursor: pointer; }
 }
 body.light .btn-qc { background: rgba(8,145,178,.1); }
 
+/* ===== LISTING KOL ===== */
+.listing-input {
+  background: var(--bg3); border: 1px solid var(--border);
+  color: var(--text); border-radius: 6px; padding: 5px 8px;
+  font-size: 12px; font-family: inherit;
+  transition: border-color .2s;
+}
+.listing-input:focus { outline: none; border-color: var(--accent); }
+
+/* Custom checkbox */
+.listing-chk { display: inline-flex; align-items: center; cursor: pointer; }
+.listing-chk input { display: none; }
+.listing-chk-box {
+  width: 22px; height: 22px; border-radius: 6px;
+  border: 2px solid var(--border); background: var(--bg3);
+  display: flex; align-items: center; justify-content: center;
+  transition: all .2s; flex-shrink: 0;
+}
+.listing-chk input:checked + .listing-chk-box {
+  background: var(--green); border-color: var(--green);
+}
+.listing-chk input:checked + .listing-chk-box::after {
+  content: '✓'; color: #fff; font-size: 13px; font-weight: 700; line-height: 1;
+}
+.listing-chk:hover .listing-chk-box { border-color: var(--accent); }
+
 /* ===== DIVIDER ===== */
 .divider { height: 1px; background: var(--border); margin: 16px 0; }
 
