@@ -210,50 +210,56 @@ async function autoFetchViews() {
   const btn = document.getElementById('btnAutoFetch');
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Mengambil data...'; }
 
-  // Build URL sesuai host yang umum dipakai
-  let url;
-  if (apiHost.includes('tiktok-api23'))        url = `https://${apiHost}/api/user/posts?uniqueId=${encodeURIComponent(username)}&count=7`;
-  else if (apiHost.includes('tokapi-mobile'))  url = `https://${apiHost}/v1/user/@${encodeURIComponent(username)}/posts?offset=0&count=7`;
-  else if (apiHost.includes('tiktok-scraper7')) url = `https://${apiHost}/user/posts?username=${encodeURIComponent(username)}&count=7&cursor=0`;
-  else                                          url = `https://${apiHost}/user/posts?username=${encodeURIComponent(username)}&count=7&cursor=0`;
+  const headers = { 'X-RapidAPI-Key': apiKey, 'X-RapidAPI-Host': apiHost };
 
   try {
-    const res = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'X-RapidAPI-Key': apiKey,
-        'X-RapidAPI-Host': apiHost,
-      },
-    });
+    let videos = [];
 
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const json = await res.json();
+    if (apiHost.includes('tiktok-scraper7')) {
+      // STEP 1: Search user → dapat secUid
+      if (btn) btn.textContent = '⏳ Step 1: Cari user...';
+      const searchRes = await fetch(
+        `https://${apiHost}/user/search?keywords=${encodeURIComponent(username)}&count=10&cursor=0&follower_count=0&profile_type=0&other_pref=0`,
+        { headers }
+      );
+      if (!searchRes.ok) throw new Error(`Search HTTP ${searchRes.status}`);
+      const searchJson = await searchRes.json();
+      const userList = searchJson?.data?.user_list || [];
 
-    // Debug: tampilkan struktur response di console
-    console.log('[QC AutoFetch] Response:', JSON.stringify(json).slice(0, 500));
+      // Cari exact match uniqueId
+      const match = userList.find(u =>
+        u?.user?.uniqueId?.toLowerCase() === username.toLowerCase()
+      ) || userList[0];
 
-    // Coba semua kemungkinan struktur response
-    const videos =
-      json?.data?.videos       ||
-      json?.data?.items        ||
-      json?.data?.itemList     ||
-      json?.data?.posts        ||
-      json?.data?.aweme_list   ||
-      json?.collector          ||
-      json?.itemList           ||
-      json?.videos             ||
-      json?.items              ||
-      json?.posts              ||
-      json?.result?.videos     ||
-      json?.result?.items      ||
-      [];
+      if (!match) throw new Error(`User @${username} tidak ditemukan`);
+      const secUid = match.user.secUid;
+      if (!secUid) throw new Error('secUid tidak ditemukan');
+
+      // STEP 2: Fetch posts pakai secUid
+      if (btn) btn.textContent = '⏳ Step 2: Ambil video...';
+      const postsRes = await fetch(
+        `https://${apiHost}/user/posts?secUid=${encodeURIComponent(secUid)}&count=7&cursor=0`,
+        { headers }
+      );
+      if (!postsRes.ok) throw new Error(`Posts HTTP ${postsRes.status}`);
+      const postsJson = await postsRes.json();
+      videos = postsJson?.data?.videos || postsJson?.data?.itemList || postsJson?.data?.items || [];
+
+    } else if (apiHost.includes('tiktok-api23')) {
+      const res = await fetch(`https://${apiHost}/api/user/posts?uniqueId=${encodeURIComponent(username)}&count=7`, { headers });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      videos = json?.data?.itemList || json?.data?.videos || [];
+
+    } else {
+      const res = await fetch(`https://${apiHost}/user/posts?username=${encodeURIComponent(username)}&count=7&cursor=0`, { headers });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      videos = json?.data?.videos || json?.data?.itemList || json?.collector || [];
+    }
 
     if (!videos.length) {
-      // Tampilkan top-level keys untuk debug
-      const keys = Object.keys(json || {}).join(', ');
-      const dataKeys = json?.data ? Object.keys(json.data).join(', ') : '-';
-      toast(`Struktur response tidak dikenali. Keys: [${keys}] | data keys: [${dataKeys}]`, 'error', 8000);
-      console.log('[QC AutoFetch] Full response:', json);
+      toast(`Tidak ada video ditemukan untuk @${username}`, 'error');
       return;
     }
 
