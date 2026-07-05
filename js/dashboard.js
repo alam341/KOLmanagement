@@ -17,37 +17,37 @@ function renderDashStats() {
 
   document.getElementById('dashStats').innerHTML = `
     <div class="stat-card s-total">
-      <div class="stat-icon">👥</div>
+      <div class="stat-icon">${icon('users',22)}</div>
       <div class="stat-label">Total KOL</div>
       <div class="stat-num">${total}</div>
       <div class="stat-sub">Database kreator</div>
     </div>
     <div class="stat-card s-contacted">
-      <div class="stat-icon">📤</div>
+      <div class="stat-icon">${icon('send',22)}</div>
       <div class="stat-label">Sudah Dihubungi</div>
       <div class="stat-num">${count('contacted')+count('replied')+count('deal')+count('followup')}</div>
       <div class="stat-sub">dari ${total} total</div>
     </div>
     <div class="stat-card s-replied">
-      <div class="stat-icon">💬</div>
+      <div class="stat-icon">${icon('message-square',22)}</div>
       <div class="stat-label">Reply / Active</div>
       <div class="stat-num">${count('replied')+count('followup')}</div>
       <div class="stat-sub">menunggu follow up</div>
     </div>
     <div class="stat-card s-deal">
-      <div class="stat-icon">🎉</div>
+      <div class="stat-icon">${icon('check-circle',22)}</div>
       <div class="stat-label">Deal</div>
       <div class="stat-num">${deals}</div>
       <div class="stat-sub">konversi ${conv}%</div>
     </div>
     <div class="stat-card s-followup">
-      <div class="stat-icon">🔔</div>
+      <div class="stat-icon">${icon('bell',22)}</div>
       <div class="stat-label">Follow Up</div>
       <div class="stat-num">${count('followup')}</div>
       <div class="stat-sub">perlu tindakan</div>
     </div>
     <div class="stat-card s-rejected">
-      <div class="stat-icon">❌</div>
+      <div class="stat-icon">${icon('x-circle',22)}</div>
       <div class="stat-label">Rejected</div>
       <div class="stat-num">${count('rejected')}</div>
       <div class="stat-sub">tidak berminat</div>

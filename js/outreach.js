@@ -52,7 +52,7 @@ function kanbanCard(k, currentStatus) {
         <option value="">Pindahkan ke...</option>
         ${moveOpts}
       </select>
-      <button class="btn btn-primary btn-xs" onclick="openSend('${k.id}')">📤</button>
+      <button class="btn btn-primary btn-xs" onclick="openSend('${k.id}')" title="Kirim Pesan">${icon('send',12)}</button>
     </div>
   </div>`;
 }

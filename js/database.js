@@ -39,9 +39,9 @@ function renderTable() {
         <div style="font-size:11px;color:var(--muted);">${k.note ? esc(k.note.slice(0,50))+(k.note.length>50?'…':'') : ''}</div>
       </td>
       <td>
-        ${k.tiktok ? `<div style="font-size:12px;">🎵 <a href="https://www.tiktok.com/@${esc(k.tiktok.replace('@',''))}" target="_blank" style="color:var(--accent);text-decoration:none;" title="Lihat profil TikTok">${esc(k.tiktok)}</a></div>` : ''}
-        ${k.wa     ? `<div style="font-size:12px;">📱 ${esc(k.wa)}</div>` : ''}
-        ${k.email  ? `<div style="font-size:11px;color:var(--muted);">✉️ ${esc(k.email)}</div>` : ''}
+        ${k.tiktok ? `<div style="font-size:12px;display:flex;align-items:center;gap:4px;">${icon('music',12)} <a href="https://www.tiktok.com/@${esc(k.tiktok.replace('@',''))}" target="_blank" style="color:var(--accent);text-decoration:none;">${esc(k.tiktok)}</a></div>` : ''}
+        ${k.wa     ? `<div style="font-size:12px;display:flex;align-items:center;gap:4px;">${icon('phone',12)} ${esc(k.wa)}</div>` : ''}
+        ${k.email  ? `<div style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:4px;">${icon('mail',11)} ${esc(k.email)}</div>` : ''}
       </td>
       <td>
         <div style="font-size:12px;font-weight:600;">${esc(k.followers||'-')}</div>
@@ -65,10 +65,10 @@ function renderTable() {
       </td>
       <td>
         <div style="display:flex;gap:5px;flex-wrap:wrap;">
-          <button class="btn btn-primary btn-sm" onclick="openSend('${k.id}')">📤</button>
-          <button class="btn btn-outline btn-sm" onclick="openKOLModal('${k.id}')">✏️</button>
-          <button class="btn btn-qc btn-sm" onclick="navigate('qc');setTimeout(()=>openQCModal('${k.id}'),300)" title="Masuk QC KOL">🔍 QC</button>
-          <button class="btn btn-danger btn-sm" onclick="deleteKOL('${k.id}')">🗑</button>
+          <button class="btn btn-primary btn-sm" onclick="openSend('${k.id}')" title="Kirim Pesan">${icon('send',13)}</button>
+          <button class="btn btn-outline btn-sm" onclick="openKOLModal('${k.id}')" title="Edit">${icon('pencil',13)}</button>
+          <button class="btn btn-qc btn-sm" onclick="navigate('qc');setTimeout(()=>openQCModal('${k.id}'),300)" title="QC KOL">${icon('microscope',13)} QC</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteKOL('${k.id}')" title="Hapus">${icon('trash-2',13)}</button>
         </div>
       </td>
     </tr>
@@ -145,7 +145,7 @@ function openKOLModal(id) {
   fields.forEach((f,i) => document.getElementById(f).value = k ? (k[keys[i]]||'') : '');
   document.getElementById('kolPlatform').value  = k?.platform || 'wa';
   document.getElementById('kolStatus').value    = k?.status   || 'new';
-  document.getElementById('kolRatecard').value  = k?.ratecard ? k.ratecard : '';
+  document.getElementById('kolRatecard').value  = k?.ratecard > 0 ? k.ratecard : '';
   openModal('modalKOL');
 }
 

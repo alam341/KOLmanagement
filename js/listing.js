@@ -111,25 +111,25 @@ function renderListingPage() {
   const statsEl = document.getElementById('listingStats');
   if (statsEl) statsEl.innerHTML = `
     <div class="stat-card s-deal">
-      <div class="stat-icon">🤝</div>
+      <div class="stat-icon">${icon('check-circle',22)}</div>
       <div class="stat-label">Total KOL Deal</div>
       <div class="stat-num">${dealKols.length}</div>
       <div class="stat-sub">Status deal aktif</div>
     </div>
     <div class="stat-card s-total">
-      <div class="stat-icon">💰</div>
+      <div class="stat-icon">${icon('trending-up',22)}</div>
       <div class="stat-label">Total Endors</div>
       <div class="stat-num" style="font-size:18px;">Rp${totalEndors.toLocaleString('id-ID')}</div>
       <div class="stat-sub">Total budget endorsement</div>
     </div>
     <div class="stat-card s-replied">
-      <div class="stat-icon">💳</div>
+      <div class="stat-icon">${icon('credit-card',22)}</div>
       <div class="stat-label">Sudah Bayar</div>
       <div class="stat-num">${sudahBayar}</div>
       <div class="stat-sub">dari ${dealKols.length} KOL</div>
     </div>
     <div class="stat-card s-contacted">
-      <div class="stat-icon">📱</div>
+      <div class="stat-icon">${icon('video',22)}</div>
       <div class="stat-label">Sudah Upload TT</div>
       <div class="stat-num">${sudahUploadTT}</div>
       <div class="stat-sub">konten live di TikTok</div>
@@ -218,7 +218,7 @@ function renderListingTable(dealKols) {
           onchange="updateListingField('${k.id}','kode_boost',this.value)" style="width:130px;">
       </td>
       <td style="padding:8px;text-align:center;">
-        <button class="btn btn-danger btn-sm" onclick="removeFromListing('${k.id}','${esc(k.name)}')" title="Hapus dari listing & kembalikan status">🗑</button>
+        <button class="btn btn-danger btn-sm" onclick="removeFromListing('${k.id}','${esc(k.name)}')" title="Hapus dari listing">${icon('trash-2',13)}</button>
       </td>
     </tr>`;
   }).join('');

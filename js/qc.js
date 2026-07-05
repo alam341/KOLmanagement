@@ -119,7 +119,7 @@ function renderQCTable() {
           </td>
           <td>${statusBadge(k.status)}</td>
           <td>
-            <button class="btn btn-primary btn-sm" onclick="openQCModal('${k.id}')">🔍 Mulai QC</button>
+            <button class="btn btn-primary btn-sm" onclick="openQCModal('${k.id}')">${icon('microscope',13)} Mulai QC</button>
           </td>
         </tr>
       `).join('');
@@ -147,10 +147,10 @@ function renderQCTable() {
             <td style="font-size:12px;line-height:1.5;max-width:200px;">${esc(qc.rekomendasi||'-')}</td>
             <td>
               <div style="display:flex;gap:5px;flex-wrap:wrap;">
-                <button class="btn btn-outline btn-sm" onclick="openQCModal('${k.id}')">✏️ Edit</button>
+                <button class="btn btn-outline btn-sm" onclick="openQCModal('${k.id}')">${icon('pencil',13)} Edit</button>
                 ${k.status === 'deal'
-                  ? `<span class="badge" style="background:rgba(16,185,129,.15);color:var(--green);padding:5px 10px;">✓ Deal</span>`
-                  : `<button class="btn btn-deal btn-sm" onclick="markDealFromQC('${k.id}')">🤝 Tandai Deal</button>`
+                  ? `<span class="badge" style="background:rgba(16,185,129,.15);color:var(--green);padding:5px 10px;display:inline-flex;align-items:center;gap:4px;">${icon('check',12)} Deal</span>`
+                  : `<button class="btn btn-deal btn-sm" onclick="markDealFromQC('${k.id}')">${icon('check-circle',13)} Tandai Deal</button>`
                 }
               </div>
             </td>
@@ -224,7 +224,7 @@ async function autoFetchViews() {
 
   const username = k.tiktok.replace('@', '').trim();
   const btn = document.getElementById('btnAutoFetch');
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ Mengambil data...'; }
+  if (btn) { btn.disabled = true; document.getElementById('btnAutoFetchIcon').innerHTML = icon('refresh-cw',12); btn.childNodes[btn.childNodes.length-1].textContent = ' Mengambil data...'; }
 
   const headers = { 'X-RapidAPI-Key': apiKey, 'X-RapidAPI-Host': apiHost };
 
@@ -232,7 +232,7 @@ async function autoFetchViews() {
     let videos = [];
 
     if (apiHost.includes('tiktok-scraper7')) {
-      if (btn) btn.textContent = '⏳ Mengambil video...';
+      if (btn) btn.childNodes[btn.childNodes.length-1].textContent = ' Mengambil video...';
       const postsRes = await fetch(
         `https://${apiHost}/user/posts?unique_id=${encodeURIComponent(username)}&count=20&cursor=0`,
         { headers }
@@ -309,7 +309,7 @@ async function autoFetchViews() {
       toast(`Gagal mengambil data TikTok. Coba beberapa saat lagi.`, 'error', 8000);
     }
   } finally {
-    if (btn) { btn.disabled = false; btn.textContent = '🔄 Auto-Fetch Views'; }
+    if (btn) { btn.disabled = false; document.getElementById('btnAutoFetchIcon').innerHTML = icon('refresh-cw',12); btn.childNodes[btn.childNodes.length-1].textContent = ' Auto-Fetch Views'; }
   }
 }
 

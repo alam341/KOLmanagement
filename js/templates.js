@@ -16,9 +16,9 @@ function renderTemplates() {
       </div>
       <div class="tmpl-card-body">${esc(t.body)}</div>
       <div class="tmpl-card-footer">
-        <button class="btn btn-outline btn-sm" onclick="copyTmpl('${t.id}')">📋 Copy</button>
-        <button class="btn btn-outline btn-sm" onclick="openTmplModal('${t.id}')">✏️ Edit</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteTmpl('${t.id}')">🗑 Hapus</button>
+        <button class="btn btn-outline btn-sm" onclick="copyTmpl('${t.id}')" style="display:inline-flex;align-items:center;gap:5px;">${icon('copy',13)} Copy</button>
+        <button class="btn btn-outline btn-sm" onclick="openTmplModal('${t.id}')" style="display:inline-flex;align-items:center;gap:5px;">${icon('pencil',13)} Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteTmpl('${t.id}')" style="display:inline-flex;align-items:center;gap:5px;">${icon('trash-2',13)} Hapus</button>
       </div>
     </div>
   `).join('') : '<div style="color:var(--muted);text-align:center;padding:48px;">Belum ada template.</div>';

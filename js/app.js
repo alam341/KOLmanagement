@@ -44,25 +44,25 @@ async function navigate(page) {
 
 function topbarActions(page) {
   if (page === 'database') return `
-    <button class="btn btn-outline btn-sm" onclick="exportCSV()">⬇ Export CSV</button>
-    <button class="btn btn-outline btn-sm" style="color:var(--accent2);border-color:var(--accent2);" onclick="openImport()">⬆ Import</button>
-    <button class="btn btn-primary btn-sm" onclick="openKOLModal()">+ Tambah KOL</button>
+    <button class="btn btn-outline btn-sm" onclick="exportCSV()">${icon('download',14)} Export CSV</button>
+    <button class="btn btn-outline btn-sm" style="color:var(--accent2);border-color:var(--accent2);" onclick="openImport()">${icon('upload',14)} Import</button>
+    <button class="btn btn-primary btn-sm" onclick="openKOLModal()">${icon('plus',14)} Tambah KOL</button>
   `;
   if (page === 'analysis') return `
-    <button class="btn btn-outline btn-sm" onclick="refreshAnalysis()">↻ Perbarui Skor</button>
+    <button class="btn btn-outline btn-sm" onclick="refreshAnalysis()">${icon('refresh-cw',14)} Perbarui Skor</button>
   `;
   if (page === 'listing') return `
-    <button class="btn btn-outline btn-sm" onclick="exportListingCSV()">⬇ Export CSV</button>
+    <button class="btn btn-outline btn-sm" onclick="exportListingCSV()">${icon('download',14)} Export CSV</button>
   `;
   if (page === 'templates') return `
-    <button class="btn btn-primary btn-sm" onclick="openTmplModal()">+ Buat Template</button>
+    <button class="btn btn-primary btn-sm" onclick="openTmplModal()">${icon('plus',14)} Buat Template</button>
   `;
   if (page === 'settings') return `
-    <button class="btn btn-outline btn-sm" onclick="exportAllData()">⬇ Backup</button>
-    <button class="btn btn-outline btn-sm" onclick="importAllData()">⬆ Restore</button>
+    <button class="btn btn-outline btn-sm" onclick="exportAllData()">${icon('download',14)} Backup</button>
+    <button class="btn btn-outline btn-sm" onclick="importAllData()">${icon('upload',14)} Restore</button>
   `;
   if (page === 'users') return `
-    <button class="btn btn-primary btn-sm" onclick="openAddUserModal()">+ Tambah User</button>
+    <button class="btn btn-primary btn-sm" onclick="openAddUserModal()">${icon('user-plus',14)} Tambah User</button>
   `;
   return '';
 }
@@ -117,7 +117,7 @@ async function renderUserInfo() {
         <div style="font-size:10px;${isAdmin ? 'color:var(--accent);' : 'color:var(--accent2);'}">${roleLabel}</div>
       </div>
       <button class="btn btn-outline btn-sm" onclick="AUTH.logout()"
-              title="Keluar" style="color:var(--red);border-color:rgba(239,68,68,.3);padding:6px 9px;">⏻</button>
+              title="Keluar" style="color:var(--red);border-color:rgba(239,68,68,.3);padding:6px 9px;">${icon('log-out',14)}</button>
     </div>`;
 
   // Sidebar
@@ -132,9 +132,29 @@ async function renderUserInfo() {
     </div>`;
 }
 
+// ===== INJECT NAV ICONS =====
+function injectNavIcons() {
+  const map = {
+    'navicon-dashboard': 'layout-dashboard',
+    'navicon-database':  'users',
+    'navicon-analysis':  'bar-chart-2',
+    'navicon-outreach':  'send',
+    'navicon-qc':        'microscope',
+    'navicon-listing':   'clipboard-list',
+    'navicon-templates': 'message-square',
+    'navicon-settings':  'settings',
+    'navicon-users':     'shield',
+  };
+  Object.entries(map).forEach(([id, name]) => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = icon(name, 18);
+  });
+}
+
 // Boot
 document.addEventListener('DOMContentLoaded', async () => {
   if (!await AUTH.requireAuth()) return;
+  injectNavIcons();
 
   const saved = localStorage.getItem('kol_theme');
   applyTheme(saved === 'light');
