@@ -19,34 +19,34 @@
   <div class="sidebar-nav">
     <div class="nav-section">Menu Utama</div>
     <button class="nav-item active" data-page="dashboard" onclick="navigate('dashboard')">
-      <span class="nav-icon">📊</span> Dashboard
+      <span class="nav-icon" id="navicon-dashboard"></span> Dashboard
     </button>
     <button class="nav-item" data-page="database" onclick="navigate('database')">
-      <span class="nav-icon">👥</span> Database KOL
+      <span class="nav-icon" id="navicon-database"></span> Database KOL
     </button>
     <button class="nav-item" data-page="analysis" onclick="navigate('analysis')">
-      <span class="nav-icon">🔬</span> Analisis KOL
+      <span class="nav-icon" id="navicon-analysis"></span> Analisis KOL
     </button>
     <button class="nav-item" data-page="outreach" onclick="navigate('outreach')">
-      <span class="nav-icon">📤</span> Outreach Pipeline
+      <span class="nav-icon" id="navicon-outreach"></span> Outreach Pipeline
     </button>
     <button class="nav-item" data-page="qc" onclick="navigate('qc')">
-      <span class="nav-icon">🔍</span> QC KOL
+      <span class="nav-icon" id="navicon-qc"></span> QC KOL
     </button>
     <button class="nav-item" data-page="listing" onclick="navigate('listing')">
-      <span class="nav-icon">📋</span> Listing KOL
+      <span class="nav-icon" id="navicon-listing"></span> Listing KOL
     </button>
     <div class="nav-section">Pengaturan</div>
     <button class="nav-item" data-page="templates" onclick="navigate('templates')">
-      <span class="nav-icon">✉️</span> Template Pesan
+      <span class="nav-icon" id="navicon-templates"></span> Template Pesan
     </button>
     <button class="nav-item" data-page="settings" onclick="navigate('settings')">
-      <span class="nav-icon">⚙️</span> Pengaturan
+      <span class="nav-icon" id="navicon-settings"></span> Pengaturan
     </button>
     <div id="navAdminSection" style="display:none;">
       <div class="nav-section">Admin</div>
       <button class="nav-item" data-page="users" onclick="navigate('users')">
-        <span class="nav-icon">👤</span> Manajemen User
+        <span class="nav-icon" id="navicon-users"></span> Manajemen User
         <span class="nav-badge" id="pendingBadge" style="display:none;"></span>
       </button>
     </div>
@@ -697,8 +697,8 @@
       <div class="form-group">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
           <label class="form-label" style="margin:0;">Views 7 Video Terakhir TikTok</label>
-          <button class="btn btn-outline btn-sm" id="btnAutoFetch" onclick="autoFetchViews()" style="color:var(--accent2);border-color:rgba(6,182,212,.4);font-size:11px;">
-            🔄 Auto-Fetch Views
+          <button class="btn btn-outline btn-sm" id="btnAutoFetch" onclick="autoFetchViews()" style="color:var(--accent2);border-color:rgba(6,182,212,.4);font-size:11px;display:inline-flex;align-items:center;gap:5px;">
+            <span id="btnAutoFetchIcon"></span> Auto-Fetch Views
           </button>
         </div>
         <div class="form-row-3" style="gap:8px;margin-bottom:8px;">
@@ -762,6 +762,7 @@
 <script src="js/supabase.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/db.js"></script>
+<script src="js/icons.js"></script>
 <script src="js/dashboard.js"></script>
 <script src="js/database.js"></script>
 <script src="js/analysis.js"></script>
