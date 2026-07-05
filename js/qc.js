@@ -229,11 +229,31 @@ async function autoFetchViews() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const json = await res.json();
 
-    // Ambil list video — format bisa beda tergantung API version
-    const videos = json?.data?.videos || json?.collector || json?.data?.itemList || json?.itemList || [];
+    // Debug: tampilkan struktur response di console
+    console.log('[QC AutoFetch] Response:', JSON.stringify(json).slice(0, 500));
+
+    // Coba semua kemungkinan struktur response
+    const videos =
+      json?.data?.videos       ||
+      json?.data?.items        ||
+      json?.data?.itemList     ||
+      json?.data?.posts        ||
+      json?.data?.aweme_list   ||
+      json?.collector          ||
+      json?.itemList           ||
+      json?.videos             ||
+      json?.items              ||
+      json?.posts              ||
+      json?.result?.videos     ||
+      json?.result?.items      ||
+      [];
 
     if (!videos.length) {
-      toast('Tidak ada video ditemukan untuk akun ini.', 'error');
+      // Tampilkan top-level keys untuk debug
+      const keys = Object.keys(json || {}).join(', ');
+      const dataKeys = json?.data ? Object.keys(json.data).join(', ') : '-';
+      toast(`Struktur response tidak dikenali. Keys: [${keys}] | data keys: [${dataKeys}]`, 'error', 8000);
+      console.log('[QC AutoFetch] Full response:', json);
       return;
     }
 
