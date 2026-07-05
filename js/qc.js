@@ -216,35 +216,14 @@ async function autoFetchViews() {
     let videos = [];
 
     if (apiHost.includes('tiktok-scraper7')) {
-      // STEP 1: Search user → dapat secUid
-      if (btn) btn.textContent = '⏳ Step 1: Cari user...';
-      const searchRes = await fetch(
-        `https://${apiHost}/user/search?keywords=${encodeURIComponent(username)}&count=10&cursor=0&follower_count=0&profile_type=0&other_pref=0`,
-        { headers }
-      );
-      if (!searchRes.ok) throw new Error(`Search HTTP ${searchRes.status}`);
-      const searchJson = await searchRes.json();
-      const userList = searchJson?.data?.user_list || [];
-
-      // Cari exact match uniqueId
-      const match = userList.find(u =>
-        u?.user?.uniqueId?.toLowerCase() === username.toLowerCase()
-      ) || userList[0];
-
-      if (!match) throw new Error(`User @${username} tidak ditemukan`);
-      const secUid = match.user.secUid;
-      if (!secUid) throw new Error('secUid tidak ditemukan');
-
-      // STEP 2: Fetch posts pakai secUid
-      if (btn) btn.textContent = '⏳ Step 2: Ambil video...';
+      if (btn) btn.textContent = '⏳ Mengambil video...';
       const postsRes = await fetch(
-        `https://${apiHost}/user/posts?secUid=${encodeURIComponent(secUid)}&count=7&cursor=0`,
+        `https://${apiHost}/user/posts?unique_id=${encodeURIComponent(username)}&count=7&cursor=0`,
         { headers }
       );
-      if (!postsRes.ok) throw new Error(`Posts HTTP ${postsRes.status}`);
+      if (!postsRes.ok) throw new Error(`HTTP ${postsRes.status}`);
       const postsJson = await postsRes.json();
-      console.log('[QC] Posts response:', postsJson);
-      toast(`code: ${postsJson?.code} | msg: ${postsJson?.msg}`, 'info', 8000);
+      if (postsJson?.code !== 0) throw new Error(`API: ${postsJson?.msg || 'error'}`);
       videos = postsJson?.data?.videos || postsJson?.data?.itemList || postsJson?.data?.items || postsJson?.data?.aweme_list || [];
 
     } else if (apiHost.includes('tiktok-api23')) {
