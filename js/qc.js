@@ -239,7 +239,7 @@ async function autoFetchViews() {
       );
       if (!postsRes.ok) throw new Error(`HTTP ${postsRes.status}`);
       const postsJson = await postsRes.json();
-      if (postsJson?.code !== 0) throw new Error(`API: ${postsJson?.msg || 'error'}`);
+      if (postsJson?.code !== 0) throw new Error(postsJson?.msg || 'user not found');
       videos = postsJson?.data?.videos || postsJson?.data?.itemList || postsJson?.data?.items || postsJson?.data?.aweme_list || [];
 
     } else if (apiHost.includes('tiktok-api23')) {
@@ -256,7 +256,7 @@ async function autoFetchViews() {
     }
 
     if (!videos.length) {
-      toast(`Tidak ada video ditemukan untuk @${username}`, 'error');
+      toast(`Akun @${username} tidak ditemukan atau belum ada video.`, 'error', 8000);
       return;
     }
 
@@ -298,7 +298,16 @@ async function autoFetchViews() {
     toast(`✓ Berhasil ambil ${top7.length} video dari @${username}`, 'success');
 
   } catch (err) {
-    toast('Gagal fetch TikTok: ' + err.message, 'error');
+    const msg = err.message?.toLowerCase() || '';
+    if (msg.includes('unique_id') || msg.includes('invalid') || msg.includes('not found') || msg.includes('user')) {
+      toast(`Akun TikTok @${username} tidak ditemukan. Pastikan username sudah benar.`, 'error', 8000);
+    } else if (msg.includes('403') || msg.includes('401')) {
+      toast('API Key tidak valid atau sudah habis kuota. Cek di menu Pengaturan.', 'error', 8000);
+    } else if (msg.includes('429')) {
+      toast('Terlalu banyak request. Tunggu beberapa saat lalu coba lagi.', 'error', 8000);
+    } else {
+      toast(`Gagal mengambil data TikTok. Coba beberapa saat lagi.`, 'error', 8000);
+    }
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = '🔄 Auto-Fetch Views'; }
   }
@@ -318,24 +327,41 @@ function calcQC() {
   const avgViews   = views.length ? totalViews / views.length : 0;
   const cpm        = (avgViews > 0 && ratecard > 0) ? (ratecard / avgViews * 1000) : 0;
 
+  // Ambil threshold dari settings
+  const s   = DB.settings;
+  const t1  = s.cpmSangatBagus ?? 20000;
+  const t2  = s.cpmBagus       ?? 30000;
+  const t3  = s.cpmPerlu       ?? 40000;
+  const t4  = s.cpmBuruk       ?? 60000;
+
   // CPM Indicator
   let indicator = '';
   if (cpm > 0) {
-    if      (cpm < 10000) indicator = 'Sangat Bagus';
-    else if (cpm < 20000) indicator = 'Bagus';
-    else if (cpm < 30000) indicator = 'Perlu Dipertimbangkan';
-    else if (cpm < 50000) indicator = 'Buruk';
-    else                  indicator = 'Sangat Buruk';
+    if      (cpm < t1) indicator = 'Sangat Bagus';
+    else if (cpm < t2) indicator = 'Bagus';
+    else if (cpm < t3) indicator = 'Perlu Dipertimbangkan';
+    else if (cpm < t4) indicator = 'Buruk';
+    else               indicator = 'Sangat Buruk';
   }
 
-  // Rekomendasi & harga ideal (target CPM 20.000)
-  const rekomendasiRatecard = avgViews > 0 ? Math.round(avgViews * 20000 / 1000) : 0;
+  // Ratecard ideal = target CPM "Sangat Bagus" (t1)
+  const rekomendasiRatecard = avgViews > 0 ? Math.round(avgViews * t1 / 1000) : 0;
+  const rcFmt = rekomendasiRatecard.toLocaleString('id-ID');
+
+  // Rekomendasi berdasarkan indikator
   let rekomendasi = '';
   if (cpm > 0) {
-    if      (cpm < 20000) rekomendasi = '✅ YES – Lanjut Kontrak';
-    else if (cpm < 30000) rekomendasi = `⚠️ Bisa Nego – Coba tawar ke Rp ${rekomendasiRatecard.toLocaleString('id-ID')}`;
-    else if (cpm < 50000) rekomendasi = `❌ NO – Kemahalan. Rekomendasi Nego ke Rp ${rekomendasiRatecard.toLocaleString('id-ID')}`;
-    else                  rekomendasi = `❌ NO – Sangat Kemahalan. Ratecard ideal: Rp ${rekomendasiRatecard.toLocaleString('id-ID')}`;
+    if (indicator === 'Sangat Bagus') {
+      rekomendasi = '✅ Lanjut Kontrak – CPM sangat efisien!';
+    } else if (indicator === 'Bagus') {
+      rekomendasi = '✅ Lanjut Kontrak – CPM bagus, worth it!';
+    } else if (indicator === 'Perlu Dipertimbangkan') {
+      rekomendasi = `⚠️ Bisa Nego – CPM masih bisa diterima jika ratecard bisa diturunkan ke Rp ${rcFmt}`;
+    } else if (indicator === 'Buruk') {
+      rekomendasi = `❌ Tolak – CPM buruk, terlalu mahal untuk performa ini. Idealnya ratecard Rp ${rcFmt}`;
+    } else {
+      rekomendasi = `❌ Tolak – CPM sangat buruk, tidak worth it sama sekali. Idealnya ratecard Rp ${rcFmt}`;
+    }
   }
 
   // Update UI hasil
@@ -346,7 +372,11 @@ function calcQC() {
   if (avgEl) avgEl.textContent = avgViews   ? Math.round(avgViews).toLocaleString('id-ID') : '-';
   if (cpmEl) {
     cpmEl.textContent = cpm ? `Rp ${Math.round(cpm).toLocaleString('id-ID')}` : '-';
-    cpmEl.style.color = cpm < 20000 && cpm > 0 ? 'var(--green)' : cpm < 30000 && cpm > 0 ? 'var(--yellow)' : cpm > 0 ? 'var(--red)' : 'var(--text)';
+    const cpmColor = !cpm ? 'var(--text)'
+      : cpm < t2 ? 'var(--green)'
+      : cpm < t3 ? 'var(--yellow)'
+      : 'var(--red)';
+    cpmEl.style.color = cpmColor;
   }
 
   const indEl = document.getElementById('qcCPMIndicator');
@@ -364,13 +394,11 @@ function calcQC() {
       const border = isYes ? 'rgba(16,185,129,.3)'  : isWarn ? 'rgba(245,158,11,.3)'  : 'rgba(239,68,68,.3)';
       rekEl.innerHTML = `
         <div style="background:${bg};border:1px solid ${border};border-radius:10px;padding:14px 16px;">
-          <div style="font-size:15px;font-weight:700;color:${color};margin-bottom:${rekomendasiRatecard && !isYes ? '8px' : '0'};">${rekomendasi}</div>
-          ${rekomendasiRatecard && !isYes ? `
-            <div style="font-size:12px;color:var(--muted);">
-              Ratecard ideal <span style="color:var(--muted);">(target CPM Rp 20.000)</span>:
-              <strong style="color:${color};font-size:13px;"> Rp ${rekomendasiRatecard.toLocaleString('id-ID')}/video</strong>
-            </div>
-          ` : ''}
+          <div style="font-size:15px;font-weight:700;color:${color};">${rekomendasi}</div>
+          ${!isYes ? `
+            <div style="font-size:11px;color:var(--muted);margin-top:6px;">
+              Target CPM ideal: Rp ${t1.toLocaleString('id-ID')} (batas Sangat Bagus di Pengaturan)
+            </div>` : ''}
         </div>`;
     }
   }

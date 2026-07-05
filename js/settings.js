@@ -6,6 +6,10 @@ function initSettings() {
   document.getElementById('setDefaultCommission').value= s.defaultCommission|| '10';
   document.getElementById('setRapidApiKey').value      = localStorage.getItem('kol_rapidapi_key') || '';
   document.getElementById('setRapidApiHost').value     = localStorage.getItem('kol_rapidapi_host') || 'tiktok-scraper2.p.rapidapi.com';
+  document.getElementById('setCpmSangatBagus').value   = s.cpmSangatBagus   ?? 20000;
+  document.getElementById('setCpmBagus').value         = s.cpmBagus         ?? 30000;
+  document.getElementById('setCpmPerlu').value         = s.cpmPerlu         ?? 40000;
+  document.getElementById('setCpmBuruk').value         = s.cpmBuruk         ?? 60000;
   const el = document.getElementById('setDataInfo');
   if (el) el.textContent = `${DB.kols.length} KOL tersimpan di database.`;
 }
@@ -15,6 +19,10 @@ function saveSettings() {
     brandName:         document.getElementById('setBrandName').value.trim(),
     defaultProduct:    document.getElementById('setDefaultProduct').value.trim(),
     defaultCommission: document.getElementById('setDefaultCommission').value.trim(),
+    cpmSangatBagus:    parseFloat(document.getElementById('setCpmSangatBagus').value) || 20000,
+    cpmBagus:          parseFloat(document.getElementById('setCpmBagus').value)        || 30000,
+    cpmPerlu:          parseFloat(document.getElementById('setCpmPerlu').value)        || 40000,
+    cpmBuruk:          parseFloat(document.getElementById('setCpmBuruk').value)        || 60000,
   };
   const apiKey  = document.getElementById('setRapidApiKey').value.trim();
   const apiHost = document.getElementById('setRapidApiHost').value.trim();
