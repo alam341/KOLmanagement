@@ -244,10 +244,7 @@ async function autoFetchViews() {
       if (!postsRes.ok) throw new Error(`Posts HTTP ${postsRes.status}`);
       const postsJson = await postsRes.json();
       console.log('[QC] Posts response:', postsJson);
-      // Tampilkan keys untuk debug
-      const pk = Object.keys(postsJson || {}).join(', ');
-      const dk = postsJson?.data ? Object.keys(postsJson.data).join(', ') : '-';
-      toast(`Posts keys: [${pk}] | data: [${dk}]`, 'info', 6000);
+      toast(`code: ${postsJson?.code} | msg: ${postsJson?.msg}`, 'info', 8000);
       videos = postsJson?.data?.videos || postsJson?.data?.itemList || postsJson?.data?.items || postsJson?.data?.aweme_list || [];
 
     } else if (apiHost.includes('tiktok-api23')) {
