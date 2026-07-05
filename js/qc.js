@@ -244,11 +244,31 @@ async function autoFetchViews() {
       return;
     }
 
-    // Isi views 7 video terakhir
-    const top7 = videos.slice(0, 7);
+    // Filter: exclude pinned/sematkan + repost + ads, sort terbaru dulu
+    const ownVideos = videos
+      .filter(vid => {
+        // Skip video yang disematkan (pinned)
+        if (vid?.is_top === 1 || vid?.isTop === 1 || vid?.isPinnedItem) return false;
+        // Skip repost (author beda)
+        const authorId = vid?.author?.uniqueId || vid?.authorMeta?.name || '';
+        if (authorId && authorId.toLowerCase() !== username.toLowerCase()) return false;
+        // Skip ads
+        if (vid?.is_ads || vid?.isAds) return false;
+        return true;
+      })
+      .sort((a, b) => (b?.createTime || b?.create_time || 0) - (a?.createTime || a?.create_time || 0));
+
+    const top7 = (ownVideos.length >= 4 ? ownVideos : videos).slice(0, 7);
+
     top7.forEach((vid, i) => {
-      const views = vid?.stats?.playCount ?? vid?.statistics?.playCount ?? vid?.play_count ?? vid?.playCount ?? 0;
-      console.log(`[QC] Video ${i+1}:`, JSON.stringify(vid?.stats || vid?.statistics || {}), '→ views:', views);
+      const views =
+        vid?.stats?.playCount       ??
+        vid?.statistics?.playCount  ??
+        vid?.statsV2?.playCount     ??
+        vid?.play_count             ??
+        vid?.playCount              ??
+        vid?.video?.play_count      ??
+        0;
       const el = document.getElementById(`qcView${i + 1}`);
       if (el) el.value = views;
     });
