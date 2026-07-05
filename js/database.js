@@ -2,16 +2,27 @@
 let importRows = [];
 let selectedDBKOLs = new Set();
 
+// ── WIB helpers ──
+function _wibNowMs()       { return Date.now() + 7 * 3600 * 1000; }
+function _wibDateStr(ms)   { return new Date(ms).toISOString().slice(0, 10); }   // "YYYY-MM-DD" in WIB
+function wibToday()        { return _wibDateStr(_wibNowMs()); }
+function wibDayStart(str)  { return new Date(str + 'T00:00:00.000+07:00'); }
+function wibDayEnd(str)    { return new Date(str + 'T23:59:59.999+07:00'); }
+function wibOfTs(isoStr)   { return _wibDateStr(new Date(isoStr).getTime() + 7 * 3600 * 1000); }
+
 // ── Date Range Picker state ──
 let dbDrpSelStart = null, dbDrpSelEnd   = null;
 let dbDrpAppliedStart = null, dbDrpAppliedEnd = null;
-let dbDrpViewYear = new Date().getFullYear(), dbDrpViewMonth = new Date().getMonth();
+const _wibInit = new Date(_wibNowMs());
+let dbDrpViewYear = _wibInit.getUTCFullYear(), dbDrpViewMonth = _wibInit.getUTCMonth();
 const DB_DRP_MONTHS = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 const DB_DRP_DAYS   = ['Mo','Tu','We','Th','Fr','Sa','Su'];
 
 function dbDrpFmt(d) {
   if (!d) return '—';
-  return d.toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' });
+  // Tampilkan dalam WIB
+  return new Date(d.getTime() + 7 * 3600 * 1000)
+    .toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric', timeZone:'UTC' });
 }
 
 function dbDrpToggle() {
@@ -52,39 +63,49 @@ function dbDrpAll(btn) {
 }
 
 function dbDrpToday(btn) {
-  const d = new Date(); d.setHours(0,0,0,0);
-  dbDrpSelStart = d;
-  dbDrpSelEnd   = new Date(); dbDrpSelEnd.setHours(23,59,59,999);
+  const t = wibToday();
+  dbDrpSelStart = wibDayStart(t);
+  dbDrpSelEnd   = wibDayEnd(t);
   dbDrpSetPresetActive(btn);
   dbDrpUpdateSel(); dbDrpRender();
 }
 
 function dbDrpYesterday(btn) {
-  dbDrpSelStart = new Date(Date.now()-864e5); dbDrpSelStart.setHours(0,0,0,0);
-  dbDrpSelEnd   = new Date(Date.now()-864e5); dbDrpSelEnd.setHours(23,59,59,999);
+  const y = _wibDateStr(_wibNowMs() - 864e5);
+  dbDrpSelStart = wibDayStart(y);
+  dbDrpSelEnd   = wibDayEnd(y);
   dbDrpSetPresetActive(btn);
   dbDrpUpdateSel(); dbDrpRender();
 }
 
 function dbDrpDays(n, label, btn) {
-  dbDrpSelStart = new Date(Date.now()-(n-1)*864e5); dbDrpSelStart.setHours(0,0,0,0);
-  dbDrpSelEnd   = new Date(); dbDrpSelEnd.setHours(23,59,59,999);
+  const startStr = _wibDateStr(_wibNowMs() - (n-1)*864e5);
+  dbDrpSelStart = wibDayStart(startStr);
+  dbDrpSelEnd   = wibDayEnd(wibToday());
   dbDrpSetPresetActive(btn);
   dbDrpUpdateSel(); dbDrpRender();
 }
 
 function dbDrpThisMonth(btn) {
-  const n = new Date();
-  dbDrpSelStart = new Date(n.getFullYear(), n.getMonth(), 1);
-  dbDrpSelEnd   = new Date(); dbDrpSelEnd.setHours(23,59,59,999);
+  const wib = new Date(_wibNowMs());
+  const y = wib.getUTCFullYear(), m = wib.getUTCMonth() + 1;
+  const startStr = `${y}-${String(m).padStart(2,'0')}-01`;
+  dbDrpSelStart = wibDayStart(startStr);
+  dbDrpSelEnd   = wibDayEnd(wibToday());
   dbDrpSetPresetActive(btn);
   dbDrpUpdateSel(); dbDrpRender();
 }
 
 function dbDrpLastMonth(btn) {
-  const n = new Date();
-  dbDrpSelStart = new Date(n.getFullYear(), n.getMonth()-1, 1);
-  dbDrpSelEnd   = new Date(n.getFullYear(), n.getMonth(), 0); dbDrpSelEnd.setHours(23,59,59,999);
+  const wib = new Date(_wibNowMs());
+  let y = wib.getUTCFullYear(), m = wib.getUTCMonth(); // 0-based current month
+  const prevM = m === 0 ? 12 : m;
+  const prevY = m === 0 ? y - 1 : y;
+  const startStr = `${prevY}-${String(prevM).padStart(2,'0')}-01`;
+  const lastDay  = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  const endStr   = `${prevY}-${String(prevM).padStart(2,'0')}-${String(lastDay).padStart(2,'0')}`;
+  dbDrpSelStart = wibDayStart(startStr);
+  dbDrpSelEnd   = wibDayEnd(endStr);
   dbDrpSetPresetActive(btn);
   dbDrpUpdateSel(); dbDrpRender();
 }
@@ -97,12 +118,14 @@ function dbDrpUpdateSel() {
 }
 
 function dbDrpClickDay(y, m, d) {
-  const clicked = new Date(y, m, d);
+  const dateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+  const clickedStart = wibDayStart(dateStr);
+  const clickedEnd   = wibDayEnd(dateStr);
   if (!dbDrpSelStart || (dbDrpSelStart && dbDrpSelEnd)) {
-    dbDrpSelStart = clicked; dbDrpSelEnd = null;
+    dbDrpSelStart = clickedStart; dbDrpSelEnd = null;
   } else {
-    if (clicked < dbDrpSelStart) { dbDrpSelEnd = dbDrpSelStart; dbDrpSelStart = clicked; }
-    else dbDrpSelEnd = clicked;
+    if (clickedStart < dbDrpSelStart) { dbDrpSelEnd = wibDayEnd(wibOfTs(dbDrpSelStart.toISOString())); dbDrpSelStart = clickedStart; }
+    else dbDrpSelEnd = clickedEnd;
     dbDrpSetPresetActive(null);
   }
   dbDrpUpdateSel(); dbDrpRender();
@@ -119,11 +142,17 @@ function dbDrpRender() {
   const cal = document.getElementById('db-drp-cal');
   if (!cal) return;
   const y = dbDrpViewYear, m = dbDrpViewMonth;
-  const firstDay    = new Date(y, m, 1).getDay();
-  const startPad    = firstDay === 0 ? 6 : firstDay - 1;
-  const daysInMonth = new Date(y, m+1, 0).getDate();
-  const prevDays    = new Date(y, m, 0).getDate();
-  const today       = new Date(); today.setHours(0,0,0,0);
+
+  // Use UTC to be timezone-independent (calendar cells are treated as WIB dates)
+  const firstDayUTC = new Date(Date.UTC(y, m, 1)).getUTCDay(); // 0=Sun
+  const startPad    = firstDayUTC === 0 ? 6 : firstDayUTC - 1;
+  const daysInMonth = new Date(Date.UTC(y, m+1, 0)).getUTCDate();
+  const prevDays    = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  const todayStr    = wibToday(); // "YYYY-MM-DD" WIB
+
+  // Get WIB date strings for selection
+  const selStartStr = dbDrpSelStart ? wibOfTs(dbDrpSelStart.toISOString()) : null;
+  const selEndStr   = dbDrpSelEnd   ? wibOfTs(dbDrpSelEnd.toISOString())   : null;
 
   let html = `<div class="drp-cal-hdr">
     <button class="drp-nav" onclick="dbDrpNav(-1)">‹</button>
@@ -137,20 +166,17 @@ function dbDrpRender() {
     html += `<button class="drp-day other-month" onclick="dbDrpNav(-1)">${prevDays-i+1}</button>`;
 
   for (let d = 1; d <= daysInMonth; d++) {
-    const cur     = new Date(y, m, d);
-    const isToday = cur.getTime() === today.getTime();
-    const sTime   = dbDrpSelStart ? new Date(dbDrpSelStart.getFullYear(),dbDrpSelStart.getMonth(),dbDrpSelStart.getDate()).getTime() : null;
-    const eTime   = dbDrpSelEnd   ? new Date(dbDrpSelEnd.getFullYear(),dbDrpSelEnd.getMonth(),dbDrpSelEnd.getDate()).getTime()     : null;
-    const isStart = sTime && cur.getTime() === sTime;
-    const isEnd   = eTime && cur.getTime() === eTime;
-    const inRange = sTime && eTime && cur.getTime() > sTime && cur.getTime() < eTime;
+    const curStr  = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday = curStr === todayStr;
+    const isStart = selStartStr && curStr === selStartStr;
+    const isEnd   = selEndStr   && curStr === selEndStr;
+    const inRange = selStartStr && selEndStr && curStr > selStartStr && curStr < selEndStr;
 
     let cls = 'drp-day';
     if (isStart && isEnd) cls += ' selected';
     else if (isStart) cls += ' range-start';
     else if (isEnd)   cls += ' range-end';
     else if (inRange) cls += ' in-range';
-    else if (isStart && !dbDrpSelEnd) cls += ' selected';
     if (isToday) cls += ' today';
 
     html += `<button class="${cls}" onclick="dbDrpClickDay(${y},${m},${d})">${d}</button>`;
@@ -188,8 +214,9 @@ function initDatabase() {
 }
 
 function formatDate(iso) {
-  const d = new Date(iso);
-  return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+  // Konversi ke WIB sebelum format
+  const wib = new Date(new Date(iso).getTime() + 7 * 3600 * 1000);
+  return wib.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' });
 }
 
 // ===== TABLE =====

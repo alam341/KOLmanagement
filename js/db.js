@@ -2,6 +2,13 @@
 // Reads: sync dari memory cache (setelah loadAll() dipanggil saat boot)
 // Writes: sync update memory + async write ke Supabase (optimistic)
 
+// Semua timestamp pakai WIB (UTC+7)
+function nowWIB() {
+  const d = new Date();
+  const wib = new Date(d.getTime() + 7 * 3600 * 1000);
+  return wib.toISOString().slice(0, -1) + '+07:00';
+}
+
 const DB = {
   _data: { kols: null, templates: null, history: null, settings: null },
   _userId: null,
@@ -69,7 +76,7 @@ const DB = {
   upsertKOL(data) {
     const kols = this._data.kols;
     const idx  = kols.findIndex(k => k.id === data.id);
-    const now  = new Date().toISOString();
+    const now  = nowWIB();
     if (idx >= 0) {
       kols[idx] = { ...kols[idx], ...data, updatedAt: now };
       this.addHistory(kols[idx], 'Data diperbarui');
@@ -104,14 +111,14 @@ const DB = {
     if (!k) return;
     const old = k.status;
     k.status = status;
-    k.updatedAt = new Date().toISOString();
+    k.updatedAt = nowWIB();
     this.addHistory(k, customAction || `Status: ${old} → ${status}`);
     _sb.from('kols').update({ status, updated_at: k.updatedAt }).eq('id', id)
       .then(({ error }) => { if (error) toast('Sync error: '+error.message,'error'); });
   },
 
   insertKols(newKols) {
-    const now = new Date().toISOString();
+    const now = nowWIB();
     newKols.forEach(r => {
       const entry = { ...r, id: r.id||uid(), createdAt: now, updatedAt: now };
       entry.tier  = computeTier(entry.followersRaw || 0);
@@ -130,7 +137,7 @@ const DB = {
 
   // ===== HISTORY =====
   addHistory(kol, action) {
-    const entry = { id: uid(), kolId: kol.id, kolName: kol.name, action, status: kol.status, ts: new Date().toISOString() };
+    const entry = { id: uid(), kolId: kol.id, kolName: kol.name, action, status: kol.status, ts: nowWIB() };
     const h = this._data.history || [];
     h.unshift(entry);
     if (h.length > 500) h.splice(500);
@@ -151,7 +158,7 @@ const DB = {
 
   // ===== PRIVATE ASYNC WRITERS =====
   async _writeKol(data) {
-    const now = new Date().toISOString();
+    const now = nowWIB();
     const { error } = await _sb.from('kols').upsert(toDbRow({ ...data, updatedAt: now }));
     if (error) throw error;
   },
@@ -208,8 +215,8 @@ function toDbRow(k) {
     ratecard: k.ratecard||0,
     kol_type: k.kolType||'kol',
     user_id: DB._userId,
-    updated_at: k.updatedAt||new Date().toISOString(),
-    created_at: k.createdAt||new Date().toISOString(),
+    updated_at: k.updatedAt||nowWIB(),
+    created_at: k.createdAt||nowWIB(),
   };
 }
 
