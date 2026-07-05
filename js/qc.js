@@ -244,21 +244,20 @@ async function autoFetchViews() {
       return;
     }
 
-    // Filter: exclude pinned/sematkan + repost + ads, sort terbaru dulu
-    const ownVideos = videos
+    // Sort by tanggal terbaru
+    const byDate = (a, b) => (b?.createTime || b?.create_time || 0) - (a?.createTime || a?.create_time || 0);
+
+    // Filter pinned + ads
+    const nonPinned = videos
       .filter(vid => {
-        // Skip video yang disematkan (pinned)
-        if (vid?.is_top === 1 || vid?.isTop === 1 || vid?.isPinnedItem) return false;
-        // Skip repost (author beda)
-        const authorId = vid?.author?.uniqueId || vid?.authorMeta?.name || '';
-        if (authorId && authorId.toLowerCase() !== username.toLowerCase()) return false;
-        // Skip ads
         if (vid?.is_ads || vid?.isAds) return false;
+        if (vid?.is_top === 1 || vid?.isTop === 1 || vid?.isPinnedItem) return false;
         return true;
       })
-      .sort((a, b) => (b?.createTime || b?.create_time || 0) - (a?.createTime || a?.create_time || 0));
+      .sort(byDate);
 
-    const top7 = (ownVideos.length >= 4 ? ownVideos : videos).slice(0, 7);
+    // Kalau non-pinned cukup → pakai, kalau kurang → fallback sort tanggal semua video
+    const top7 = (nonPinned.length >= 7 ? nonPinned : videos.filter(v => !(v?.is_ads || v?.isAds)).sort(byDate)).slice(0, 7);
 
     top7.forEach((vid, i) => {
       const views =
