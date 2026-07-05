@@ -199,7 +199,8 @@ async function autoFetchViews() {
   const k = DB.kols.find(x => x.id === activeQCKolId);
   if (!k?.tiktok) { toast('Username TikTok tidak ada di data KOL!', 'error'); return; }
 
-  const apiKey = localStorage.getItem('kol_rapidapi_key');
+  const apiKey  = localStorage.getItem('kol_rapidapi_key');
+  const apiHost = localStorage.getItem('kol_rapidapi_host') || 'tiktok-scraper2.p.rapidapi.com';
   if (!apiKey) {
     toast('RapidAPI Key belum diisi. Atur di menu Pengaturan.', 'error');
     return;
@@ -209,17 +210,21 @@ async function autoFetchViews() {
   const btn = document.getElementById('btnAutoFetch');
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Mengambil data...'; }
 
+  // Build URL sesuai host yang umum dipakai
+  let url;
+  if (apiHost.includes('tiktok-api23'))        url = `https://${apiHost}/api/user/posts?uniqueId=${encodeURIComponent(username)}&count=7`;
+  else if (apiHost.includes('tokapi-mobile'))  url = `https://${apiHost}/v1/user/@${encodeURIComponent(username)}/posts?offset=0&count=7`;
+  else if (apiHost.includes('tiktok-scraper7')) url = `https://${apiHost}/user/posts?username=${encodeURIComponent(username)}&count=7&cursor=0`;
+  else                                          url = `https://${apiHost}/user/posts?username=${encodeURIComponent(username)}&count=7&cursor=0`;
+
   try {
-    const res = await fetch(
-      `https://tiktok-scraper2.p.rapidapi.com/user/posts?username=${encodeURIComponent(username)}&count=7&cursor=0`,
-      {
-        method: 'GET',
-        headers: {
-          'X-RapidAPI-Key': apiKey,
-          'X-RapidAPI-Host': 'tiktok-scraper2.p.rapidapi.com',
-        },
-      }
-    );
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'X-RapidAPI-Key': apiKey,
+        'X-RapidAPI-Host': apiHost,
+      },
+    });
 
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const json = await res.json();
