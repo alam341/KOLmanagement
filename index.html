@@ -36,6 +36,9 @@
     <button class="nav-item" data-page="listing" onclick="navigate('listing')">
       <span class="nav-icon" id="navicon-listing"></span> Listing KOL
     </button>
+    <button class="nav-item" data-page="affiliator" onclick="navigate('affiliator')">
+      <span class="nav-icon" id="navicon-affiliator"></span> Listing Affiliator
+    </button>
     <div class="nav-section">Pengaturan</div>
     <button class="nav-item" data-page="templates" onclick="navigate('templates')">
       <span class="nav-icon" id="navicon-templates"></span> Template Pesan
@@ -394,6 +397,24 @@
         <span style="font-size:12px;color:var(--muted);" id="listingSubtitle">Tracking payment, pengiriman barang & konten</span>
       </div>
       <div id="listingTableWrap"></div>
+    </div>
+  </div>
+
+  <!-- ===== PAGE: LISTING AFFILIATOR ===== -->
+  <div class="page" id="page-affiliator">
+    <div class="stats-grid" id="affiliatorStats"></div>
+    <div class="toolbar">
+      <select class="filter-select" id="affiliatorFilterBulan" onchange="renderAffiliatorListingPage()">
+        <option value="">📅 Semua Bulan</option>
+      </select>
+      <input class="search-box" id="affiliatorSearch" placeholder="🔍 Cari nama affiliator..." oninput="renderAffiliatorListingPage()" style="max-width:260px;">
+    </div>
+    <div class="card" style="margin-top:4px;">
+      <div class="card-header">
+        <span class="card-title">🤝 Listing Affiliator</span>
+        <span style="font-size:12px;color:var(--muted);" id="affiliatorSubtitle">Tracking pengiriman barang & konten affiliator</span>
+      </div>
+      <div id="affiliatorTableWrap"></div>
     </div>
   </div>
 
@@ -769,6 +790,7 @@
 <script src="js/outreach.js"></script>
 <script src="js/qc.js"></script>
 <script src="js/listing.js"></script>
+<script src="js/listing_affiliator.js"></script>
 <script src="js/templates.js"></script>
 <script src="js/settings.js"></script>
 <script src="js/users.js"></script>
