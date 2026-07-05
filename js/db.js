@@ -32,11 +32,21 @@ const DB = {
     ]);
     this._data.kols      = allKols.map(fromDbRow);
     this._data.history   = (histRes.data  || []).map(fromHistoryRow);
-    this._data.templates = tmplRes.data?.length ? tmplRes.data : this._defaultTemplates();
     this._data.settings  = setRes.data?.value   ?? { brandName:'', defaultProduct:'', defaultCommission:'10' };
 
-    // Seed templates jika belum ada (per user)
-    if (!tmplRes.data?.length) this._flushTemplates(this._data.templates);
+    // Load templates: Supabase → localStorage backup → default
+    if (tmplRes.data?.length) {
+      this._data.templates = tmplRes.data;
+      localStorage.setItem('kol_templates', JSON.stringify(tmplRes.data));
+    } else {
+      const local = localStorage.getItem('kol_templates');
+      if (local) {
+        try { this._data.templates = JSON.parse(local); } catch { this._data.templates = this._defaultTemplates(); }
+      } else {
+        this._data.templates = this._defaultTemplates();
+      }
+      this._flushTemplates(this._data.templates);
+    }
   },
 
   async _fetchAllKols() {
@@ -154,9 +164,11 @@ const DB = {
 
   async _flushTemplates(tmpls) {
     if (!tmpls.length) return;
+    // Selalu simpan ke localStorage dulu sebagai backup
+    localStorage.setItem('kol_templates', JSON.stringify(tmpls));
     const rows = tmpls.map(t => ({ id: t.id, name: t.name, platform: t.platform, body: t.body, user_id: this._userId }));
     const { error } = await _sb.from('templates').upsert(rows);
-    if (error) toast('Sync error: '+error.message,'error');
+    if (error) console.warn('Templates Supabase sync error (pakai localStorage backup):', error.message);
   },
 
   async _flushSettings(s) {
@@ -166,14 +178,15 @@ const DB = {
 
   // ===== DEFAULT TEMPLATES =====
   _defaultTemplates() {
+    const u = this._userId ? this._userId.slice(0,8) : uid();
     return [
-      { id: 't1', name: 'Pesan Pertama WA', platform: 'wa',
+      { id: `t1_${u}`, name: 'Pesan Pertama WA', platform: 'wa',
         body: `Halo Kak {nama}! 👋\n\nSaya dari tim {brand}. Saya melihat konten Kak {nama} di TikTok dan sangat tertarik dengan kontennya di niche {niche}! 🔥\n\nKami sedang mencari KOL/Affiliate untuk berkolaborasi mempromosikan *{produk}* kami.\n\nBenefit:\n✅ Komisi {komisi}% per penjualan\n✅ Free produk untuk review\n✅ Support konten & brief\n\nApakah Kakak tertarik? 🙏` },
-      { id: 't2', name: 'DM TikTok Pertama', platform: 'tiktok',
+      { id: `t2_${u}`, name: 'DM TikTok Pertama', platform: 'tiktok',
         body: `Hiii Kak {nama}! 😊\n\nSuka banget sama kontennya!\n\nKami dari {brand} pengen ajak kolaborasi untuk promosi {produk}. Ada komisi {komisi}% & free produk buat Kak {nama}.\n\nBoleh DM balik atau WA kami? 🙏✨` },
-      { id: 't3', name: 'Follow Up (3 Hari)', platform: 'both',
+      { id: `t3_${u}`, name: 'Follow Up (3 Hari)', platform: 'both',
         body: `Halo Kak {nama}! 😊\n\nMau follow up terkait kolaborasi {produk} dari {brand}.\n\nApakah sudah sempat membaca pesan kami? Kami sangat ingin berkolaborasi dengan Kak {nama}! 🙏` },
-      { id: 't4', name: 'Pesan Deal / Closing', platform: 'both',
+      { id: `t4_${u}`, name: 'Pesan Deal / Closing', platform: 'both',
         body: `Halo Kak {nama}! 🎉\n\nSenang sekali Kakak tertarik berkolaborasi!\n\nDetail kerjasama:\n📦 Produk: {produk}\n💰 Komisi: {komisi}% per penjualan\n🎁 Free produk + materi konten\n\nLangkah selanjutnya:\n1. Kakak setuju → kami kirim brief & produk\n2. Buat konten (deadline: [tanggal])\n3. Upload & tag akun kami\n\nApakah Kakak setuju? 🙏` },
     ];
   },
