@@ -155,6 +155,8 @@ body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', syste
 .btn-qc:hover { background: rgba(6,182,212,.25); }
 .btn-deal { background: rgba(16,185,129,.15); color: var(--green); border: 1px solid rgba(16,185,129,.3); }
 .btn-deal:hover { background: rgba(16,185,129,.25); }
+.btn-affiliate { background: rgba(245,158,11,.15); color: var(--yellow); border: 1px solid rgba(245,158,11,.3); }
+.btn-affiliate:hover { background: rgba(245,158,11,.25); }
 
 /* ===== CARDS ===== */
 .card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); }
