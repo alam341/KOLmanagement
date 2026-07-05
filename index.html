@@ -141,6 +141,35 @@
         <option value="macro">Macro (100K-1M)</option>
         <option value="mega">Mega (&gt;1M)</option>
       </select>
+      <div class="drp-wrap">
+        <button class="drp-trigger" onclick="dbDrpToggle()" id="db-drp-trigger">
+          <span class="drp-icon">📅</span>
+          <span id="db-drp-label">Semua Periode</span>
+          <span style="color:var(--muted);">▾</span>
+        </button>
+        <div class="drp-dropdown" id="db-drp-dropdown">
+          <div class="drp-body">
+            <div class="drp-presets">
+              <button class="drp-preset active" onclick="dbDrpAll(this)">Semua Periode</button>
+              <button class="drp-preset" onclick="dbDrpToday(this)">Hari Ini</button>
+              <button class="drp-preset" onclick="dbDrpYesterday(this)">Kemarin</button>
+              <button class="drp-preset" onclick="dbDrpDays(7,'7 Hari Terakhir',this)">7 Hari Terakhir</button>
+              <button class="drp-preset" onclick="dbDrpDays(14,'14 Hari Terakhir',this)">14 Hari Terakhir</button>
+              <button class="drp-preset" onclick="dbDrpDays(30,'30 Hari Terakhir',this)">30 Hari Terakhir</button>
+              <button class="drp-preset" onclick="dbDrpThisMonth(this)">Bulan Ini</button>
+              <button class="drp-preset" onclick="dbDrpLastMonth(this)">Bulan Lalu</button>
+            </div>
+            <div class="drp-cal" id="db-drp-cal"></div>
+          </div>
+          <div class="drp-footer">
+            <div class="drp-selected-txt"><span id="db-drp-sel-start">—</span> → <span id="db-drp-sel-end">—</span></div>
+            <div style="display:flex;gap:8px;">
+              <button class="drp-cancel" onclick="dbDrpClose()">Batal</button>
+              <button class="drp-apply" onclick="dbDrpApply()">Terapkan</button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
     <div id="dbBulkBar" style="display:none;align-items:center;gap:10px;padding:8px 14px;margin-bottom:8px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);border-radius:8px;">
       <span style="font-size:13px;color:var(--text);"><strong id="dbSelectedCount">0</strong> KOL dipilih</span>
