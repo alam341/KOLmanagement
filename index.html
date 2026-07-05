@@ -30,6 +30,9 @@
     <button class="nav-item" data-page="outreach" onclick="navigate('outreach')">
       <span class="nav-icon">📤</span> Outreach Pipeline
     </button>
+    <button class="nav-item" data-page="qc" onclick="navigate('qc')">
+      <span class="nav-icon">🔍</span> QC KOL
+    </button>
     <div class="nav-section">Pengaturan</div>
     <button class="nav-item" data-page="templates" onclick="navigate('templates')">
       <span class="nav-icon">✉️</span> Template Pesan
@@ -269,6 +272,51 @@
       </div>
     </div>
   </div>
+  <!-- ===== PAGE: QC KOL ===== -->
+  <div class="page" id="page-qc">
+    <div class="stats-grid" id="qcStats"></div>
+    <div class="toolbar">
+      <input class="search-box" id="qcSearch" placeholder="🔍 Cari nama, username..." oninput="renderQCTable()" style="max-width:300px;">
+      <select class="filter-select" id="qcFilterRek" onchange="renderQCTable()">
+        <option value="">Semua Rekomendasi</option>
+        <option value="✅">✅ Lanjut Kontrak</option>
+        <option value="⚠️">⚠️ Bisa Nego</option>
+        <option value="❌">❌ Tidak Lanjut</option>
+      </select>
+    </div>
+
+    <!-- Siap QC -->
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-header">
+        <span class="card-title">⏳ Siap di-QC</span>
+        <span style="font-size:12px;color:var(--muted);">KOL dengan status "Dihubungi" yang belum di-QC</span>
+      </div>
+      <div class="table-wrap" style="border:none;border-radius:0;">
+        <table>
+          <thead>
+            <tr><th>Kreator</th><th>Tier & Followers</th><th>Ratecard</th><th>Status</th><th>Aksi</th></tr>
+          </thead>
+          <tbody id="qcEligibleBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Sudah QC -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">✅ Sudah di-QC</span>
+      </div>
+      <div class="table-wrap" style="border:none;border-radius:0;">
+        <table>
+          <thead>
+            <tr><th>Kreator</th><th>Ratecard</th><th>Avg Views</th><th>CPM</th><th>Indikator CPM</th><th>Rekomendasi</th><th>Aksi</th></tr>
+          </thead>
+          <tbody id="qcDoneBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
   <!-- ===== PAGE: USERS ===== -->
   <div class="page" id="page-users">
     <div class="table-wrap">
@@ -380,6 +428,12 @@
           <input class="form-control" id="kolProduct" placeholder="Nama produk">
         </div>
         <div class="form-group">
+          <label class="form-label">Ratecard / Harga Per Video (Rp)</label>
+          <input class="form-control" id="kolRatecard" type="number" placeholder="Contoh: 500000">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
           <label class="form-label">Status</label>
           <select class="form-control" id="kolStatus">
             <option value="new">Belum Dihubungi</option>
@@ -390,6 +444,7 @@
             <option value="rejected">Rejected</option>
           </select>
         </div>
+        <div></div>
       </div>
       <div class="form-group">
         <label class="form-label">Catatan</label>
@@ -537,6 +592,85 @@
   </div>
 </div>
 
+<!-- ===== MODAL: QC KOL ===== -->
+<div class="overlay" id="modalQC">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <span class="modal-title">🔍 QC KOL — <span id="qcKolName" style="color:var(--accent2);"></span></span>
+      <button class="modal-close" onclick="closeModal('modalQC')">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- Info KOL -->
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:16px;display:flex;gap:24px;flex-wrap:wrap;font-size:13px;">
+        <div><span style="color:var(--muted);font-size:11px;font-weight:700;text-transform:uppercase;">TikTok</span><br><strong id="qcKolTiktok"></strong></div>
+        <div><span style="color:var(--muted);font-size:11px;font-weight:700;text-transform:uppercase;">Followers</span><br><strong id="qcKolFollowers"></strong></div>
+      </div>
+
+      <!-- Ratecard -->
+      <div class="form-group">
+        <label class="form-label">Ratecard / Harga Per Video (Rp) *</label>
+        <input class="form-control" id="qcRatecard" type="number" placeholder="Contoh: 500000" oninput="calcQC()">
+      </div>
+
+      <!-- Views Input -->
+      <div class="form-group">
+        <label class="form-label">Views 7 Video Terakhir TikTok</label>
+        <div class="form-row-3" style="gap:8px;margin-bottom:8px;">
+          <div><span style="font-size:10px;color:var(--muted);font-weight:700;">VIDEO 1</span><input class="form-control" id="qcView1" type="number" placeholder="0" oninput="calcQC()" style="margin-top:3px;"></div>
+          <div><span style="font-size:10px;color:var(--muted);font-weight:700;">VIDEO 2</span><input class="form-control" id="qcView2" type="number" placeholder="0" oninput="calcQC()" style="margin-top:3px;"></div>
+          <div><span style="font-size:10px;color:var(--muted);font-weight:700;">VIDEO 3</span><input class="form-control" id="qcView3" type="number" placeholder="0" oninput="calcQC()" style="margin-top:3px;"></div>
+        </div>
+        <div class="form-row-3" style="gap:8px;margin-bottom:8px;">
+          <div><span style="font-size:10px;color:var(--muted);font-weight:700;">VIDEO 4</span><input class="form-control" id="qcView4" type="number" placeholder="0" oninput="calcQC()" style="margin-top:3px;"></div>
+          <div><span style="font-size:10px;color:var(--muted);font-weight:700;">VIDEO 5</span><input class="form-control" id="qcView5" type="number" placeholder="0" oninput="calcQC()" style="margin-top:3px;"></div>
+          <div><span style="font-size:10px;color:var(--muted);font-weight:700;">VIDEO 6</span><input class="form-control" id="qcView6" type="number" placeholder="0" oninput="calcQC()" style="margin-top:3px;"></div>
+        </div>
+        <div style="max-width:calc(33.333% - 6px);">
+          <span style="font-size:10px;color:var(--muted);font-weight:700;">VIDEO 7</span>
+          <input class="form-control" id="qcView7" type="number" placeholder="0" oninput="calcQC()" style="margin-top:3px;">
+        </div>
+      </div>
+
+      <!-- Hasil Kalkulasi -->
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:14px;">
+        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:12px;">Hasil Kalkulasi</div>
+        <div class="form-row-3" style="gap:16px;margin-bottom:14px;">
+          <div>
+            <div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;margin-bottom:4px;">Total Views</div>
+            <div style="font-size:20px;font-weight:800;" id="qcTotalViews">-</div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;margin-bottom:4px;">Avg Views/Video</div>
+            <div style="font-size:20px;font-weight:800;color:var(--accent2);" id="qcAvgViews">-</div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;margin-bottom:4px;">CPM</div>
+            <div style="font-size:20px;font-weight:800;" id="qcCPM">-</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;">CPM Indicator:</span>
+          <span id="qcCPMIndicator"><span style="color:var(--muted);">-</span></span>
+        </div>
+      </div>
+
+      <!-- Rekomendasi -->
+      <div class="form-group">
+        <label class="form-label">Rekomendasi Sistem</label>
+        <div id="qcRekomendasi">
+          <div class="qc-empty-rek">Isi ratecard dan minimal 1 views untuk melihat rekomendasi.</div>
+        </div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modalQC')">Batal</button>
+      <button class="btn btn-primary" onclick="saveQC()">💾 Simpan QC</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast-wrap" id="toastWrap"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -547,6 +681,7 @@
 <script src="js/database.js"></script>
 <script src="js/analysis.js"></script>
 <script src="js/outreach.js"></script>
+<script src="js/qc.js"></script>
 <script src="js/templates.js"></script>
 <script src="js/settings.js"></script>
 <script src="js/users.js"></script>
