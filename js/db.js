@@ -192,6 +192,7 @@ function toDbRow(k) {
     engagement: k.engagement||'', engagement_raw: k.engagementRaw||0,
     views_raw: k.viewsRaw||0, pendapatan_raw: k.pendapatanRaw||0,
     penjualan: k.penjualan||0,
+    ratecard: k.ratecard||0,
     user_id: DB._userId,
     updated_at: k.updatedAt||new Date().toISOString(),
     created_at: k.createdAt||new Date().toISOString(),
@@ -212,6 +213,7 @@ function fromDbRow(r) {
     viewsRaw: Number(r.views_raw)||0,
     pendapatanRaw: Number(r.pendapatan_raw)||0,
     penjualan: Number(r.penjualan)||0,
+    ratecard: Number(r.ratecard)||0,
     createdAt: r.created_at, updatedAt: r.updated_at,
   };
 }

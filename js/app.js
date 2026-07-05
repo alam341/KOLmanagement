@@ -4,6 +4,7 @@ const PAGES = {
   database:  { title:'Database KOL', subtitle:'Kelola daftar kreator & affiliator', init: initDatabase },
   analysis:  { title:'Analisis KOL', subtitle:'Scoring, tier, & performa kreator', init: initAnalysis },
   outreach:  { title:'Outreach Pipeline', subtitle:'Kelola status pendekatan ke kreator', init: initOutreach },
+  qc:        { title:'QC KOL', subtitle:'Quality control & analisis CPM kreator', init: initQC },
   templates: { title:'Template Pesan', subtitle:'Kelola template WA & TikTok DM', init: initTemplates },
   settings:  { title:'Pengaturan', subtitle:'Konfigurasi brand & data', init: initSettings },
   users:     { title:'Manajemen User', subtitle:'Kelola akun & hak akses pengguna', init: initUsers },
