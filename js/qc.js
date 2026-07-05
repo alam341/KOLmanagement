@@ -176,21 +176,84 @@ function openQCModal(kolId) {
   const existing = qcCache[kolId];
 
   // Info KOL
-  document.getElementById('qcKolName').textContent     = k.name;
-  document.getElementById('qcKolTiktok').textContent   = k.tiktok || '-';
+  document.getElementById('qcKolName').textContent      = k.name;
+  document.getElementById('qcKolTiktok').textContent    = k.tiktok || '-';
   document.getElementById('qcKolFollowers').textContent = k.followers || '-';
 
-  // Ratecard: ambil dari QC existing → atau dari KOL
-  document.getElementById('qcRatecard').value = existing?.ratecard || k.ratecard || '';
+  // Ratecard: prioritas QC existing → in-memory KOL
+  const ratecardVal = existing?.ratecard > 0 ? existing.ratecard : (k.ratecard > 0 ? k.ratecard : '');
+  document.getElementById('qcRatecard').value = ratecardVal;
 
-  // Views
+  // Views dari QC existing
   for (let i = 1; i <= 7; i++) {
     const el = document.getElementById('qcView' + i);
-    if (el) el.value = (existing?.views?.[i-1] && existing.views[i-1] > 0) ? existing.views[i-1] : '';
+    if (el) el.value = (existing?.views?.[i-1] > 0) ? existing.views[i-1] : '';
   }
 
   calcQC();
   openModal('modalQC');
+}
+
+// ===== AUTO-FETCH VIEWS DARI TIKTOK (RapidAPI) =====
+async function autoFetchViews() {
+  const k = DB.kols.find(x => x.id === activeQCKolId);
+  if (!k?.tiktok) { toast('Username TikTok tidak ada di data KOL!', 'error'); return; }
+
+  const apiKey = localStorage.getItem('kol_rapidapi_key');
+  if (!apiKey) {
+    toast('RapidAPI Key belum diisi. Atur di menu Pengaturan.', 'error');
+    return;
+  }
+
+  const username = k.tiktok.replace('@', '').trim();
+  const btn = document.getElementById('btnAutoFetch');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Mengambil data...'; }
+
+  try {
+    const res = await fetch(
+      `https://tiktok-scraper2.p.rapidapi.com/user/posts?username=${encodeURIComponent(username)}&count=7&cursor=0`,
+      {
+        method: 'GET',
+        headers: {
+          'X-RapidAPI-Key': apiKey,
+          'X-RapidAPI-Host': 'tiktok-scraper2.p.rapidapi.com',
+        },
+      }
+    );
+
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+
+    // Ambil list video — format bisa beda tergantung API version
+    const videos = json?.data?.videos || json?.collector || json?.data?.itemList || json?.itemList || [];
+
+    if (!videos.length) {
+      toast('Tidak ada video ditemukan untuk akun ini.', 'error');
+      return;
+    }
+
+    // Isi views 7 video terakhir
+    const top7 = videos.slice(0, 7);
+    top7.forEach((vid, i) => {
+      const views = vid?.stats?.playCount ?? vid?.statistics?.playCount ?? vid?.play_count ?? vid?.playCount ?? 0;
+      const el = document.getElementById(`qcView${i + 1}`);
+      if (el) el.value = views;
+    });
+
+    // Kosongkan sisa kalau video < 7
+    for (let i = top7.length + 1; i <= 7; i++) {
+      const el = document.getElementById(`qcView${i}`);
+      if (el) el.value = '';
+    }
+
+    calcQC();
+    toast(`✓ Berhasil ambil ${top7.length} video dari @${username}`, 'success');
+
+  } catch (err) {
+    toast('Gagal fetch TikTok: ' + err.message, 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '🔄 Auto-Fetch Views'; }
+  }
 }
 
 // ===== KALKULASI REALTIME =====

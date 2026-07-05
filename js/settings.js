@@ -4,6 +4,7 @@ function initSettings() {
   document.getElementById('setBrandName').value        = s.brandName        || '';
   document.getElementById('setDefaultProduct').value   = s.defaultProduct   || '';
   document.getElementById('setDefaultCommission').value= s.defaultCommission|| '10';
+  document.getElementById('setRapidApiKey').value      = localStorage.getItem('kol_rapidapi_key') || '';
   const el = document.getElementById('setDataInfo');
   if (el) el.textContent = `${DB.kols.length} KOL tersimpan di database.`;
 }
@@ -14,6 +15,9 @@ function saveSettings() {
     defaultProduct:    document.getElementById('setDefaultProduct').value.trim(),
     defaultCommission: document.getElementById('setDefaultCommission').value.trim(),
   };
+  const apiKey = document.getElementById('setRapidApiKey').value.trim();
+  if (apiKey) localStorage.setItem('kol_rapidapi_key', apiKey);
+  else localStorage.removeItem('kol_rapidapi_key');
   toast('Pengaturan disimpan!', 'success');
   initSettings();
 }
