@@ -281,6 +281,48 @@
       </div>
 
       <div class="settings-section">
+        <div class="settings-section-title">Formula CPM & Rekomendasi QC</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.7;">
+          Atur batas CPM untuk setiap indikator. Rekomendasi otomatis:<br>
+          ✅ <strong>Lanjut</strong> = Sangat Bagus & Bagus &nbsp;·&nbsp;
+          ⚠️ <strong>Nego</strong> = Perlu Dipertimbangkan &nbsp;·&nbsp;
+          ❌ <strong>Tolak</strong> = Buruk & Sangat Buruk
+        </div>
+        <div class="form-row" style="grid-template-columns:1fr 1fr;">
+          <div class="form-group">
+            <label class="form-label" style="color:var(--green);">✅ Sangat Bagus — CPM di bawah</label>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span style="font-size:12px;color:var(--muted);">Rp</span>
+              <input class="form-control" id="setCpmSangatBagus" type="number" placeholder="20000">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" style="color:var(--green);">✅ Bagus — CPM di bawah</label>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span style="font-size:12px;color:var(--muted);">Rp</span>
+              <input class="form-control" id="setCpmBagus" type="number" placeholder="30000">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" style="color:var(--yellow);">⚠️ Perlu Dipertimbangkan — CPM di bawah</label>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span style="font-size:12px;color:var(--muted);">Rp</span>
+              <input class="form-control" id="setCpmPerlu" type="number" placeholder="40000">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" style="color:var(--red);">❌ Buruk — CPM di bawah</label>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span style="font-size:12px;color:var(--muted);">Rp</span>
+              <input class="form-control" id="setCpmBuruk" type="number" placeholder="60000">
+            </div>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:12px;">❌ Sangat Buruk = CPM ≥ batas Buruk ke atas</div>
+        <button class="btn btn-primary" onclick="saveSettings()">Simpan Formula CPM</button>
+      </div>
+
+      <div class="settings-section">
         <div class="settings-section-title">Data & Backup</div>
         <div style="font-size:13px;color:var(--muted);margin-bottom:14px;" id="setDataInfo"></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
