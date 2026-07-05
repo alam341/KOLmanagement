@@ -248,6 +248,7 @@ async function autoFetchViews() {
     const top7 = videos.slice(0, 7);
     top7.forEach((vid, i) => {
       const views = vid?.stats?.playCount ?? vid?.statistics?.playCount ?? vid?.play_count ?? vid?.playCount ?? 0;
+      console.log(`[QC] Video ${i+1}:`, JSON.stringify(vid?.stats || vid?.statistics || {}), '→ views:', views);
       const el = document.getElementById(`qcView${i + 1}`);
       if (el) el.value = views;
     });
