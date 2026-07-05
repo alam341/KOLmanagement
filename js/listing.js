@@ -4,7 +4,36 @@ let listingCache = {}; // { kolId: listingRecord }
 
 async function initListing() {
   await loadListingData();
+  populateMonthFilter();
   renderListingPage();
+}
+
+function populateMonthFilter() {
+  const sel = document.getElementById('listingFilterBulan');
+  if (!sel) return;
+
+  const dealKols = DB.kols.filter(k => k.status === 'deal');
+  const monthSet = new Set();
+
+  dealKols.forEach(k => {
+    const date = k.updatedAt || k.createdAt;
+    if (!date) return;
+    const d = new Date(date);
+    monthSet.add(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`);
+  });
+
+  // Sort desc (terbaru dulu)
+  const months = [...monthSet].sort((a,b) => b.localeCompare(a));
+
+  const names = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  const current = sel.value;
+
+  sel.innerHTML = `<option value="">📅 Semua Bulan</option>` +
+    months.map(m => {
+      const [y, mo] = m.split('-');
+      const label = `${names[parseInt(mo)-1]} ${y}`;
+      return `<option value="${m}" ${current===m?'selected':''}>${label}</option>`;
+    }).join('');
 }
 
 async function loadListingData() {
@@ -27,7 +56,40 @@ async function loadListingData() {
 }
 
 function renderListingPage() {
-  const dealKols = DB.kols.filter(k => k.status === 'deal');
+  const filterBulan = document.getElementById('listingFilterBulan')?.value || '';
+  const q           = (document.getElementById('listingSearch')?.value || '').toLowerCase();
+
+  let dealKols = DB.kols.filter(k => k.status === 'deal');
+
+  // Filter bulan berdasarkan updatedAt KOL
+  if (filterBulan) {
+    dealKols = dealKols.filter(k => {
+      const date = k.updatedAt || k.createdAt;
+      if (!date) return false;
+      const d = new Date(date);
+      const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+      return key === filterBulan;
+    });
+  }
+
+  // Filter search
+  if (q) {
+    dealKols = dealKols.filter(k =>
+      k.name.toLowerCase().includes(q) || (k.tiktok||'').toLowerCase().includes(q)
+    );
+  }
+
+  // Update subtitle info
+  const names = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  const subtitle = document.getElementById('listingSubtitle');
+  if (subtitle) {
+    if (filterBulan) {
+      const [y, mo] = filterBulan.split('-');
+      subtitle.textContent = `${names[parseInt(mo)-1]} ${y} — ${dealKols.length} KOL deal`;
+    } else {
+      subtitle.textContent = 'Tracking payment, pengiriman barang & konten';
+    }
+  }
 
   // Hitung total endors dari ratecard listing / QC / kol
   let totalEndors = 0;
@@ -249,7 +311,16 @@ async function upsertListing(kolId, updates) {
 }
 
 async function exportListingCSV() {
-  const dealKols = DB.kols.filter(k => k.status === 'deal');
+  const filterBulan = document.getElementById('listingFilterBulan')?.value || '';
+  let dealKols = DB.kols.filter(k => k.status === 'deal');
+  if (filterBulan) {
+    dealKols = dealKols.filter(k => {
+      const date = k.updatedAt || k.createdAt;
+      if (!date) return false;
+      const d = new Date(date);
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}` === filterBulan;
+    });
+  }
   if (!dealKols.length) { toast('Belum ada KOL deal!', 'error'); return; }
 
   const header = ['No','Ratecard','Nama','WA','TikTok','Payment','Kirim Barang','Barang Sampai','Draft Video','Upload TT','Upload Drive','Catatan','Kode Boost'];
