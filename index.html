@@ -382,10 +382,16 @@
   <!-- ===== PAGE: LISTING KOL ===== -->
   <div class="page" id="page-listing">
     <div class="stats-grid" id="listingStats"></div>
+    <div class="toolbar">
+      <select class="filter-select" id="listingFilterBulan" onchange="renderListingPage()">
+        <option value="">📅 Semua Bulan</option>
+      </select>
+      <input class="search-box" id="listingSearch" placeholder="🔍 Cari nama KOL..." oninput="renderListingPage()" style="max-width:260px;">
+    </div>
     <div class="card" style="margin-top:4px;">
       <div class="card-header">
         <span class="card-title">📋 Listing KOL Deal</span>
-        <span style="font-size:12px;color:var(--muted);">Tracking payment, pengiriman barang & konten</span>
+        <span style="font-size:12px;color:var(--muted);" id="listingSubtitle">Tracking payment, pengiriman barang & konten</span>
       </div>
       <div id="listingTableWrap"></div>
     </div>
