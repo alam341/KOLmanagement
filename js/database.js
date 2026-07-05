@@ -64,9 +64,10 @@ function renderTable() {
         </div>
       </td>
       <td>
-        <div style="display:flex;gap:5px;">
+        <div style="display:flex;gap:5px;flex-wrap:wrap;">
           <button class="btn btn-primary btn-sm" onclick="openSend('${k.id}')">📤</button>
           <button class="btn btn-outline btn-sm" onclick="openKOLModal('${k.id}')">✏️</button>
+          <button class="btn btn-qc btn-sm" onclick="navigate('qc');setTimeout(()=>openQCModal('${k.id}'),300)" title="Masuk QC KOL">🔍 QC</button>
           <button class="btn btn-danger btn-sm" onclick="deleteKOL('${k.id}')">🗑</button>
         </div>
       </td>
@@ -142,8 +143,9 @@ function openKOLModal(id) {
   const fields = ['kolName','kolTiktok','kolWA','kolEmail','kolIG','kolNiche','kolFollowers','kolProduct','kolNote'];
   const keys   = ['name','tiktok','wa','email','instagram','niche','followers','product','note'];
   fields.forEach((f,i) => document.getElementById(f).value = k ? (k[keys[i]]||'') : '');
-  document.getElementById('kolPlatform').value = k?.platform || 'wa';
-  document.getElementById('kolStatus').value   = k?.status   || 'new';
+  document.getElementById('kolPlatform').value  = k?.platform || 'wa';
+  document.getElementById('kolStatus').value    = k?.status   || 'new';
+  document.getElementById('kolRatecard').value  = k?.ratecard ? k.ratecard : '';
   openModal('modalKOL');
 }
 
@@ -167,6 +169,7 @@ function saveKOL() {
     product:   document.getElementById('kolProduct').value.trim(),
     status:    document.getElementById('kolStatus').value,
     note:      document.getElementById('kolNote').value.trim(),
+    ratecard:  parseFloat(document.getElementById('kolRatecard').value) || 0,
     tier:      computeTier(followersRaw),
     score:     0,
   };
