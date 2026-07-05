@@ -12,7 +12,7 @@ function populateMonthFilter() {
   const sel = document.getElementById('listingFilterBulan');
   if (!sel) return;
 
-  const dealKols = DB.kols.filter(k => k.status === 'deal');
+  const dealKols = DB.kols.filter(k => k.status === 'deal' && k.kolType !== 'affiliator');
   const monthSet = new Set();
 
   dealKols.forEach(k => {
@@ -59,7 +59,7 @@ function renderListingPage() {
   const filterBulan = document.getElementById('listingFilterBulan')?.value || '';
   const q           = (document.getElementById('listingSearch')?.value || '').toLowerCase();
 
-  let dealKols = DB.kols.filter(k => k.status === 'deal');
+  let dealKols = DB.kols.filter(k => k.status === 'deal' && k.kolType !== 'affiliator');
 
   // Filter bulan berdasarkan updatedAt KOL
   if (filterBulan) {
@@ -140,7 +140,7 @@ function renderListingPage() {
 }
 
 function renderListingTable(dealKols) {
-  if (!dealKols) dealKols = DB.kols.filter(k => k.status === 'deal');
+  if (!dealKols) dealKols = DB.kols.filter(k => k.status === 'deal' && k.kolType !== 'affiliator');
 
   const wrap = document.getElementById('listingTableWrap');
   if (!wrap) return;
@@ -340,7 +340,7 @@ async function upsertListing(kolId, updates) {
 
 async function exportListingCSV() {
   const filterBulan = document.getElementById('listingFilterBulan')?.value || '';
-  let dealKols = DB.kols.filter(k => k.status === 'deal');
+  let dealKols = DB.kols.filter(k => k.status === 'deal' && k.kolType !== 'affiliator');
   if (filterBulan) {
     dealKols = dealKols.filter(k => {
       const date = k.updatedAt || k.createdAt;

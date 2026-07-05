@@ -10,7 +10,7 @@ const DB = {
   get kols()      { return this._data.kols      ?? []; },
   get templates() { return this._data.templates ?? []; },
   get history()   { return this._data.history   ?? []; },
-  get settings()  { return this._data.settings  ?? { brandName:'', defaultProduct:'', defaultCommission:'10' }; },
+  get settings()  { return this._data.settings  ?? { brandName:'', defaultProduct:'', defaultCommission:'10', cpmSangatBagus:20000, cpmBagus:30000, cpmPerlu:40000, cpmBuruk:60000 }; },
 
   // ===== SYNC SETTERS (+ async flush) =====
   set kols(v)     { this._data.kols      = v; this._flushKols(v); },
@@ -206,6 +206,7 @@ function toDbRow(k) {
     views_raw: k.viewsRaw||0, pendapatan_raw: k.pendapatanRaw||0,
     penjualan: k.penjualan||0,
     ratecard: k.ratecard||0,
+    kol_type: k.kolType||'kol',
     user_id: DB._userId,
     updated_at: k.updatedAt||new Date().toISOString(),
     created_at: k.createdAt||new Date().toISOString(),
@@ -227,6 +228,7 @@ function fromDbRow(r) {
     pendapatanRaw: Number(r.pendapatan_raw)||0,
     penjualan: Number(r.penjualan)||0,
     ratecard: Number(r.ratecard)||0,
+    kolType: r.kol_type||'kol',
     createdAt: r.created_at, updatedAt: r.updated_at,
   };
 }

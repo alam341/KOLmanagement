@@ -68,6 +68,7 @@ function renderTable() {
           <button class="btn btn-primary btn-sm" onclick="openSend('${k.id}')" title="Kirim Pesan">${icon('send',13)}</button>
           <button class="btn btn-outline btn-sm" onclick="openKOLModal('${k.id}')" title="Edit">${icon('pencil',13)}</button>
           <button class="btn btn-qc btn-sm" onclick="navigate('qc');setTimeout(()=>openQCModal('${k.id}'),300)" title="QC KOL">${icon('microscope',13)} QC</button>
+          <button class="btn btn-affiliate btn-sm" onclick="markAsAffiliate('${k.id}')" title="Tandai sebagai Affiliator">${icon('user',13)} Affiliator</button>
           <button class="btn btn-danger btn-sm" onclick="deleteKOL('${k.id}')" title="Hapus">${icon('trash-2',13)}</button>
         </div>
       </td>
@@ -239,6 +240,32 @@ function markSendContacted() {
   closeModal('modalSend');
   renderTable();
   toast('Status diperbarui: Dihubungi', 'success');
+}
+
+// ===== AFFILIATOR =====
+function markAsAffiliate(kolId) {
+  const k = DB.kols.find(x => x.id === kolId);
+  if (!k) return;
+  if (k.status === 'deal' && k.kolType === 'affiliator') {
+    toast(`${k.name} sudah berstatus Affiliator Deal.`, 'info'); return;
+  }
+  if (!confirm(`Tandai "${k.name}" sebagai Affiliator?\n\nStatus langsung jadi Deal dan masuk ke Listing Affiliator.`)) return;
+
+  // Update memory
+  const idx = DB.kols.findIndex(x => x.id === kolId);
+  if (idx >= 0) {
+    DB.kols[idx].kolType = 'affiliator';
+    DB.kols[idx].status  = 'deal';
+    DB.kols[idx].updatedAt = new Date().toISOString();
+  }
+
+  // Sync ke Supabase
+  _sb.from('kols').update({ kol_type: 'affiliator', status: 'deal', updated_at: new Date().toISOString() })
+    .eq('id', kolId)
+    .then(({ error }) => { if (error) toast('Sync error: ' + error.message, 'error'); });
+
+  toast(`${k.name} ditandai Affiliator Deal ✓`, 'success');
+  renderTable();
 }
 
 // ===== IMPORT =====

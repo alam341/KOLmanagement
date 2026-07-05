@@ -6,6 +6,7 @@ const PAGES = {
   outreach:  { title:'Outreach Pipeline', subtitle:'Kelola status pendekatan ke kreator', init: () => initOutreach() },
   qc:        { title:'QC KOL', subtitle:'Quality control & analisis CPM kreator', init: () => initQC() },
   listing:   { title:'Listing KOL', subtitle:'Tracking post-deal: payment, pengiriman & konten', init: () => initListing() },
+  affiliator: { title:'Listing Affiliator', subtitle:'Tracking pengiriman & konten affiliator', init: () => initListingAffiliate() },
   templates: { title:'Template Pesan', subtitle:'Kelola template WA & TikTok DM', init: () => initTemplates() },
   settings:  { title:'Pengaturan', subtitle:'Konfigurasi brand & data', init: () => initSettings() },
   users:     { title:'Manajemen User', subtitle:'Kelola akun & hak akses pengguna', init: () => initUsers() },
@@ -53,6 +54,9 @@ function topbarActions(page) {
   `;
   if (page === 'listing') return `
     <button class="btn btn-outline btn-sm" onclick="exportListingCSV()">${icon('download',14)} Export CSV</button>
+  `;
+  if (page === 'affiliator') return `
+    <button class="btn btn-outline btn-sm" onclick="exportAffiliatorCSV()">${icon('download',14)} Export CSV</button>
   `;
   if (page === 'templates') return `
     <button class="btn btn-primary btn-sm" onclick="openTmplModal()">${icon('plus',14)} Buat Template</button>
@@ -141,6 +145,7 @@ function injectNavIcons() {
     'navicon-outreach':  'send',
     'navicon-qc':        'microscope',
     'navicon-listing':   'clipboard-list',
+    'navicon-affiliator':'users',
     'navicon-templates': 'message-square',
     'navicon-settings':  'settings',
     'navicon-users':     'shield',
