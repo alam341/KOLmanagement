@@ -146,13 +146,29 @@ function renderQCTable() {
             <td>${cpmBadge(qc.cpmIndicator)}</td>
             <td style="font-size:12px;line-height:1.5;max-width:200px;">${esc(qc.rekomendasi||'-')}</td>
             <td>
-              <button class="btn btn-outline btn-sm" onclick="openQCModal('${k.id}')">✏️ Edit</button>
+              <div style="display:flex;gap:5px;flex-wrap:wrap;">
+                <button class="btn btn-outline btn-sm" onclick="openQCModal('${k.id}')">✏️ Edit</button>
+                ${k.status === 'deal'
+                  ? `<span class="badge" style="background:rgba(16,185,129,.15);color:var(--green);padding:5px 10px;">✓ Deal</span>`
+                  : `<button class="btn btn-deal btn-sm" onclick="markDealFromQC('${k.id}')">🤝 Tandai Deal</button>`
+                }
+              </div>
             </td>
           </tr>
         `;
       }).join('');
     }
   }
+}
+
+// ===== TANDAI DEAL DARI QC =====
+function markDealFromQC(kolId) {
+  const k = DB.kols.find(x => x.id === kolId);
+  if (!k) return;
+  if (!confirm(`Tandai "${k.name}" sebagai Deal ✓?`)) return;
+  DB.updateStatus(kolId, 'deal', 'Deal dikonfirmasi dari QC');
+  toast(`${k.name} ditandai Deal ✓`, 'success');
+  renderQCTable();
 }
 
 // ===== CPM BADGE =====
