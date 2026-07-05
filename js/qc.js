@@ -218,7 +218,7 @@ async function autoFetchViews() {
     if (apiHost.includes('tiktok-scraper7')) {
       if (btn) btn.textContent = '⏳ Mengambil video...';
       const postsRes = await fetch(
-        `https://${apiHost}/user/posts?unique_id=${encodeURIComponent(username)}&count=7&cursor=0`,
+        `https://${apiHost}/user/posts?unique_id=${encodeURIComponent(username)}&count=20&cursor=0`,
         { headers }
       );
       if (!postsRes.ok) throw new Error(`HTTP ${postsRes.status}`);
