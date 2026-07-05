@@ -217,6 +217,9 @@ function renderListingTable(dealKols) {
         <input class="listing-input" type="text" value="${esc(rec.kode_boost||'')}" placeholder="Kode boost..."
           onchange="updateListingField('${k.id}','kode_boost',this.value)" style="width:130px;">
       </td>
+      <td style="padding:8px;text-align:center;">
+        <button class="btn btn-danger btn-sm" onclick="removeFromListing('${k.id}','${esc(k.name)}')" title="Hapus dari listing & kembalikan status">🗑</button>
+      </td>
     </tr>`;
   }).join('');
 
@@ -248,6 +251,7 @@ function renderListingTable(dealKols) {
             <th style="padding:10px 8px;text-align:center;white-space:nowrap;font-size:12px;color:var(--muted);font-weight:600;">☁️<br>Upload Drive</th>
             <th style="padding:10px 8px;text-align:left;white-space:nowrap;font-size:12px;color:var(--muted);font-weight:600;">Catatan / Link Konten</th>
             <th style="padding:10px 8px;text-align:left;white-space:nowrap;font-size:12px;color:var(--muted);font-weight:600;">Kode Boost Ads</th>
+            <th style="padding:10px 8px;text-align:center;white-space:nowrap;font-size:12px;color:var(--muted);font-weight:600;">Hapus</th>
           </tr>
         </thead>
         <tbody>${rows}</tbody>
@@ -276,6 +280,30 @@ async function updateListingRatecard(kolId, value) {
 
 async function updateListingField(kolId, field, value) {
   await upsertListing(kolId, { [field]: value });
+}
+
+async function removeFromListing(kolId, kolName) {
+  if (!confirm(`Hapus "${kolName}" dari Listing?\n\nStatus KOL akan dikembalikan ke "Replied" dan bisa di-QC ulang.`)) return;
+  try {
+    const { data: { user } } = await _sb.auth.getUser();
+
+    // Hapus record dari kol_listing
+    const { error } = await _sb.from('kol_listing').delete()
+      .eq('kol_id', kolId).eq('user_id', user.id);
+    if (error) throw error;
+
+    // Hapus dari cache
+    delete listingCache[kolId];
+
+    // Kembalikan status KOL ke "replied"
+    DB.updateStatus(kolId, 'replied', 'Dikembalikan dari Listing — perlu QC ulang');
+
+    toast(`${kolName} dihapus dari Listing. Status kembali ke "Replied".`, 'success', 5000);
+    populateMonthFilter();
+    renderListingPage();
+  } catch(e) {
+    toast('Gagal hapus: ' + e.message, 'error');
+  }
 }
 
 async function upsertListing(kolId, updates) {
