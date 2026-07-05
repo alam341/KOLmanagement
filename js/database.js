@@ -2,21 +2,211 @@
 let importRows = [];
 let selectedDBKOLs = new Set();
 
+// ── Date Range Picker state ──
+let dbDrpSelStart = null, dbDrpSelEnd   = null;
+let dbDrpAppliedStart = null, dbDrpAppliedEnd = null;
+let dbDrpViewYear = new Date().getFullYear(), dbDrpViewMonth = new Date().getMonth();
+const DB_DRP_MONTHS = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+const DB_DRP_DAYS   = ['Mo','Tu','We','Th','Fr','Sa','Su'];
+
+function dbDrpFmt(d) {
+  if (!d) return '—';
+  return d.toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' });
+}
+
+function dbDrpToggle() {
+  const dd = document.getElementById('db-drp-dropdown');
+  dd.classList.toggle('open');
+  if (dd.classList.contains('open')) {
+    // Sync pending selection with applied
+    dbDrpSelStart = dbDrpAppliedStart ? new Date(dbDrpAppliedStart) : null;
+    dbDrpSelEnd   = dbDrpAppliedEnd   ? new Date(dbDrpAppliedEnd)   : null;
+    dbDrpRender();
+    dbDrpUpdateSel();
+    document.addEventListener('click', dbDrpOutside);
+  } else {
+    document.removeEventListener('click', dbDrpOutside);
+  }
+}
+
+function dbDrpClose() {
+  document.getElementById('db-drp-dropdown')?.classList.remove('open');
+  document.removeEventListener('click', dbDrpOutside);
+}
+
+function dbDrpOutside(e) {
+  const dd = document.getElementById('db-drp-dropdown');
+  const tr = document.getElementById('db-drp-trigger');
+  if (dd && tr && !dd.contains(e.target) && !tr.contains(e.target)) dbDrpClose();
+}
+
+function dbDrpSetPresetActive(btn) {
+  document.querySelectorAll('#db-drp-dropdown .drp-preset').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+}
+
+function dbDrpAll(btn) {
+  dbDrpSelStart = null; dbDrpSelEnd = null;
+  dbDrpSetPresetActive(btn);
+  dbDrpUpdateSel(); dbDrpRender();
+}
+
+function dbDrpToday(btn) {
+  const d = new Date(); d.setHours(0,0,0,0);
+  dbDrpSelStart = d;
+  dbDrpSelEnd   = new Date(); dbDrpSelEnd.setHours(23,59,59,999);
+  dbDrpSetPresetActive(btn);
+  dbDrpUpdateSel(); dbDrpRender();
+}
+
+function dbDrpYesterday(btn) {
+  dbDrpSelStart = new Date(Date.now()-864e5); dbDrpSelStart.setHours(0,0,0,0);
+  dbDrpSelEnd   = new Date(Date.now()-864e5); dbDrpSelEnd.setHours(23,59,59,999);
+  dbDrpSetPresetActive(btn);
+  dbDrpUpdateSel(); dbDrpRender();
+}
+
+function dbDrpDays(n, label, btn) {
+  dbDrpSelStart = new Date(Date.now()-(n-1)*864e5); dbDrpSelStart.setHours(0,0,0,0);
+  dbDrpSelEnd   = new Date(); dbDrpSelEnd.setHours(23,59,59,999);
+  dbDrpSetPresetActive(btn);
+  dbDrpUpdateSel(); dbDrpRender();
+}
+
+function dbDrpThisMonth(btn) {
+  const n = new Date();
+  dbDrpSelStart = new Date(n.getFullYear(), n.getMonth(), 1);
+  dbDrpSelEnd   = new Date(); dbDrpSelEnd.setHours(23,59,59,999);
+  dbDrpSetPresetActive(btn);
+  dbDrpUpdateSel(); dbDrpRender();
+}
+
+function dbDrpLastMonth(btn) {
+  const n = new Date();
+  dbDrpSelStart = new Date(n.getFullYear(), n.getMonth()-1, 1);
+  dbDrpSelEnd   = new Date(n.getFullYear(), n.getMonth(), 0); dbDrpSelEnd.setHours(23,59,59,999);
+  dbDrpSetPresetActive(btn);
+  dbDrpUpdateSel(); dbDrpRender();
+}
+
+function dbDrpUpdateSel() {
+  const s = document.getElementById('db-drp-sel-start');
+  const e = document.getElementById('db-drp-sel-end');
+  if (s) s.textContent = dbDrpFmt(dbDrpSelStart);
+  if (e) e.textContent = dbDrpFmt(dbDrpSelEnd);
+}
+
+function dbDrpClickDay(y, m, d) {
+  const clicked = new Date(y, m, d);
+  if (!dbDrpSelStart || (dbDrpSelStart && dbDrpSelEnd)) {
+    dbDrpSelStart = clicked; dbDrpSelEnd = null;
+  } else {
+    if (clicked < dbDrpSelStart) { dbDrpSelEnd = dbDrpSelStart; dbDrpSelStart = clicked; }
+    else dbDrpSelEnd = clicked;
+    dbDrpSetPresetActive(null);
+  }
+  dbDrpUpdateSel(); dbDrpRender();
+}
+
+function dbDrpNav(dir) {
+  dbDrpViewMonth += dir;
+  if (dbDrpViewMonth > 11) { dbDrpViewMonth = 0; dbDrpViewYear++; }
+  if (dbDrpViewMonth < 0)  { dbDrpViewMonth = 11; dbDrpViewYear--; }
+  dbDrpRender();
+}
+
+function dbDrpRender() {
+  const cal = document.getElementById('db-drp-cal');
+  if (!cal) return;
+  const y = dbDrpViewYear, m = dbDrpViewMonth;
+  const firstDay    = new Date(y, m, 1).getDay();
+  const startPad    = firstDay === 0 ? 6 : firstDay - 1;
+  const daysInMonth = new Date(y, m+1, 0).getDate();
+  const prevDays    = new Date(y, m, 0).getDate();
+  const today       = new Date(); today.setHours(0,0,0,0);
+
+  let html = `<div class="drp-cal-hdr">
+    <button class="drp-nav" onclick="dbDrpNav(-1)">‹</button>
+    <div class="drp-cal-title">${DB_DRP_MONTHS[m]} ${y}</div>
+    <button class="drp-nav" onclick="dbDrpNav(1)">›</button>
+  </div>
+  <div class="drp-days-hdr">${DB_DRP_DAYS.map(d=>`<span>${d}</span>`).join('')}</div>
+  <div class="drp-days">`;
+
+  for (let i = startPad; i > 0; i--)
+    html += `<button class="drp-day other-month" onclick="dbDrpNav(-1)">${prevDays-i+1}</button>`;
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const cur     = new Date(y, m, d);
+    const isToday = cur.getTime() === today.getTime();
+    const sTime   = dbDrpSelStart ? new Date(dbDrpSelStart.getFullYear(),dbDrpSelStart.getMonth(),dbDrpSelStart.getDate()).getTime() : null;
+    const eTime   = dbDrpSelEnd   ? new Date(dbDrpSelEnd.getFullYear(),dbDrpSelEnd.getMonth(),dbDrpSelEnd.getDate()).getTime()     : null;
+    const isStart = sTime && cur.getTime() === sTime;
+    const isEnd   = eTime && cur.getTime() === eTime;
+    const inRange = sTime && eTime && cur.getTime() > sTime && cur.getTime() < eTime;
+
+    let cls = 'drp-day';
+    if (isStart && isEnd) cls += ' selected';
+    else if (isStart) cls += ' range-start';
+    else if (isEnd)   cls += ' range-end';
+    else if (inRange) cls += ' in-range';
+    else if (isStart && !dbDrpSelEnd) cls += ' selected';
+    if (isToday) cls += ' today';
+
+    html += `<button class="${cls}" onclick="dbDrpClickDay(${y},${m},${d})">${d}</button>`;
+  }
+
+  const total = startPad + daysInMonth;
+  const rem   = total % 7 === 0 ? 0 : 7 - (total % 7);
+  for (let d = 1; d <= rem; d++)
+    html += `<button class="drp-day other-month" onclick="dbDrpNav(1)">${d}</button>`;
+
+  html += '</div>';
+  cal.innerHTML = html;
+}
+
+function dbDrpApply() {
+  dbDrpAppliedStart = dbDrpSelStart ? new Date(dbDrpSelStart) : null;
+  dbDrpAppliedEnd   = dbDrpSelEnd   ? new Date(dbDrpSelEnd)   : dbDrpSelStart ? new Date(dbDrpSelStart) : null;
+  if (dbDrpAppliedEnd) dbDrpAppliedEnd.setHours(23,59,59,999);
+
+  const label = document.getElementById('db-drp-label');
+  if (label) {
+    if (!dbDrpAppliedStart) label.textContent = 'Semua Periode';
+    else if (!dbDrpSelEnd || dbDrpFmt(dbDrpAppliedStart) === dbDrpFmt(dbDrpAppliedEnd))
+      label.textContent = dbDrpFmt(dbDrpAppliedStart);
+    else
+      label.textContent = `${dbDrpFmt(dbDrpAppliedStart)} — ${dbDrpFmt(dbDrpAppliedEnd)}`;
+  }
+  dbDrpClose();
+  renderTable();
+}
+
 function initDatabase() {
   selectedDBKOLs.clear();
   renderTable();
 }
 
+function formatDate(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
 // ===== TABLE =====
 function renderTable() {
-  const q = (document.getElementById('dbSearch')?.value || '').toLowerCase();
-  const sf = document.getElementById('dbFilterStatus')?.value || '';
+  const q  = (document.getElementById('dbSearch')?.value || '').toLowerCase();
+  const sf = document.getElementById('dbFilterStatus')?.value   || '';
   const pf = document.getElementById('dbFilterPlatform')?.value || '';
-  const tf = document.getElementById('dbFilterTier')?.value || '';
+  const tf = document.getElementById('dbFilterTier')?.value     || '';
 
   let kols = DB.kols.filter(k => {
     const match = !q || [k.name,k.tiktok,k.niche,k.product,k.wa,k.email].join(' ').toLowerCase().includes(q);
-    return match && (!sf||k.status===sf) && (!pf||k.platform===pf) && (!tf||k.tier===tf);
+    let dateMatch = true;
+    if (dbDrpAppliedStart && k.createdAt) {
+      const t = new Date(k.createdAt).getTime();
+      dateMatch = t >= dbDrpAppliedStart.getTime() && t <= (dbDrpAppliedEnd || dbDrpAppliedStart).getTime();
+    }
+    return match && (!sf||k.status===sf) && (!pf||k.platform===pf) && (!tf||k.tier===tf) && dateMatch;
   });
 
   const body = document.getElementById('dbTableBody');
