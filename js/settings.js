@@ -25,36 +25,42 @@ async function renderMasterSection() {
   const tokoList   = DB.tokoList;
   const produkList = DB.produkList;
 
-  // Render setiap toko + produk-produknya di bawah
+  // Render setiap toko sebagai accordion
   const tokoBlocks = tokoList.length
     ? tokoList.map(toko => {
-        const produkToko = produkList.filter(p => p.toko_id === toko.id);
+        const produkToko  = produkList.filter(p => p.toko_id === toko.id);
+        const defaultOpen = produkToko.length === 0; // baru ditambah → langsung buka
+        const bodyId      = `tokoBody_${toko.id}`;
+
         const produkItems = produkToko.length
           ? produkToko.map(p => `
-              <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 10px 5px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;margin-bottom:4px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 10px 5px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;margin-bottom:4px;">
                 <span style="font-size:12px;">📦 ${esc(p.name)}</span>
                 ${isAdmin ? `<button onclick="deleteMasterItem('${p.id}','${esc(p.name)}')" style="background:none;border:none;cursor:pointer;color:var(--muted);padding:2px 4px;line-height:1;" title="Hapus produk">${icon('x',12)}</button>` : ''}
               </div>`).join('')
-          : `<div style="font-size:11px;color:var(--muted);padding:4px 0 4px 14px;">Belum ada produk</div>`;
+          : `<div style="font-size:11px;color:var(--muted);padding:4px 0;">Belum ada produk — tambahkan di bawah.</div>`;
 
         const addProdukHtml = isAdmin ? `
-          <div style="display:flex;gap:6px;margin-top:6px;padding-left:14px;">
-            <input class="form-control" id="inputProduk_${toko.id}" placeholder="Nama produk..." style="flex:1;font-size:12px;padding:5px 8px;"
+          <div style="display:flex;gap:6px;margin-top:8px;">
+            <input class="form-control" id="inputProduk_${toko.id}" placeholder="Nama produk baru..." style="flex:1;font-size:12px;padding:5px 8px;"
               onkeydown="if(event.key==='Enter')addProdukToToko('${toko.id}')">
             <button class="btn btn-outline btn-sm" onclick="addProdukToToko('${toko.id}')" style="font-size:11px;white-space:nowrap;">+ Produk</button>
           </div>` : '';
 
         return `
-          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px;">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-              <span style="font-size:13px;font-weight:700;">🏪 ${esc(toko.name)}</span>
+          <div style="border:1px solid var(--border);border-radius:10px;margin-bottom:8px;overflow:hidden;">
+            <div onclick="toggleTokoAccordion('${bodyId}')" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--bg3);cursor:pointer;user-select:none;">
               <div style="display:flex;align-items:center;gap:8px;">
-                <span style="font-size:11px;color:var(--muted);">${produkToko.length} produk</span>
-                ${isAdmin ? `<button onclick="deleteMasterItem('${toko.id}','${esc(toko.name)}','toko')" style="background:none;border:none;cursor:pointer;color:var(--muted);padding:2px 4px;line-height:1;" title="Hapus toko">${icon('trash-2',13)}</button>` : ''}
+                <span id="${bodyId}_arrow" style="font-size:11px;transition:transform .2s;display:inline-block;${defaultOpen ? 'transform:rotate(90deg)' : ''}">▶</span>
+                <span style="font-size:13px;font-weight:700;">🏪 ${esc(toko.name)}</span>
+                <span style="font-size:11px;color:var(--muted);background:var(--bg4);padding:2px 7px;border-radius:10px;">${produkToko.length} produk</span>
               </div>
+              ${isAdmin ? `<button onclick="event.stopPropagation();deleteMasterItem('${toko.id}','${esc(toko.name)}','toko')" style="background:none;border:none;cursor:pointer;color:var(--muted);padding:2px 6px;border-radius:4px;line-height:1;" title="Hapus toko">${icon('trash-2',13)}</button>` : ''}
             </div>
-            ${produkItems}
-            ${addProdukHtml}
+            <div id="${bodyId}" style="padding:${defaultOpen ? '10px 14px' : '0 14px'};max-height:${defaultOpen ? '600px' : '0'};overflow:hidden;transition:max-height .25s ease, padding .25s ease;">
+              ${produkItems}
+              ${addProdukHtml}
+            </div>
           </div>`;
       }).join('')
     : `<div style="color:var(--muted);font-size:12px;padding:8px 0;">Belum ada toko yang ditambahkan.</div>`;
@@ -75,6 +81,22 @@ async function renderMasterSection() {
     ${tokoBlocks}
     ${addTokoHtml}
   `;
+}
+
+function toggleTokoAccordion(bodyId) {
+  const body  = document.getElementById(bodyId);
+  const arrow = document.getElementById(bodyId + '_arrow');
+  if (!body) return;
+  const isOpen = body.style.maxHeight !== '0px' && body.style.maxHeight !== '';
+  if (isOpen) {
+    body.style.maxHeight = '0';
+    body.style.padding   = '0 14px';
+    if (arrow) arrow.style.transform = '';
+  } else {
+    body.style.maxHeight = '600px';
+    body.style.padding   = '10px 14px';
+    if (arrow) arrow.style.transform = 'rotate(90deg)';
+  }
 }
 
 async function addMasterToko() {
