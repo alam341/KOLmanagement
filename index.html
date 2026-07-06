@@ -725,13 +725,22 @@
         <label class="form-label">Nama Template</label>
         <input class="form-control" id="tmplName" placeholder="e.g. Pesan Pertama WA">
       </div>
-      <div class="form-group">
-        <label class="form-label">Platform</label>
-        <select class="form-control" id="tmplPlatform">
-          <option value="wa">WhatsApp</option>
-          <option value="tiktok">TikTok DM</option>
-          <option value="both">Keduanya</option>
-        </select>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Platform</label>
+          <select class="form-control" id="tmplPlatform">
+            <option value="wa">WhatsApp</option>
+            <option value="tiktok">TikTok DM</option>
+            <option value="both">Keduanya</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Kategori</label>
+          <select class="form-control" id="tmplCategory">
+            <option value="outreach">📤 Outreach (Cold)</option>
+            <option value="reengagement">⭐ Re-Engagement (Talent Prioritas)</option>
+          </select>
+        </div>
       </div>
       <div class="form-group">
         <label class="form-label">Isi Pesan</label>
@@ -741,6 +750,36 @@
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('modalTmpl')">Batal</button>
       <button class="btn btn-primary" onclick="saveTmpl()">Simpan Template</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: HUBUNGI ULANG (TALENT PRIORITAS) ===== -->
+<div class="overlay" id="modal-rereach">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <span class="modal-title">⭐ Hubungi Ulang Talent</span>
+      <button class="modal-close" onclick="closeModal('modal-rereach')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="background:var(--bg3);border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+        <div style="font-weight:700;font-size:14px;color:var(--text);" id="rereachKolName"></div>
+        <div style="display:flex;align-items:center;gap:8px;" id="rereachKolContact"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Pilih Template Re-Engagement</label>
+        <div id="rereachTemplateTabs" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Preview & Edit Pesan</label>
+        <textarea class="form-control" id="rereachMsgPreview" rows="8" style="font-family:monospace;font-size:13px;"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-rereach')">Tutup</button>
+      <button class="btn btn-outline" onclick="copyRereachMsg()">📋 Copy Pesan</button>
+      <button class="btn btn-green" id="btnRereachWA" onclick="doRereachWA()">📱 Kirim WA</button>
+      <button class="btn btn-outline" id="btnRereachTT" onclick="doRereachTT()" style="color:var(--accent2);border-color:rgba(6,182,212,.4);">🎵 DM TikTok</button>
     </div>
   </div>
 </div>
