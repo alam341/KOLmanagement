@@ -184,12 +184,23 @@ function renderListingTable(dealKols) {
     const pct = Math.round(doneCnt / fields.length * 100);
     const barColor = pct === 100 ? 'var(--green)' : pct >= 50 ? 'var(--yellow)' : 'var(--accent)';
 
+    const tokoVal   = esc(rec.toko   || '');
+    const produkVal = esc(rec.produk || '');
+
     return `
     <tr id="listing-row-${k.id}">
       <td style="text-align:center;color:var(--muted);font-size:13px;padding:8px;">${i+1}</td>
       <td style="padding:8px;">
         <input class="listing-input" type="number" value="${ratecard||''}" placeholder="0"
           onchange="updateListingRatecard('${k.id}',this.value)" style="width:90px;">
+      </td>
+      <td style="padding:8px;min-width:120px;">
+        ${tokoVal
+          ? `<div style="font-weight:600;font-size:12px;color:var(--accent2);">${tokoVal}</div>`
+          : `<span style="color:var(--muted);font-size:11px;">—</span>`}
+        ${produkVal
+          ? `<div style="font-size:11px;color:var(--text2);margin-top:2px;">${produkVal}</div>`
+          : ''}
       </td>
       <td style="padding:8px;">
         <div style="font-weight:600;font-size:13px;">${esc(k.name)}</div>
@@ -243,6 +254,7 @@ function renderListingTable(dealKols) {
           <tr style="background:var(--bg3);">
             <th style="padding:10px 8px;text-align:center;white-space:nowrap;font-size:12px;color:var(--muted);font-weight:600;">No</th>
             <th style="padding:10px 8px;text-align:left;white-space:nowrap;font-size:12px;color:var(--muted);font-weight:600;">Ratecard</th>
+            <th style="padding:10px 8px;text-align:left;white-space:nowrap;font-size:12px;color:var(--muted);font-weight:600;">Toko / Produk</th>
             <th style="padding:10px 8px;text-align:left;white-space:nowrap;font-size:12px;color:var(--muted);font-weight:600;">Nama</th>
             <th style="padding:10px 8px;text-align:left;white-space:nowrap;font-size:12px;color:var(--muted);font-weight:600;">Nomer WA</th>
             <th style="padding:10px 8px;text-align:left;white-space:nowrap;font-size:12px;color:var(--muted);font-weight:600;">Username TikTok</th>
@@ -263,7 +275,7 @@ function renderListingTable(dealKols) {
           <tr style="background:var(--bg3);border-top:2px solid var(--border);">
             <td colspan="1" style="padding:10px 8px;font-size:12px;color:var(--muted);font-weight:600;">TOTAL</td>
             <td style="padding:10px 8px;font-weight:700;color:var(--accent);">Rp${totalEndors.toLocaleString('id-ID')}</td>
-            <td colspan="12"></td>
+            <td colspan="13"></td>
           </tr>
         </tfoot>
       </table>
@@ -365,14 +377,14 @@ async function exportListingCSV() {
   }
   if (!dealKols.length) { toast('Belum ada KOL deal!', 'error'); return; }
 
-  const header = ['No','Ratecard','Nama','WA','TikTok','Payment','Kirim Barang','Barang Sampai','Draft Video','Upload TT','Upload Drive','Catatan','Kode Boost'];
+  const header = ['No','Ratecard','Toko','Produk','Nama','WA','TikTok','Payment','Kirim Barang','Barang Sampai','Draft Video','Upload TT','Upload Drive','Catatan','Kode Boost'];
   const rows = dealKols.map((k, i) => {
     const rec   = listingCache[k.id] || {};
     const qcRec = (typeof qcCache !== 'undefined') ? qcCache[k.id] : null;
     const rc    = rec.ratecard > 0 ? rec.ratecard
                 : (qcRec?.rekomendasiRatecard > 0 ? qcRec.rekomendasiRatecard : (k.ratecard || 0));
     return [
-      i+1, rc, k.name, k.wa||'', k.tiktok||'',
+      i+1, rc, rec.toko||'', rec.produk||'', k.name, k.wa||'', k.tiktok||'',
       rec.payment     ? '✅' : '❌',
       rec.kirim_barang? '✅' : '❌',
       rec.barang_sampai?'✅' : '❌',

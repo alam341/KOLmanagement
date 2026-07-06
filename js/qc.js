@@ -162,12 +162,84 @@ function renderQCTable() {
 }
 
 // ===== TANDAI DEAL DARI QC =====
+let _dealKolId = null;
+
 function markDealFromQC(kolId) {
+  openDealModal(kolId);
+}
+
+function openDealModal(kolId) {
   const k = DB.kols.find(x => x.id === kolId);
   if (!k) return;
-  if (!confirm(`Tandai "${k.name}" sebagai Deal ✓?`)) return;
-  DB.updateStatus(kolId, 'deal', 'Deal dikonfirmasi dari QC');
-  toast(`${k.name} ditandai Deal ✓`, 'success');
+  _dealKolId = kolId;
+
+  document.getElementById('dealKolName').textContent = k.name;
+
+  // Populate Toko dropdown
+  const tokoSel = document.getElementById('dealToko');
+  const tokoList = (DB.settings.tokoList || []);
+  tokoSel.innerHTML = '<option value="">— Pilih Toko —</option>' +
+    tokoList.map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join('');
+
+  // Populate Produk dropdown
+  const produkSel = document.getElementById('dealProduk');
+  const produkList = (DB.settings.produkList || []);
+  produkSel.innerHTML = '<option value="">— Pilih Produk —</option>' +
+    produkList.map(p => `<option value="${esc(p)}">${esc(p)}</option>`).join('');
+
+  openModal('modalDeal');
+}
+
+async function confirmDeal() {
+  if (!_dealKolId) return;
+
+  const toko   = document.getElementById('dealToko').value.trim();
+  const produk = document.getElementById('dealProduk').value.trim();
+
+  if (!toko)   { toast('Pilih toko terlebih dahulu!', 'error'); return; }
+  if (!produk) { toast('Pilih produk terlebih dahulu!', 'error'); return; }
+
+  const k = DB.kols.find(x => x.id === _dealKolId);
+  if (!k) return;
+
+  // Pastikan tipe = kol (bukan affiliator)
+  const idx = DB.kols.findIndex(x => x.id === _dealKolId);
+  if (idx >= 0) DB.kols[idx].kolType = 'kol';
+  _sb.from('kols').update({ kol_type: 'kol' }).eq('id', _dealKolId).then(() => {});
+
+  // Update status ke deal
+  DB.updateStatus(_dealKolId, 'deal', `Deal dikonfirmasi dari QC — Toko: ${toko}, Produk: ${produk}`);
+
+  // Simpan toko & produk ke kol_listing
+  try {
+    const { data: { user } } = await _sb.auth.getUser();
+    const existing = (typeof listingCache !== 'undefined') ? (listingCache[_dealKolId] || {}) : {};
+    const qcRec    = qcCache[_dealKolId];
+    const kolRec   = DB.kols.find(x => x.id === _dealKolId);
+
+    const ratecard = existing.ratecard > 0 ? existing.ratecard
+      : (qcRec?.rekomendasiRatecard > 0 ? qcRec.rekomendasiRatecard : (kolRec?.ratecard || 0));
+
+    const record = {
+      ...existing,
+      id:         existing.id || uid(),
+      kol_id:     _dealKolId,
+      user_id:    user.id,
+      toko,
+      produk,
+      ratecard,
+      updated_at: new Date().toISOString(),
+    };
+    if (!existing.id) record.created_at = new Date().toISOString();
+
+    if (typeof listingCache !== 'undefined') listingCache[_dealKolId] = record;
+    await _sb.from('kol_listing').upsert(record);
+  } catch(e) {
+    console.error('Gagal simpan toko/produk ke listing:', e.message);
+  }
+
+  closeModal('modalDeal');
+  toast(`${k.name} ditandai Deal ✓ — Toko: ${toko} · Produk: ${produk}`, 'success', 5000);
   renderQCTable();
 }
 

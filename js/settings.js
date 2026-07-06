@@ -4,6 +4,8 @@ function initSettings() {
   document.getElementById('setBrandName').value        = s.brandName        || '';
   document.getElementById('setDefaultProduct').value   = s.defaultProduct   || '';
   document.getElementById('setDefaultCommission').value= s.defaultCommission|| '10';
+  document.getElementById('setTokoList').value         = (s.tokoList   || []).join(', ');
+  document.getElementById('setProdukList').value       = (s.produkList || []).join(', ');
   document.getElementById('setRapidApiKey').value      = localStorage.getItem('kol_rapidapi_key') || '';
   document.getElementById('setRapidApiHost').value     = localStorage.getItem('kol_rapidapi_host') || 'tiktok-scraper2.p.rapidapi.com';
   document.getElementById('setCpmSangatBagus').value   = s.cpmSangatBagus   ?? 20000;
@@ -15,10 +17,15 @@ function initSettings() {
 }
 
 function saveSettings() {
+  const parseList = id => document.getElementById(id).value
+    .split(',').map(s => s.trim()).filter(Boolean);
+
   DB.settings = {
     brandName:         document.getElementById('setBrandName').value.trim(),
     defaultProduct:    document.getElementById('setDefaultProduct').value.trim(),
     defaultCommission: document.getElementById('setDefaultCommission').value.trim(),
+    tokoList:          parseList('setTokoList'),
+    produkList:        parseList('setProdukList'),
     cpmSangatBagus:    parseFloat(document.getElementById('setCpmSangatBagus').value) || 20000,
     cpmBagus:          parseFloat(document.getElementById('setCpmBagus').value)        || 30000,
     cpmPerlu:          parseFloat(document.getElementById('setCpmPerlu').value)        || 40000,
