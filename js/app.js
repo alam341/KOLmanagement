@@ -149,6 +149,7 @@ function injectNavIcons() {
     'navicon-listing':   'clipboard-list',
     'navicon-affiliator':'users',
     'navicon-priority':  'star',
+    'navicon-content_performance': 'trending-up',
     'navicon-templates': 'message-square',
     'navicon-settings':  'settings',
     'navicon-users':     'shield',
