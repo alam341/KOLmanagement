@@ -502,6 +502,21 @@
     </div>
   </div>
 
+  <!-- ===== PAGE: CONTENT PERFORMANCE ===== -->
+  <div class="page" id="page-content_performance">
+    <div class="stats-grid" id="cpStats"></div>
+    <div class="toolbar" style="margin-bottom:16px;">
+      <input class="search-box" id="cpSearch" placeholder="🔍 Cari nama, username..." oninput="renderCPPage()" style="max-width:260px;">
+      <select class="filter-select" id="cpFilterToko" onchange="cpFilterToko()">
+        <option value="">🏪 Semua Toko</option>
+      </select>
+      <select class="filter-select" id="cpFilterProduk" onchange="renderCPPage()">
+        <option value="">📦 Semua Produk</option>
+      </select>
+    </div>
+    <div id="cpGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;"></div>
+  </div>
+
 </div><!-- /main -->
 
 <!-- ===== MODAL: TAMBAH USER ===== -->
@@ -927,21 +942,6 @@
       <button class="btn btn-primary" onclick="saveQC()">💾 Simpan QC</button>
     </div>
   </div>
-</div>
-
-<!-- ===== PAGE: CONTENT PERFORMANCE ===== -->
-<div class="page" id="page-content_performance">
-  <div class="stats-grid" id="cpStats"></div>
-  <div class="toolbar" style="margin-bottom:16px;">
-    <input class="search-box" id="cpSearch" placeholder="🔍 Cari nama, username..." oninput="renderCPPage()" style="max-width:260px;">
-    <select class="filter-select" id="cpFilterToko" onchange="cpFilterToko()">
-      <option value="">🏪 Semua Toko</option>
-    </select>
-    <select class="filter-select" id="cpFilterProduk" onchange="renderCPPage()">
-      <option value="">📦 Semua Produk</option>
-    </select>
-  </div>
-  <div id="cpGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;"></div>
 </div>
 
 <!-- ===== MODAL: CONTENT PERFORMANCE DETAIL ===== -->
