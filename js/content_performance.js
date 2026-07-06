@@ -358,6 +358,43 @@ function renderCPModalTable(kolId) {
   }).join('');
 }
 
+// ===== FETCH MANUAL =====
+async function fetchViewsNow() {
+  if (!cpModalKolId) return;
+  const btn = document.getElementById('btnFetchNow');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Mengambil views...'; }
+
+  try {
+    const { data: { session } } = await _sb.auth.getSession();
+    if (!session) throw new Error('Session tidak ditemukan');
+
+    const baseUrl = window.location.origin;
+    const res = await fetch(`${baseUrl}/api/fetch-single?kolId=${cpModalKolId}`, {
+      headers: { 'Authorization': `Bearer ${session.access_token}` }
+    });
+    const json = await res.json();
+
+    if (!res.ok) throw new Error(json.error || 'Gagal fetch');
+
+    if (json.alreadyFetched) {
+      toast(`Hari ke-${json.dayNumber} sudah difetch sebelumnya (${Number(json.views).toLocaleString('id-ID')} views)`, 'success', 4000);
+    } else {
+      toast(`✓ Views hari ke-${json.dayNumber}: ${Number(json.views).toLocaleString('id-ID')}`, 'success', 4000);
+    }
+
+    // Reload data & refresh modal
+    await loadViewsLog();
+    renderCPModalChart(cpModalKolId);
+    renderCPModalTable(cpModalKolId);
+    renderCPPage();
+
+  } catch(e) {
+    toast('Gagal: ' + e.message, 'error', 6000);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '📡 Fetch Views Sekarang'; }
+  }
+}
+
 // ===== HELPER =====
 function calcDayNumber(uploadDate) {
   const upload = new Date(uploadDate);
