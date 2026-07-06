@@ -248,10 +248,6 @@ function renderListingTable(dealKols) {
       <td style="padding:8px;text-align:center;">
         ${videosBadge(k.id)}
       </td>
-      <td style="padding:8px;">
-        <input class="listing-input" type="text" value="${esc(rec.kode_boost||'')}" placeholder="Kode boost..."
-          onchange="updateListingField('${k.id}','kode_boost',this.value)" style="width:130px;">
-      </td>
       <td style="padding:8px;text-align:center;">
         ${evalBadge(rec, k.id)}
       </td>
@@ -289,8 +285,7 @@ function renderListingTable(dealKols) {
             <th style="padding:10px 8px;text-align:center;white-space:nowrap;font-size:12px;color:var(--muted);font-weight:600;">🎵<br>Upload TT</th>
             <th style="padding:10px 8px;text-align:center;white-space:nowrap;font-size:12px;color:var(--muted);font-weight:600;">☁️<br>Upload Drive</th>
             <th style="padding:10px 8px;text-align:left;white-space:nowrap;font-size:12px;color:var(--muted);font-weight:600;">Catatan</th>
-            <th style="padding:10px 8px;text-align:center;white-space:nowrap;font-size:12px;color:var(--muted);font-weight:600;">📹 Video</th>
-            <th style="padding:10px 8px;text-align:left;white-space:nowrap;font-size:12px;color:var(--muted);font-weight:600;">Kode Boost Ads</th>
+            <th style="padding:10px 8px;text-align:center;white-space:nowrap;font-size:12px;color:var(--muted);font-weight:600;">📹 Video &amp; Kode Boost</th>
             <th style="padding:10px 8px;text-align:center;white-space:nowrap;font-size:12px;color:var(--muted);font-weight:600;">${icon('star',12)} Evaluasi</th>
             <th style="padding:10px 8px;text-align:center;white-space:nowrap;font-size:12px;color:var(--muted);font-weight:600;">Hapus</th>
           </tr>
@@ -300,7 +295,7 @@ function renderListingTable(dealKols) {
           <tr style="background:var(--bg3);border-top:2px solid var(--border);">
             <td colspan="1" style="padding:10px 8px;font-size:12px;color:var(--muted);font-weight:600;">TOTAL</td>
             <td style="padding:10px 8px;font-weight:700;color:var(--accent);">Rp${totalEndors.toLocaleString('id-ID')}</td>
-            <td colspan="13"></td>
+            <td colspan="12"></td>
           </tr>
         </tfoot>
       </table>
