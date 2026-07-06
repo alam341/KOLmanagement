@@ -470,9 +470,11 @@ function openVideosModal(kolId) {
   const li = document.getElementById('newVideoLink');
   const ji = document.getElementById('newVideoJudul');
   const di = document.getElementById('newVideoDate');
+  const ki = document.getElementById('newVideoKodeBoost');
   if (li) li.value = '';
   if (ji) ji.value = '';
   if (di) di.value = '';
+  if (ki) ki.value = '';
   openModal('modalVideos');
 }
 
@@ -498,6 +500,12 @@ function renderVideosList(kolId) {
         ${v.upload_date ? `<div style="font-size:11px;color:var(--muted);margin-top:3px;">
           📅 ${new Date(v.upload_date).toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'})}
         </div>` : ''}
+        <div style="margin-top:6px;display:flex;align-items:center;gap:6px;">
+          <span style="font-size:11px;color:var(--muted);flex-shrink:0;">🚀 Kode Boost:</span>
+          <input type="text" value="${esc(v.kode_boost||'')}" placeholder="Belum diisi..."
+            onchange="updateVideoKodeBoost('${v.id}','${kolId}',this.value)"
+            style="font-size:11px;padding:2px 6px;border:1px solid var(--border);border-radius:4px;background:var(--bg2);color:var(--text);width:140px;">
+        </div>
       </div>
       <button onclick="deleteKolVideo('${v.id}','${kolId}')"
         style="flex-shrink:0;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:var(--red);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:13px;" title="Hapus">🗑</button>
@@ -507,13 +515,15 @@ function renderVideosList(kolId) {
 
 async function addKolVideo() {
   const kolId      = videosModalKolId;
-  const linkInput  = document.getElementById('newVideoLink');
-  const judulInput = document.getElementById('newVideoJudul');
-  const dateInput  = document.getElementById('newVideoDate');
+  const linkInput      = document.getElementById('newVideoLink');
+  const judulInput     = document.getElementById('newVideoJudul');
+  const dateInput      = document.getElementById('newVideoDate');
+  const kodeBoostInput = document.getElementById('newVideoKodeBoost');
 
-  const link  = linkInput?.value.trim();
-  const judul = judulInput?.value.trim();
-  const date  = dateInput?.value;
+  const link      = linkInput?.value.trim();
+  const judul     = judulInput?.value.trim();
+  const date      = dateInput?.value;
+  const kodeBoost = kodeBoostInput?.value.trim();
 
   if (!link) { toast('Link video wajib diisi', 'error'); return; }
 
@@ -526,6 +536,7 @@ async function addKolVideo() {
       link_video:  link,
       upload_date: date ? new Date(date).toISOString() : null,
       judul:       judul || null,
+      kode_boost:  kodeBoost || null,
       created_at:  new Date().toISOString(),
     };
 
@@ -535,9 +546,10 @@ async function addKolVideo() {
     if (!kolVideosCache[kolId]) kolVideosCache[kolId] = [];
     kolVideosCache[kolId].push(row);
 
-    if (linkInput)  linkInput.value  = '';
-    if (judulInput) judulInput.value = '';
-    if (dateInput)  dateInput.value  = '';
+    if (linkInput)      linkInput.value      = '';
+    if (judulInput)     judulInput.value     = '';
+    if (dateInput)      dateInput.value      = '';
+    if (kodeBoostInput) kodeBoostInput.value = '';
 
     renderVideosList(kolId);
     renderListingTable();
@@ -559,5 +571,20 @@ async function deleteKolVideo(videoId, kolId) {
     toast('Video dihapus.', 'success');
   } catch(e) {
     toast('Gagal hapus: ' + e.message, 'error');
+  }
+}
+
+async function updateVideoKodeBoost(videoId, kolId, value) {
+  try {
+    const { error } = await _sb.from('kol_videos').update({ kode_boost: value || null }).eq('id', videoId);
+    if (error) throw error;
+
+    const vids = kolVideosCache[kolId] || [];
+    const vid  = vids.find(v => v.id === videoId);
+    if (vid) vid.kode_boost = value || null;
+
+    toast('Kode boost disimpan!', 'success');
+  } catch(e) {
+    toast('Gagal simpan kode boost: ' + e.message, 'error');
   }
 }
