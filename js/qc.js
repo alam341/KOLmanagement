@@ -176,16 +176,24 @@ function openDealModal(kolId) {
   document.getElementById('dealKolName').textContent = k.name;
 
   // Populate Toko dropdown
-  const tokoSel = document.getElementById('dealToko');
-  const tokoList = (DB.settings.tokoList || []);
-  tokoSel.innerHTML = '<option value="">— Pilih Toko —</option>' +
-    tokoList.map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join('');
+  const tokoSel  = document.getElementById('dealToko');
+  const tokoList = DB.tokoList;
+  if (!tokoList.length) {
+    tokoSel.innerHTML = '<option value="">— Belum ada toko (isi di Pengaturan) —</option>';
+  } else {
+    tokoSel.innerHTML = '<option value="">— Pilih Toko —</option>' +
+      tokoList.map(t => `<option value="${esc(t.name)}">${esc(t.name)}</option>`).join('');
+  }
 
   // Populate Produk dropdown
-  const produkSel = document.getElementById('dealProduk');
-  const produkList = (DB.settings.produkList || []);
-  produkSel.innerHTML = '<option value="">— Pilih Produk —</option>' +
-    produkList.map(p => `<option value="${esc(p)}">${esc(p)}</option>`).join('');
+  const produkSel  = document.getElementById('dealProduk');
+  const produkList = DB.produkList;
+  if (!produkList.length) {
+    produkSel.innerHTML = '<option value="">— Belum ada produk (isi di Pengaturan) —</option>';
+  } else {
+    produkSel.innerHTML = '<option value="">— Pilih Produk —</option>' +
+      produkList.map(p => `<option value="${esc(p.name)}">${esc(p.name)}</option>`).join('');
+  }
 
   openModal('modalDeal');
 }

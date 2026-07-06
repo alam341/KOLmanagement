@@ -10,14 +10,16 @@ function nowWIB() {
 }
 
 const DB = {
-  _data: { kols: null, templates: null, history: null, settings: null },
+  _data: { kols: null, templates: null, history: null, settings: null, masterData: null },
   _userId: null,
 
   // ===== SYNC GETTERS =====
   get kols()      { return this._data.kols      ?? []; },
   get templates() { return this._data.templates ?? []; },
   get history()   { return this._data.history   ?? []; },
-  get settings()  { return this._data.settings  ?? { brandName:'', defaultProduct:'', defaultCommission:'10', tokoList:[], produkList:[], cpmSangatBagus:20000, cpmBagus:30000, cpmPerlu:40000, cpmBuruk:60000 }; },
+  get settings()  { return this._data.settings  ?? { brandName:'', defaultProduct:'', defaultCommission:'10', cpmSangatBagus:20000, cpmBagus:30000, cpmPerlu:40000, cpmBuruk:60000 }; },
+  get tokoList()   { return (this._data.masterData || []).filter(r => r.type === 'toko'); },
+  get produkList() { return (this._data.masterData || []).filter(r => r.type === 'produk'); },
 
   // ===== SYNC SETTERS (+ async flush) =====
   set kols(v)     { this._data.kols      = v; this._flushKols(v); },
@@ -31,15 +33,17 @@ const DB = {
     this._userId = user.id;
 
     const settingsKey = `brand_settings_${this._userId}`;
-    const [allKols, tmplRes, histRes, setRes] = await Promise.all([
+    const [allKols, tmplRes, histRes, setRes, masterRes] = await Promise.all([
       this._fetchAllKols(),
       _sb.from('templates').select('*').eq('user_id', this._userId).order('created_at'),
       _sb.from('kol_history').select('*').eq('user_id', this._userId).order('created_at', { ascending: false }).limit(500),
       _sb.from('app_settings').select('*').eq('key', settingsKey).maybeSingle(),
+      _sb.from('kol_master').select('*').order('created_at'),
     ]);
-    this._data.kols      = allKols.map(fromDbRow);
-    this._data.history   = (histRes.data  || []).map(fromHistoryRow);
-    this._data.settings  = setRes.data?.value   ?? { brandName:'', defaultProduct:'', defaultCommission:'10' };
+    this._data.kols       = allKols.map(fromDbRow);
+    this._data.history    = (histRes.data   || []).map(fromHistoryRow);
+    this._data.settings   = setRes.data?.value ?? { brandName:'', defaultProduct:'', defaultCommission:'10' };
+    this._data.masterData = masterRes.data  || [];
 
     // Load templates: Supabase → localStorage backup → default
     if (tmplRes.data?.length) {
@@ -154,6 +158,25 @@ const DB = {
     this._data.history = [];
     _sb.from('kol_history').delete().eq('user_id', this._userId)
       .then(({ error }) => { if (error) toast('Sync error: '+error.message,'error'); });
+  },
+
+  // ===== MASTER DATA (Toko & Produk — shared, admin-managed) =====
+  async addMaster(type, name) {
+    const row = { id: uid(), type, name, created_at: nowWIB() };
+    const { error } = await _sb.from('kol_master').insert(row);
+    if (error) throw error;
+    this._data.masterData = [...(this._data.masterData || []), row];
+  },
+
+  async deleteMaster(id) {
+    const { error } = await _sb.from('kol_master').delete().eq('id', id);
+    if (error) throw error;
+    this._data.masterData = (this._data.masterData || []).filter(r => r.id !== id);
+  },
+
+  async reloadMaster() {
+    const { data, error } = await _sb.from('kol_master').select('*').order('created_at');
+    if (!error) this._data.masterData = data || [];
   },
 
   // ===== PRIVATE ASYNC WRITERS =====
