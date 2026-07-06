@@ -395,7 +395,10 @@ async function fetchViewsNow() {
     if (dayNum > 28) { toast('Sudah melewati 28 hari tracking', 'error'); return; }
 
     // Panggil API untuk resolve URL + fetch views
+    const k = DB.kols.find(x => x.id === cpModalKolId);
+    const tiktokUsername = (k?.tiktok || '').replace('@', '').trim();
     const params = new URLSearchParams({ videoUrl: rec.link_video, uploadDate: uploadDate });
+    if (tiktokUsername) params.set('username', tiktokUsername);
     const res = await fetch(`${window.location.origin}/api/fetch-single?${params}`, {
       headers: { 'x-rapidapi-key': apiKey, 'x-rapidapi-host': apiHost }
     });
