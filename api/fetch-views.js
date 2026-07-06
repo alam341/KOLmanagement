@@ -180,10 +180,10 @@ module.exports = async function handler(req, res) {
       for (const s of allSettings) {
         const userId = s.key.replace('brand_settings_', '');
         debugResults.steps.push(`user: ${userId}, hasApiKey: ${!!s.value?.rapidApiKey}`);
-        const listings = await sbGet(`kol_listing?user_id=eq.${userId}&link_video=not.is.null&upload_date=not.is.null&select=id,kol_id`);
-        debugResults.steps.push(`listings with link+date: ${listings.length}`);
-        const allListings = await sbGet(`kol_listing?user_id=eq.${userId}&select=id,kol_id,link_video,upload_date&limit=5`);
-        debugResults.steps.push(`sample listings: ${JSON.stringify(allListings.map(l=>({kol_id:l.kol_id,has_link:!!l.link_video,has_date:!!l.upload_date})))}`);
+        const listings = await sbGet(`kol_videos?user_id=eq.${userId}&upload_date=not.is.null&select=id,kol_id`);
+        debugResults.steps.push(`kol_videos with date: ${listings.length}`);
+        const allListings = await sbGet(`kol_videos?user_id=eq.${userId}&select=id,kol_id,link_video,upload_date&limit=5`);
+        debugResults.steps.push(`sample kol_videos: ${JSON.stringify(allListings.map(l=>({kol_id:l.kol_id,has_link:!!l.link_video,has_date:!!l.upload_date})))}`);
       }
     } catch(e) {
       debugResults.errors.push(e.message);
@@ -237,11 +237,11 @@ module.exports = async function handler(req, res) {
       if (!apiKey) { step(`userId ${userId}: no apiKey, skip`); continue; }
       step(`userId ${userId}: has apiKey, host=${apiHost}`);
 
-      // 2. Ambil listing + username TikTok dari kols
+      // 2. Ambil kol_videos user ini yang punya upload_date
       const listings = await sbGet(
-        `kol_listing?user_id=eq.${userId}&link_video=not.is.null&upload_date=not.is.null&select=id,kol_id,link_video,upload_date`
+        `kol_videos?user_id=eq.${userId}&upload_date=not.is.null&select=id,kol_id,link_video,upload_date`
       );
-      step(`listings found: ${listings.length}`);
+      step(`kol_videos found: ${listings.length}`);
       const kolIds = listings.map(l => l.kol_id).filter(Boolean);
       let kolUsernameMap = {};
       if (kolIds.length) {
@@ -262,7 +262,7 @@ module.exports = async function handler(req, res) {
 
         // Cek apakah hari ini sudah di-fetch untuk day_number ini
         const existing = await sbGet(
-          `kol_views_log?kol_id=eq.${listing.kol_id}&user_id=eq.${userId}&day_number=eq.${dayNumber}`
+          `kol_views_log?video_id=eq.${listing.id}&user_id=eq.${userId}&day_number=eq.${dayNumber}`
         );
         if (existing.length > 0) { results.skipped++; continue; }
 
@@ -275,6 +275,7 @@ module.exports = async function handler(req, res) {
           await sbInsert('kol_views_log', {
             id:         randomUUID(),
             kol_id:     listing.kol_id,
+            video_id:   listing.id,
             user_id:    userId,
             views,
             day_number: dayNumber,
