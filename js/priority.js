@@ -115,13 +115,74 @@ function renderPriorityPage() {
           ${resultLabel ? `<span style="margin-left:4px;">${resultLabel}</span>` : ''}
         </div>
         <div style="display:flex;gap:6px;">
-          <button class="btn btn-primary btn-sm" onclick="openSend('${k.id}')" title="Hubungi KOL">${icon('send',13)} Hubungi</button>
+          <button class="btn btn-primary btn-sm" onclick="openRereachModal('${k.id}')" title="Hubungi Ulang">${icon('send',13)} Hubungi</button>
           <button class="btn btn-outline btn-sm" onclick="openEvalModal('${k.id}')" title="Edit Evaluasi">${icon('pencil',13)}</button>
           <button class="btn btn-danger btn-sm" onclick="demotePriority('${k.id}','${esc(k.name)}')" title="Hapus dari Prioritas">${icon('star',13)}</button>
         </div>
       </div>
     </div>`;
   }).join('');
+}
+
+// ===== MODAL HUBUNGI ULANG =====
+let _rereachKolId = null;
+
+function openRereachModal(kolId) {
+  const k = DB.kols.find(x => x.id === kolId);
+  if (!k) return;
+  _rereachKolId = kolId;
+
+  document.getElementById('rereachKolName').textContent = k.name;
+  document.getElementById('rereachKolContact').innerHTML = [
+    k.wa     ? `<span style="font-size:12px;color:var(--green);">📱 ${esc(k.wa)}</span>` : '',
+    k.tiktok ? `<span style="font-size:12px;color:var(--accent2);">🎵 @${esc(k.tiktok.replace('@',''))}</span>` : '',
+  ].filter(Boolean).join('<span style="color:var(--muted);margin:0 6px;">·</span>');
+
+  const tmpls = DB.templates.filter(t => (t.category||'outreach') === 'reengagement');
+  const tabsEl = document.getElementById('rereachTemplateTabs');
+  const preview = document.getElementById('rereachMsgPreview');
+
+  if (!tmpls.length) {
+    tabsEl.innerHTML = '<div style="font-size:12px;color:var(--muted);">Belum ada template Re-Engagement. Buat di halaman <strong>Template Pesan</strong> dengan kategori ⭐ Re-Engagement.</div>';
+    preview.value = '';
+  } else {
+    tabsEl.innerHTML = tmpls.map((t,i) =>
+      `<button class="tmpl-pill ${i===0?'active':''}" onclick="selectRereachTmpl(this,'${t.id}')">${esc(t.name)}</button>`
+    ).join('');
+    preview.value = fillTemplate(tmpls[0].body, k);
+  }
+
+  document.getElementById('btnRereachWA').style.display = k.platform === 'tiktok' ? 'none' : '';
+  document.getElementById('btnRereachTT').style.display = k.platform === 'wa' ? 'none' : '';
+  openModal('modal-rereach');
+}
+
+function selectRereachTmpl(el, tmplId) {
+  document.querySelectorAll('#rereachTemplateTabs .tmpl-pill').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  const tmpl = DB.templates.find(t => t.id === tmplId);
+  const kol  = DB.kols.find(k => k.id === _rereachKolId);
+  if (tmpl && kol) document.getElementById('rereachMsgPreview').value = fillTemplate(tmpl.body, kol);
+}
+
+function doRereachWA() {
+  const k = DB.kols.find(x => x.id === _rereachKolId);
+  if (!k?.wa) { toast('Nomor WA tidak ada!', 'error'); return; }
+  const msg = encodeURIComponent(document.getElementById('rereachMsgPreview').value);
+  window.open(`https://wa.me/${k.wa.replace(/\D/g,'')}?text=${msg}`, '_blank');
+}
+
+function doRereachTT() {
+  const k = DB.kols.find(x => x.id === _rereachKolId);
+  if (!k?.tiktok) { toast('Username TikTok tidak ada!', 'error'); return; }
+  navigator.clipboard.writeText(document.getElementById('rereachMsgPreview').value);
+  window.open(`https://www.tiktok.com/${k.tiktok.startsWith('@')?k.tiktok:'@'+k.tiktok}`, '_blank');
+  toast('TikTok dibuka, pesan di-copy — paste di DM!', 'info');
+}
+
+function copyRereachMsg() {
+  navigator.clipboard.writeText(document.getElementById('rereachMsgPreview').value)
+    .then(() => toast('Pesan di-copy!', 'success'));
 }
 
 async function demotePriority(kolId, kolName) {

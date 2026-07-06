@@ -173,7 +173,7 @@ const DB = {
     if (!tmpls.length) return;
     // Selalu simpan ke localStorage dulu sebagai backup
     localStorage.setItem('kol_templates', JSON.stringify(tmpls));
-    const rows = tmpls.map(t => ({ id: t.id, name: t.name, platform: t.platform, body: t.body, user_id: this._userId }));
+    const rows = tmpls.map(t => ({ id: t.id, name: t.name, platform: t.platform, body: t.body, category: t.category||'outreach', user_id: this._userId }));
     const { error } = await _sb.from('templates').upsert(rows);
     if (error) console.warn('Templates Supabase sync error (pakai localStorage backup):', error.message);
   },
@@ -187,13 +187,13 @@ const DB = {
   _defaultTemplates() {
     const u = this._userId ? this._userId.slice(0,8) : uid();
     return [
-      { id: `t1_${u}`, name: 'Pesan Pertama WA', platform: 'wa',
+      { id: `t1_${u}`, name: 'Pesan Pertama WA', platform: 'wa', category: 'outreach',
         body: `Halo Kak {nama}! 👋\n\nSaya dari tim {brand}. Saya melihat konten Kak {nama} di TikTok dan sangat tertarik dengan kontennya di niche {niche}! 🔥\n\nKami sedang mencari KOL/Affiliate untuk berkolaborasi mempromosikan *{produk}* kami.\n\nBenefit:\n✅ Komisi {komisi}% per penjualan\n✅ Free produk untuk review\n✅ Support konten & brief\n\nApakah Kakak tertarik? 🙏` },
-      { id: `t2_${u}`, name: 'DM TikTok Pertama', platform: 'tiktok',
+      { id: `t2_${u}`, name: 'DM TikTok Pertama', platform: 'tiktok', category: 'outreach',
         body: `Hiii Kak {nama}! 😊\n\nSuka banget sama kontennya!\n\nKami dari {brand} pengen ajak kolaborasi untuk promosi {produk}. Ada komisi {komisi}% & free produk buat Kak {nama}.\n\nBoleh DM balik atau WA kami? 🙏✨` },
-      { id: `t3_${u}`, name: 'Follow Up (3 Hari)', platform: 'both',
+      { id: `t3_${u}`, name: 'Follow Up (3 Hari)', platform: 'both', category: 'outreach',
         body: `Halo Kak {nama}! 😊\n\nMau follow up terkait kolaborasi {produk} dari {brand}.\n\nApakah sudah sempat membaca pesan kami? Kami sangat ingin berkolaborasi dengan Kak {nama}! 🙏` },
-      { id: `t4_${u}`, name: 'Pesan Deal / Closing', platform: 'both',
+      { id: `t4_${u}`, name: 'Pesan Deal / Closing', platform: 'both', category: 'outreach',
         body: `Halo Kak {nama}! 🎉\n\nSenang sekali Kakak tertarik berkolaborasi!\n\nDetail kerjasama:\n📦 Produk: {produk}\n💰 Komisi: {komisi}% per penjualan\n🎁 Free produk + materi konten\n\nLangkah selanjutnya:\n1. Kakak setuju → kami kirim brief & produk\n2. Buat konten (deadline: [tanggal])\n3. Upload & tag akun kami\n\nApakah Kakak setuju? 🙏` },
     ];
   },

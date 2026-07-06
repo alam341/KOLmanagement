@@ -406,7 +406,7 @@ function openSend(id) {
   if (!k) return;
   activeSendKOLId = id;
   document.getElementById('sendModalName').textContent = k.name;
-  const tmpls = DB.templates.filter(t => t.platform === k.platform || t.platform === 'both' || k.platform === 'both');
+  const tmpls = DB.templates.filter(t => (t.category||'outreach') === 'outreach' && (t.platform === k.platform || t.platform === 'both' || k.platform === 'both'));
   const tabsEl = document.getElementById('sendTemplateTabs');
   tabsEl.innerHTML = tmpls.map((t,i) =>
     `<button class="tmpl-pill ${i===0?'active':''}" onclick="selectSendTmpl(this,'${t.id}')">${esc(t.name)}</button>`
