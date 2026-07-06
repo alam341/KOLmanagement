@@ -358,6 +358,16 @@ body.light .btn-qc { background: rgba(8,145,178,.1); }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
 
+/* ===== TALENT PRIORITAS ===== */
+.priority-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px; }
+.priority-card { background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:18px;transition:border-color .15s,box-shadow .15s; }
+.priority-card:hover { border-color:var(--accent);box-shadow:0 4px 20px rgba(124,58,237,.12); }
+
+/* ===== EVALUASI MODAL ===== */
+.eval-result-btn { flex:1;padding:10px 8px;border-radius:10px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;text-align:center; }
+.eval-result-btn:hover { border-color:var(--accent);color:var(--accent); }
+.eval-result-btn.eval-result-active { border-color:var(--accent);background:rgba(124,58,237,.12);color:var(--accent);transform:scale(1.03); }
+
 /* ===== DATE RANGE PICKER ===== */
 .drp-trigger { display:flex;align-items:center;gap:7px;padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;white-space:nowrap; }
 .drp-trigger:hover { border-color:var(--accent); }
