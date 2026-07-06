@@ -361,28 +361,51 @@ function renderCPModalTable(kolId) {
 // ===== FETCH MANUAL =====
 async function fetchViewsNow() {
   if (!cpModalKolId) return;
+
+  const rec = (typeof listingCache !== 'undefined') ? listingCache[cpModalKolId] : null;
+  if (!rec?.link_video)  { toast('Link video belum diisi di Listing KOL', 'error'); return; }
+  if (!rec?.upload_date) { toast('Upload date tidak ada', 'error'); return; }
+
+  const apiKey  = localStorage.getItem('kol_rapidapi_key');
+  const apiHost = localStorage.getItem('kol_rapidapi_host') || 'tiktok-scraper7.p.rapidapi.com';
+  if (!apiKey) { toast('RapidAPI Key belum diisi di Pengaturan', 'error'); return; }
+
   const btn = document.getElementById('btnFetchNow');
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Mengambil views...'; }
 
   try {
-    const { data: { session } } = await _sb.auth.getSession();
-    if (!session) throw new Error('Session tidak ditemukan');
-
-    const baseUrl = window.location.origin;
-    const res = await fetch(`${baseUrl}/api/fetch-single?kolId=${cpModalKolId}`, {
-      headers: { 'Authorization': `Bearer ${session.access_token}` }
-    });
-    const json = await res.json();
-
-    if (!res.ok) throw new Error(json.error || 'Gagal fetch');
-
-    if (json.alreadyFetched) {
-      toast(`Hari ke-${json.dayNumber} sudah difetch sebelumnya (${Number(json.views).toLocaleString('id-ID')} views)`, 'success', 4000);
-    } else {
-      toast(`✓ Views hari ke-${json.dayNumber}: ${Number(json.views).toLocaleString('id-ID')}`, 'success', 4000);
+    // Cek sudah difetch hari ini
+    const dayNum  = calcDayNumber(rec.upload_date);
+    const already = (cpViewsLog[cpModalKolId] || []).find(l => l.day_number === dayNum);
+    if (already) {
+      toast(`Hari ke-${dayNum} sudah difetch (${Number(already.views).toLocaleString('id-ID')} views)`, 'success', 4000);
+      return;
     }
 
-    // Reload data & refresh modal
+    if (dayNum > 28) { toast('Sudah melewati 28 hari tracking', 'error'); return; }
+
+    // Panggil API untuk resolve URL + fetch views
+    const params = new URLSearchParams({ videoUrl: rec.link_video, uploadDate: rec.upload_date });
+    const res = await fetch(`${window.location.origin}/api/fetch-single?${params}`, {
+      headers: { 'x-rapidapi-key': apiKey, 'x-rapidapi-host': apiHost }
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error || 'Gagal fetch views');
+
+    // Save ke Supabase langsung dari client (pakai auth sendiri)
+    const { data: { user } } = await _sb.auth.getUser();
+    const { error } = await _sb.from('kol_views_log').insert({
+      kol_id:     cpModalKolId,
+      user_id:    user.id,
+      views:      json.views,
+      day_number: json.dayNumber,
+      fetched_at: new Date().toISOString(),
+    });
+    if (error) throw new Error('Gagal simpan ke database: ' + error.message);
+
+    toast(`✓ Views hari ke-${json.dayNumber}: ${Number(json.views).toLocaleString('id-ID')}`, 'success', 4000);
+
+    // Reload data & refresh
     await loadViewsLog();
     renderCPModalChart(cpModalKolId);
     renderCPModalTable(cpModalKolId);
