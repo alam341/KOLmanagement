@@ -14,7 +14,69 @@ function extractVideoId(url) {
   return m?.[1] || null;
 }
 
-async function fetchViews(videoUrl, apiKey, apiHost) {
+function extractUsername(url) {
+  const m = url.match(/tiktok\.com\/@([^/?]+)/);
+  return m?.[1] || null;
+}
+
+function extractViews(vid) {
+  return (
+    vid?.stats?.playCount       ??
+    vid?.statistics?.playCount  ??
+    vid?.statsV2?.playCount     ??
+    vid?.play_count             ??
+    vid?.playCount              ??
+    vid?.video?.play_count      ??
+    null
+  );
+}
+
+// Cari video dari user posts (untuk tiktok-scraper7 yang tidak punya endpoint video detail)
+async function fetchViewsFromUserPosts(videoId, username, apiKey, apiHost) {
+  const headers = { 'X-RapidAPI-Key': apiKey, 'X-RapidAPI-Host': apiHost };
+  let cursor = 0;
+  const maxPages = 5; // max 5 halaman (100 video)
+
+  for (let page = 0; page < maxPages; page++) {
+    let url;
+    if (apiHost.includes('tiktok-scraper7')) {
+      url = `https://${apiHost}/user/posts?unique_id=${encodeURIComponent(username)}&count=20&cursor=${cursor}`;
+    } else if (apiHost.includes('tiktok-api23')) {
+      url = `https://${apiHost}/api/user/posts?uniqueId=${encodeURIComponent(username)}&count=20&cursor=${cursor}`;
+    } else {
+      url = `https://${apiHost}/user/posts?username=${encodeURIComponent(username)}&count=20&cursor=${cursor}`;
+    }
+
+    const res = await fetch(url, { headers });
+    if (!res.ok) throw new Error(`HTTP ${res.status} dari user/posts`);
+    const json = await res.json();
+    if (json?.code !== undefined && json.code !== 0) throw new Error(json?.msg || 'Gagal ambil user posts');
+
+    const videos = json?.data?.videos || json?.data?.itemList || json?.data?.items || json?.data?.aweme_list || [];
+    if (!videos.length) break;
+
+    // Cari video dengan ID yang cocok
+    const found = videos.find(v => {
+      const id = v?.video_id || v?.id || v?.aweme_id || v?.videoId ||
+                 v?.video?.id || extractVideoId(v?.video?.play_addr?.url_list?.[0] || '');
+      return String(id) === String(videoId);
+    });
+
+    if (found) {
+      const views = extractViews(found);
+      if (views !== null) return Number(views);
+    }
+
+    // Cek apakah ada halaman berikutnya
+    const hasMore = json?.data?.hasMore ?? json?.data?.has_more ?? false;
+    if (!hasMore) break;
+    cursor = json?.data?.cursor || (cursor + 20);
+  }
+
+  return null;
+}
+
+async function fetchViews(videoUrl, username, apiKey, apiHost) {
   let fullUrl = videoUrl;
   if (videoUrl.includes('vt.tiktok.com') || videoUrl.includes('/t/')) {
     fullUrl = await resolveShortUrl(videoUrl);
@@ -23,53 +85,46 @@ async function fetchViews(videoUrl, apiKey, apiHost) {
   const videoId = extractVideoId(fullUrl);
   if (!videoId) throw new Error('Tidak bisa extract video ID dari URL: ' + fullUrl);
 
+  // Ambil username dari URL kalau tidak di-pass
+  const resolvedUsername = username || extractUsername(fullUrl);
+
   const headers = { 'X-RapidAPI-Key': apiKey, 'X-RapidAPI-Host': apiHost };
-  const endpoints = [
-    // tiktok-scraper7 (trailing slash)
-    `https://${apiHost}/video/info/?url=${encodeURIComponent(fullUrl)}`,
-    `https://${apiHost}/video/info/?id=${videoId}`,
-    // tiktok-api23 / umum
+
+  // Coba endpoint video detail langsung dulu
+  const directEndpoints = [
     `https://${apiHost}/api/video/detail?url=${encodeURIComponent(fullUrl)}`,
     `https://${apiHost}/video/info?url=${encodeURIComponent(fullUrl)}`,
     `https://${apiHost}/video/detail?id=${videoId}`,
   ];
 
-  const triedErrors = [];
-
-  for (const ep of endpoints) {
+  for (const ep of directEndpoints) {
     try {
       const res = await fetch(ep, { headers });
-      const text = await res.text();
-      let json;
-      try { json = JSON.parse(text); } catch {
-        triedErrors.push(`${ep} → HTTP ${res.status}: non-JSON response`);
-        continue;
-      }
-
-      if (!res.ok) {
-        triedErrors.push(`${ep} → HTTP ${res.status}: ${json?.message || json?.error || text.slice(0,100)}`);
-        continue;
-      }
-
+      if (!res.ok) continue;
+      const json = await res.json();
       const views =
+        json?.data?.play_count              ??
+        json?.data?.video?.play_count       ??
+        json?.data?.statistics?.play_count  ??
         json?.data?.statistics?.playCount   ??
         json?.data?.stats?.playCount        ??
         json?.data?.video?.stats?.playCount ??
         json?.itemInfo?.itemStruct?.stats?.playCount ??
-        json?.data?.play_count              ??
         json?.statistics?.playCount         ??
         json?.stats?.playCount              ??
         null;
-
       if (views !== null) return { views: Number(views), videoId };
-
-      triedErrors.push(`${ep} → HTTP ${res.status}: views field tidak ditemukan. Keys: ${JSON.stringify(Object.keys(json?.data || json || {}))}`);
-    } catch(e) {
-      triedErrors.push(`${ep} → Error: ${e.message}`);
-    }
+    } catch { continue; }
   }
 
-  throw new Error('Semua endpoint gagal:\n' + triedErrors.join('\n'));
+  // Fallback: cari dari user posts (tiktok-scraper7 style)
+  if (resolvedUsername) {
+    const views = await fetchViewsFromUserPosts(videoId, resolvedUsername, apiKey, apiHost);
+    if (views !== null) return { views, videoId };
+    throw new Error(`Video ID ${videoId} tidak ditemukan di 100 video terbaru @${resolvedUsername}`);
+  }
+
+  throw new Error('Gagal fetch views: tidak ada username dan endpoint direct gagal semua');
 }
 
 module.exports = async function handler(req, res) {
@@ -77,7 +132,7 @@ module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'content-type, x-rapidapi-key, x-rapidapi-host');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const { videoUrl, uploadDate } = req.query;
+  const { videoUrl, uploadDate, username } = req.query;
   if (!videoUrl) return res.status(400).json({ error: 'videoUrl required' });
 
   const apiKey  = req.headers['x-rapidapi-key'];
@@ -90,7 +145,7 @@ module.exports = async function handler(req, res) {
   if (dayNum > 28) return res.status(400).json({ error: 'Sudah melewati 28 hari tracking.' });
 
   try {
-    const { views, videoId } = await fetchViews(videoUrl, apiKey, apiHost);
+    const { views, videoId } = await fetchViews(videoUrl, username, apiKey, apiHost);
     return res.status(200).json({ ok: true, views, dayNumber: dayNum, videoId });
   } catch(e) {
     return res.status(500).json({ error: e.message, apiHost, tip: 'Cek RapidAPI key & host di Pengaturan' });
