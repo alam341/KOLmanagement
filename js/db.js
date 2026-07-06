@@ -162,7 +162,7 @@ const DB = {
 
   // ===== MASTER DATA (Toko & Produk — shared, admin-managed) =====
   async addMaster(type, name) {
-    const row = { id: uid(), type, name, created_at: nowWIB() };
+    const row = { id: crypto.randomUUID(), type, name, created_at: nowWIB() };
     const { error } = await _sb.from('kol_master').insert(row);
     if (error) throw error;
     this._data.masterData = [...(this._data.masterData || []), row];
