@@ -20,6 +20,7 @@ const DB = {
   get settings()  { return this._data.settings  ?? { brandName:'', defaultProduct:'', defaultCommission:'10', cpmSangatBagus:20000, cpmBagus:30000, cpmPerlu:40000, cpmBuruk:60000 }; },
   get tokoList()   { return (this._data.masterData || []).filter(r => r.type === 'toko'); },
   get produkList() { return (this._data.masterData || []).filter(r => r.type === 'produk'); },
+  produkByToko(tokoId) { return (this._data.masterData || []).filter(r => r.type === 'produk' && r.toko_id === tokoId); },
 
   // ===== SYNC SETTERS (+ async flush) =====
   set kols(v)     { this._data.kols      = v; this._flushKols(v); },
@@ -161,8 +162,8 @@ const DB = {
   },
 
   // ===== MASTER DATA (Toko & Produk — shared, admin-managed) =====
-  async addMaster(type, name) {
-    const row = { id: crypto.randomUUID(), type, name, created_at: nowWIB() };
+  async addMaster(type, name, tokoId = null) {
+    const row = { id: crypto.randomUUID(), type, name, toko_id: tokoId || null, created_at: nowWIB() };
     const { error } = await _sb.from('kol_master').insert(row);
     if (error) throw error;
     this._data.masterData = [...(this._data.masterData || []), row];

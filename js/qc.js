@@ -175,33 +175,50 @@ function openDealModal(kolId) {
 
   document.getElementById('dealKolName').textContent = k.name;
 
-  // Populate Toko dropdown
+  // Populate Toko dropdown (value = toko.id)
   const tokoSel  = document.getElementById('dealToko');
   const tokoList = DB.tokoList;
   if (!tokoList.length) {
     tokoSel.innerHTML = '<option value="">— Belum ada toko (isi di Pengaturan) —</option>';
   } else {
     tokoSel.innerHTML = '<option value="">— Pilih Toko —</option>' +
-      tokoList.map(t => `<option value="${esc(t.name)}">${esc(t.name)}</option>`).join('');
+      tokoList.map(t => `<option value="${t.id}">${esc(t.name)}</option>`).join('');
   }
 
-  // Populate Produk dropdown
-  const produkSel  = document.getElementById('dealProduk');
-  const produkList = DB.produkList;
+  // Reset produk (kosong dulu, diisi setelah toko dipilih)
+  const produkSel = document.getElementById('dealProduk');
+  produkSel.innerHTML = '<option value="">— Pilih toko dulu —</option>';
+  produkSel.disabled = true;
+
+  openModal('modalDeal');
+}
+
+function filterDealProduk() {
+  const tokoId    = document.getElementById('dealToko').value;
+  const produkSel = document.getElementById('dealProduk');
+
+  if (!tokoId) {
+    produkSel.innerHTML  = '<option value="">— Pilih toko dulu —</option>';
+    produkSel.disabled   = true;
+    return;
+  }
+
+  const produkList = DB.produkByToko(tokoId);
+  produkSel.disabled = false;
+
   if (!produkList.length) {
-    produkSel.innerHTML = '<option value="">— Belum ada produk (isi di Pengaturan) —</option>';
+    produkSel.innerHTML = '<option value="">— Belum ada produk untuk toko ini —</option>';
   } else {
     produkSel.innerHTML = '<option value="">— Pilih Produk —</option>' +
       produkList.map(p => `<option value="${esc(p.name)}">${esc(p.name)}</option>`).join('');
   }
-
-  openModal('modalDeal');
 }
 
 async function confirmDeal() {
   if (!_dealKolId) return;
 
-  const toko   = document.getElementById('dealToko').value.trim();
+  const tokoId = document.getElementById('dealToko').value;
+  const toko   = DB.tokoList.find(t => t.id === tokoId)?.name || '';
   const produk = document.getElementById('dealProduk').value.trim();
 
   if (!toko)   { toast('Pilih toko terlebih dahulu!', 'error'); return; }

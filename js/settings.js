@@ -25,76 +25,104 @@ async function renderMasterSection() {
   const tokoList   = DB.tokoList;
   const produkList = DB.produkList;
 
-  const renderList = (items, type) => {
-    if (!items.length) {
-      return `<div style="color:var(--muted);font-size:12px;padding:8px 0;">Belum ada ${type === 'toko' ? 'toko' : 'produk'} yang ditambahkan.</div>`;
-    }
-    return items.map(item => `
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;margin-bottom:6px;">
-        <span style="font-size:13px;font-weight:500;">${esc(item.name)}</span>
-        ${isAdmin ? `<button onclick="deleteMasterItem('${item.id}','${esc(item.name)}')" style="background:none;border:none;cursor:pointer;color:var(--muted);padding:2px 4px;line-height:1;" title="Hapus">${icon('trash-2',13)}</button>` : ''}
-      </div>
-    `).join('');
-  };
+  // Render setiap toko + produk-produknya di bawah
+  const tokoBlocks = tokoList.length
+    ? tokoList.map(toko => {
+        const produkToko = produkList.filter(p => p.toko_id === toko.id);
+        const produkItems = produkToko.length
+          ? produkToko.map(p => `
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 10px 5px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;margin-bottom:4px;">
+                <span style="font-size:12px;">📦 ${esc(p.name)}</span>
+                ${isAdmin ? `<button onclick="deleteMasterItem('${p.id}','${esc(p.name)}')" style="background:none;border:none;cursor:pointer;color:var(--muted);padding:2px 4px;line-height:1;" title="Hapus produk">${icon('x',12)}</button>` : ''}
+              </div>`).join('')
+          : `<div style="font-size:11px;color:var(--muted);padding:4px 0 4px 14px;">Belum ada produk</div>`;
 
-  const addRowHtml = (type, placeholder) => isAdmin ? `
-    <div style="display:flex;gap:8px;margin-top:8px;">
-      <input class="form-control" id="inputNew_${type}" placeholder="${placeholder}" style="flex:1;" onkeydown="if(event.key==='Enter')addMasterItem('${type}')">
-      <button class="btn btn-primary btn-sm" onclick="addMasterItem('${type}')">+ Tambah</button>
-    </div>
-  ` : '';
+        const addProdukHtml = isAdmin ? `
+          <div style="display:flex;gap:6px;margin-top:6px;padding-left:14px;">
+            <input class="form-control" id="inputProduk_${toko.id}" placeholder="Nama produk..." style="flex:1;font-size:12px;padding:5px 8px;"
+              onkeydown="if(event.key==='Enter')addProdukToToko('${toko.id}')">
+            <button class="btn btn-outline btn-sm" onclick="addProdukToToko('${toko.id}')" style="font-size:11px;white-space:nowrap;">+ Produk</button>
+          </div>` : '';
+
+        return `
+          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+              <span style="font-size:13px;font-weight:700;">🏪 ${esc(toko.name)}</span>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-size:11px;color:var(--muted);">${produkToko.length} produk</span>
+                ${isAdmin ? `<button onclick="deleteMasterItem('${toko.id}','${esc(toko.name)}','toko')" style="background:none;border:none;cursor:pointer;color:var(--muted);padding:2px 4px;line-height:1;" title="Hapus toko">${icon('trash-2',13)}</button>` : ''}
+              </div>
+            </div>
+            ${produkItems}
+            ${addProdukHtml}
+          </div>`;
+      }).join('')
+    : `<div style="color:var(--muted);font-size:12px;padding:8px 0;">Belum ada toko yang ditambahkan.</div>`;
+
+  const addTokoHtml = isAdmin ? `
+    <div style="display:flex;gap:8px;margin-top:4px;">
+      <input class="form-control" id="inputNew_toko" placeholder="Nama toko baru..." style="flex:1;"
+        onkeydown="if(event.key==='Enter')addMasterToko()">
+      <button class="btn btn-primary btn-sm" onclick="addMasterToko()">+ Tambah Toko</button>
+    </div>` : '';
 
   section.innerHTML = `
     <div style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.7;">
       ${isAdmin
-        ? 'Daftar ini digunakan oleh semua user saat menandai Deal di QC KOL.'
+        ? 'Tambah toko dulu, lalu tambahkan produk di bawah masing-masing toko.'
         : '<span style="background:rgba(6,182,212,.1);color:var(--accent2);border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700;">View Only</span> Hanya Admin yang bisa mengelola daftar ini.'}
     </div>
-    <div class="form-row" style="grid-template-columns:1fr 1fr;align-items:start;gap:24px;">
-      <div>
-        <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;">🏪 Toko (${tokoList.length})</div>
-        <div id="tokoListWrap">${renderList(tokoList, 'toko')}</div>
-        ${addRowHtml('toko', 'Nama toko baru...')}
-      </div>
-      <div>
-        <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;">📦 Produk (${produkList.length})</div>
-        <div id="produkListWrap">${renderList(produkList, 'produk')}</div>
-        ${addRowHtml('produk', 'Nama produk baru...')}
-      </div>
-    </div>
+    ${tokoBlocks}
+    ${addTokoHtml}
   `;
 }
 
-async function addMasterItem(type) {
-  const input = document.getElementById(`inputNew_${type}`);
+async function addMasterToko() {
+  const input = document.getElementById('inputNew_toko');
   const name  = input?.value.trim();
-  if (!name) { toast('Nama tidak boleh kosong!', 'error'); return; }
-
-  // Cek duplikat
-  const existing = type === 'toko' ? DB.tokoList : DB.produkList;
-  if (existing.some(x => x.name.toLowerCase() === name.toLowerCase())) {
-    toast(`"${name}" sudah ada di daftar!`, 'error'); return;
+  if (!name) { toast('Nama toko tidak boleh kosong!', 'error'); return; }
+  if (DB.tokoList.some(x => x.name.toLowerCase() === name.toLowerCase())) {
+    toast(`Toko "${name}" sudah ada!`, 'error'); return;
   }
-
   try {
-    await DB.addMaster(type, name);
+    await DB.addMaster('toko', name, null);
     if (input) input.value = '';
     await renderMasterSection();
-    toast(`${type === 'toko' ? 'Toko' : 'Produk'} "${name}" berhasil ditambahkan!`, 'success');
-  } catch(e) {
-    toast('Gagal: ' + e.message, 'error');
-  }
+    toast(`Toko "${name}" berhasil ditambahkan!`, 'success');
+  } catch(e) { toast('Gagal: ' + e.message, 'error'); }
 }
 
-async function deleteMasterItem(id, name) {
-  if (!confirm(`Hapus "${name}" dari daftar?`)) return;
+async function addProdukToToko(tokoId) {
+  const input = document.getElementById(`inputProduk_${tokoId}`);
+  const name  = input?.value.trim();
+  if (!name) { toast('Nama produk tidak boleh kosong!', 'error'); return; }
+  const existing = DB.produkList.filter(p => p.toko_id === tokoId);
+  if (existing.some(x => x.name.toLowerCase() === name.toLowerCase())) {
+    toast(`Produk "${name}" sudah ada di toko ini!`, 'error'); return;
+  }
   try {
+    await DB.addMaster('produk', name, tokoId);
+    if (input) input.value = '';
+    await renderMasterSection();
+    toast(`Produk "${name}" berhasil ditambahkan!`, 'success');
+  } catch(e) { toast('Gagal: ' + e.message, 'error'); }
+}
+
+async function deleteMasterItem(id, name, type) {
+  const label = type === 'toko'
+    ? `Hapus toko "${name}"?\n\nSemua produk di toko ini juga akan dihapus.`
+    : `Hapus produk "${name}"?`;
+  if (!confirm(label)) return;
+  try {
+    // Kalau hapus toko, hapus juga semua produknya
+    if (type === 'toko') {
+      const produkToko = DB.produkList.filter(p => p.toko_id === id);
+      for (const p of produkToko) await DB.deleteMaster(p.id);
+    }
     await DB.deleteMaster(id);
     await renderMasterSection();
     toast(`"${name}" dihapus.`, 'success');
-  } catch(e) {
-    toast('Gagal: ' + e.message, 'error');
-  }
+  } catch(e) { toast('Gagal: ' + e.message, 'error'); }
 }
 
 function saveSettings() {
