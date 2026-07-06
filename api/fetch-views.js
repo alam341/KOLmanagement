@@ -170,6 +170,27 @@ function calcDayNumber(uploadDate) {
 
 // ===== Main handler =====
 module.exports = async function handler(req, res) {
+  // Mode debug: ?debug=1&secret=... (jalankan logic tapi skip fetch RapidAPI)
+  if (req.query.debug === '1' && req.query.secret === CRON_SECRET) {
+    const debugResults = { steps: [], errors: [] };
+    try {
+      debugResults.steps.push('Fetching app_settings...');
+      const allSettings = await sbGet('app_settings?key=like.brand_settings_%&select=key,value');
+      debugResults.steps.push(`app_settings: ${allSettings.length} rows`);
+      for (const s of allSettings) {
+        const userId = s.key.replace('brand_settings_', '');
+        debugResults.steps.push(`user: ${userId}, hasApiKey: ${!!s.value?.rapidApiKey}`);
+        const listings = await sbGet(`kol_listing?user_id=eq.${userId}&link_video=not.is.null&upload_date=not.is.null&select=id,kol_id`);
+        debugResults.steps.push(`listings with link+date: ${listings.length}`);
+        const allListings = await sbGet(`kol_listing?user_id=eq.${userId}&select=id,kol_id,link_video,upload_date&limit=5`);
+        debugResults.steps.push(`sample listings: ${JSON.stringify(allListings.map(l=>({kol_id:l.kol_id,has_link:!!l.link_video,has_date:!!l.upload_date})))}`);
+      }
+    } catch(e) {
+      debugResults.errors.push(e.message);
+    }
+    return res.status(200).json(debugResults);
+  }
+
   // Mode test: ?test=1 (tanpa auth, untuk debug koneksi)
   if (req.query.test === '1') {
     const diag = {
