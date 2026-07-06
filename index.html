@@ -957,6 +957,7 @@
         <div><span style="color:var(--muted);font-size:11px;font-weight:700;text-transform:uppercase;">Toko</span><br><strong id="cpModalToko"></strong></div>
         <div><span style="color:var(--muted);font-size:11px;font-weight:700;text-transform:uppercase;">Produk</span><br><strong id="cpModalProduk"></strong></div>
         <div><span style="color:var(--muted);font-size:11px;font-weight:700;text-transform:uppercase;">Tgl Upload</span><br><strong id="cpModalUpload"></strong></div>
+        <div><span style="color:var(--muted);font-size:11px;font-weight:700;text-transform:uppercase;">Judul</span><br><strong id="cpModalJudul" style="font-style:italic;"></strong></div>
       </div>
 
       <div style="margin-bottom:20px;">
@@ -984,6 +985,38 @@
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('modalCP')">Tutup</button>
       <button class="btn btn-primary" id="btnFetchNow" onclick="fetchViewsNow()">📡 Fetch Views Sekarang</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: VIDEO MANAGEMENT ===== -->
+<div class="overlay" id="modalVideos">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-header">
+      <span class="modal-title">📹 Video — <span id="videosModalKolName" style="color:var(--accent2);"></span></span>
+      <button class="modal-close" onclick="closeModal('modalVideos')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="videosListWrap" style="margin-bottom:20px;max-height:300px;overflow-y:auto;"></div>
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:16px;">
+        <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:12px;">Tambah Video Baru</div>
+        <div class="form-group">
+          <label class="form-label">Link TikTok <span style="color:var(--red);">*</span></label>
+          <input id="newVideoLink" class="form-control" type="text" placeholder="https://www.tiktok.com/@user/video/... atau vt.tiktok.com/...">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Judul / Keterangan Video</label>
+          <input id="newVideoJudul" class="form-control" type="text" placeholder="Contoh: Review produk, Unboxing...">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tanggal Upload</label>
+          <input id="newVideoDate" class="form-control" type="date" style="max-width:200px;">
+        </div>
+        <button class="btn btn-primary" onclick="addKolVideo()" style="width:100%;">➕ Tambah Video</button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modalVideos')">Tutup</button>
     </div>
   </div>
 </div>
