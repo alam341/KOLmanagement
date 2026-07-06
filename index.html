@@ -48,6 +48,9 @@
     <button class="nav-item" data-page="priority" onclick="navigate('priority')">
       <span class="nav-icon" id="navicon-priority"></span> Talent Prioritas
     </button>
+    <button class="nav-item" data-page="content_performance" onclick="navigate('content_performance')">
+      <span class="nav-icon" id="navicon-content_performance"></span> Content Performance
+    </button>
     <div class="nav-section">Pengaturan</div>
     <button class="nav-item" data-page="templates" onclick="navigate('templates')">
       <span class="nav-icon" id="navicon-templates"></span> Template Pesan
@@ -926,6 +929,64 @@
   </div>
 </div>
 
+<!-- ===== PAGE: CONTENT PERFORMANCE ===== -->
+<div class="page" id="page-content_performance">
+  <div class="stats-grid" id="cpStats"></div>
+  <div class="toolbar" style="margin-bottom:16px;">
+    <input class="search-box" id="cpSearch" placeholder="🔍 Cari nama, username..." oninput="renderCPPage()" style="max-width:260px;">
+    <select class="filter-select" id="cpFilterToko" onchange="cpFilterToko()">
+      <option value="">🏪 Semua Toko</option>
+    </select>
+    <select class="filter-select" id="cpFilterProduk" onchange="renderCPPage()">
+      <option value="">📦 Semua Produk</option>
+    </select>
+  </div>
+  <div id="cpGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;"></div>
+</div>
+
+<!-- ===== MODAL: CONTENT PERFORMANCE DETAIL ===== -->
+<div class="overlay" id="modalCP">
+  <div class="modal modal-lg" style="max-width:680px;">
+    <div class="modal-header">
+      <span class="modal-title">📊 <span id="cpModalName"></span></span>
+      <button class="modal-close" onclick="closeModal('modalCP')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;gap:24px;flex-wrap:wrap;font-size:13px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin-bottom:16px;">
+        <div><span style="color:var(--muted);font-size:11px;font-weight:700;text-transform:uppercase;">TikTok</span><br><strong id="cpModalTiktok"></strong></div>
+        <div><span style="color:var(--muted);font-size:11px;font-weight:700;text-transform:uppercase;">Toko</span><br><strong id="cpModalToko"></strong></div>
+        <div><span style="color:var(--muted);font-size:11px;font-weight:700;text-transform:uppercase;">Produk</span><br><strong id="cpModalProduk"></strong></div>
+        <div><span style="color:var(--muted);font-size:11px;font-weight:700;text-transform:uppercase;">Tgl Upload</span><br><strong id="cpModalUpload"></strong></div>
+      </div>
+
+      <div style="margin-bottom:20px;">
+        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:8px;">
+          Views Growth · <span style="color:var(--accent2);">Harian</span> | <span style="color:#a855f7;">Mingguan</span>
+        </div>
+        <canvas id="cpModalChart" height="180"></canvas>
+      </div>
+
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:8px;">Riwayat Data</div>
+      <div style="overflow-x:auto;border:1px solid var(--border);border-radius:8px;">
+        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+          <thead>
+            <tr style="background:var(--bg3);">
+              <th style="padding:8px 12px;text-align:left;font-size:11px;color:var(--muted);font-weight:600;">Periode</th>
+              <th style="padding:8px 12px;text-align:left;font-size:11px;color:var(--muted);font-weight:600;">Views</th>
+              <th style="padding:8px 12px;text-align:left;font-size:11px;color:var(--muted);font-weight:600;">+/- dari Sebelumnya</th>
+              <th style="padding:8px 12px;text-align:left;font-size:11px;color:var(--muted);font-weight:600;">Difetch</th>
+            </tr>
+          </thead>
+          <tbody id="cpModalTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modalCP')">Tutup</button>
+    </div>
+  </div>
+</div>
+
 <!-- ===== MODAL: TANDAI DEAL ===== -->
 <div class="overlay" id="modalDeal">
   <div class="modal" style="max-width:440px;">
@@ -961,6 +1022,7 @@
 
 <div class="toast-wrap" id="toastWrap"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="js/supabase.js"></script>
 <script src="js/auth.js"></script>
@@ -977,6 +1039,7 @@
 <script src="js/templates.js"></script>
 <script src="js/settings.js"></script>
 <script src="js/users.js"></script>
+<script src="js/content_performance.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>
