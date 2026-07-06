@@ -45,6 +45,9 @@
     <button class="nav-item" data-page="affiliator" onclick="navigate('affiliator')">
       <span class="nav-icon" id="navicon-affiliator"></span> Listing Affiliator
     </button>
+    <button class="nav-item" data-page="priority" onclick="navigate('priority')">
+      <span class="nav-icon" id="navicon-priority"></span> Talent Prioritas
+    </button>
     <div class="nav-section">Pengaturan</div>
     <button class="nav-item" data-page="templates" onclick="navigate('templates')">
       <span class="nav-icon" id="navicon-templates"></span> Template Pesan
@@ -453,6 +456,20 @@
     </div>
   </div>
 
+  <!-- ===== PAGE: TALENT PRIORITAS ===== -->
+  <div class="page" id="page-priority">
+    <div class="stats-grid" id="priorityStats"></div>
+    <div class="toolbar">
+      <input class="search-box" id="prioritySearch" placeholder="🔍 Cari nama, username..." oninput="renderPriorityPage()" style="max-width:280px;">
+      <select class="filter-select" id="priorityFilter" onchange="renderPriorityPage()">
+        <option value="">Semua Talent</option>
+        <option value="kol">KOL</option>
+        <option value="affiliator">Affiliator</option>
+      </select>
+    </div>
+    <div id="priorityGrid" class="priority-grid"></div>
+  </div>
+
   <!-- ===== PAGE: USERS ===== -->
   <div class="page" id="page-users">
     <div class="table-wrap">
@@ -728,6 +745,49 @@
   </div>
 </div>
 
+<!-- ===== MODAL: EVALUASI KONTEN ===== -->
+<div class="overlay" id="modal-evaluasi">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-header">
+      <span class="modal-title">${icon('star',16)} Evaluasi Konten</span>
+      <button class="modal-close" onclick="closeModal('modal-evaluasi')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="evalKolId">
+      <div style="background:var(--bg3);border-radius:8px;padding:10px 14px;margin-bottom:16px;font-weight:700;font-size:14px;color:var(--text);" id="evalKolNameDisplay"></div>
+
+      <div class="form-group">
+        <label class="form-label">Views Aktual Konten</label>
+        <input class="form-control" type="number" id="evalViews" placeholder="Contoh: 250000">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Rating Konten</label>
+        <div id="evalStars" style="display:flex;gap:6px;font-size:28px;cursor:pointer;margin-top:4px;"></div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Catatan Evaluasi</label>
+        <textarea class="form-control" id="evalNotes" rows="2" placeholder="Konten tepat waktu, engagement bagus, dll..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Hasil Evaluasi</label>
+        <div style="display:flex;gap:8px;margin-top:6px;">
+          <button class="eval-result-btn" data-val="bagus"  onclick="setEvalResult('bagus')">✅ Bagus</button>
+          <button class="eval-result-btn" data-val="cukup"  onclick="setEvalResult('cukup')">⚡ Cukup</button>
+          <button class="eval-result-btn" data-val="kurang" onclick="setEvalResult('kurang')">❌ Kurang</button>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:8px;">Jika <strong>Bagus</strong> → otomatis masuk Talent Prioritas ⭐</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-evaluasi')">Batal</button>
+      <button class="btn btn-primary" onclick="saveEval()">${icon('save',14)} Simpan Evaluasi</button>
+    </div>
+  </div>
+</div>
+
 <!-- ===== MODAL: QC KOL ===== -->
 <div class="overlay" id="modalQC">
   <div class="modal modal-lg">
@@ -826,6 +886,7 @@
 <script src="js/qc.js"></script>
 <script src="js/listing.js"></script>
 <script src="js/listing_affiliator.js"></script>
+<script src="js/priority.js"></script>
 <script src="js/templates.js"></script>
 <script src="js/settings.js"></script>
 <script src="js/users.js"></script>
