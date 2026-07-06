@@ -11,9 +11,17 @@ const CP_DAY_LABELS = {
 };
 
 async function initContentPerformance() {
+  // Load listing data kalau belum (user belum buka Listing KOL)
+  if (typeof listingCache !== 'undefined' && Object.keys(listingCache).length === 0) {
+    await loadListingData();
+  }
   await loadViewsLog();
   renderCPFilters();
   renderCPPage();
+
+  // Debug info (hapus jika sudah stabil)
+  const hasVideo = DB.kols.filter(k => listingCache[k.id]?.link_video).length;
+  console.log('[CP] listingCache entries:', Object.keys(listingCache).length, '| KOL dgn link_video:', hasVideo, '| DB.kols:', DB.kols.length);
 }
 
 async function loadViewsLog() {
@@ -63,10 +71,10 @@ function renderCPPage() {
       produkList.map(p => `<option value="${esc(p.name)}" ${currentProduk===p.name?'selected':''}>${esc(p.name)}</option>`).join('');
   }
 
-  // Ambil KOL yang punya link_video
+  // Ambil KOL yang punya link_video (upload_date boleh null, fallback ke hari ini)
   let kols = DB.kols.filter(k => {
     const rec = (typeof listingCache !== 'undefined') ? listingCache[k.id] : null;
-    if (!rec?.link_video || !rec?.upload_date) return false;
+    if (!rec?.link_video) return false;
     if (filterToko   && rec.toko   !== filterToko)   return false;
     if (filterProduk && rec.produk !== filterProduk) return false;
     if (q && !k.name.toLowerCase().includes(q) && !(k.tiktok||'').toLowerCase().includes(q)) return false;
@@ -363,19 +371,21 @@ async function fetchViewsNow() {
   if (!cpModalKolId) return;
 
   const rec = (typeof listingCache !== 'undefined') ? listingCache[cpModalKolId] : null;
-  if (!rec?.link_video)  { toast('Link video belum diisi di Listing KOL', 'error'); return; }
-  if (!rec?.upload_date) { toast('Upload date tidak ada', 'error'); return; }
+  if (!rec?.link_video) { toast('Link video belum diisi di Listing KOL', 'error'); return; }
 
   const apiKey  = localStorage.getItem('kol_rapidapi_key');
   const apiHost = localStorage.getItem('kol_rapidapi_host') || 'tiktok-scraper7.p.rapidapi.com';
   if (!apiKey) { toast('RapidAPI Key belum diisi di Pengaturan', 'error'); return; }
+
+  // Jika upload_date tidak ada, anggap hari ini (hari ke-1)
+  const uploadDate = rec.upload_date || new Date().toISOString().split('T')[0];
 
   const btn = document.getElementById('btnFetchNow');
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Mengambil views...'; }
 
   try {
     // Cek sudah difetch hari ini
-    const dayNum  = calcDayNumber(rec.upload_date);
+    const dayNum  = calcDayNumber(uploadDate);
     const already = (cpViewsLog[cpModalKolId] || []).find(l => l.day_number === dayNum);
     if (already) {
       toast(`Hari ke-${dayNum} sudah difetch (${Number(already.views).toLocaleString('id-ID')} views)`, 'success', 4000);
@@ -385,7 +395,7 @@ async function fetchViewsNow() {
     if (dayNum > 28) { toast('Sudah melewati 28 hari tracking', 'error'); return; }
 
     // Panggil API untuk resolve URL + fetch views
-    const params = new URLSearchParams({ videoUrl: rec.link_video, uploadDate: rec.upload_date });
+    const params = new URLSearchParams({ videoUrl: rec.link_video, uploadDate: uploadDate });
     const res = await fetch(`${window.location.origin}/api/fetch-single?${params}`, {
       headers: { 'x-rapidapi-key': apiKey, 'x-rapidapi-host': apiHost }
     });
