@@ -55,25 +55,33 @@ async function fetchViewsFromUserPosts(videoId, username, apiKey, apiHost) {
     const videos = json?.data?.videos || json?.data?.itemList || json?.data?.items || json?.data?.aweme_list || [];
     if (!videos.length) break;
 
+    // Kumpulkan semua ID yang ada untuk debug
+    const foundIds = videos.map(v =>
+      v?.video_id || v?.id || v?.aweme_id || v?.videoId || v?.video?.id || '?'
+    );
+
     // Cari video dengan ID yang cocok
     const found = videos.find(v => {
-      const id = v?.video_id || v?.id || v?.aweme_id || v?.videoId ||
-                 v?.video?.id || extractVideoId(v?.video?.play_addr?.url_list?.[0] || '');
-      return String(id) === String(videoId);
+      const ids = [v?.video_id, v?.id, v?.aweme_id, v?.videoId, v?.video?.id]
+        .filter(Boolean).map(String);
+      return ids.includes(String(videoId));
     });
 
     if (found) {
       const views = extractViews(found);
-      if (views !== null) return Number(views);
+      if (views !== null) return { views: Number(views), foundIds };
     }
 
     // Cek apakah ada halaman berikutnya
     const hasMore = json?.data?.hasMore ?? json?.data?.has_more ?? false;
-    if (!hasMore) break;
+    if (!hasMore) {
+      // Return debug info supaya bisa diagnosa
+      return { views: null, foundIds, noMore: true };
+    }
     cursor = json?.data?.cursor || (cursor + 20);
   }
 
-  return null;
+  return { views: null, foundIds: [], noMore: false };
 }
 
 async function fetchViews(videoUrl, username, apiKey, apiHost) {
@@ -119,9 +127,11 @@ async function fetchViews(videoUrl, username, apiKey, apiHost) {
 
   // Fallback: cari dari user posts (tiktok-scraper7 style)
   if (resolvedUsername) {
-    const views = await fetchViewsFromUserPosts(videoId, resolvedUsername, apiKey, apiHost);
-    if (views !== null) return { views, videoId };
-    throw new Error(`Video ID ${videoId} tidak ditemukan di 100 video terbaru @${resolvedUsername}`);
+    const result = await fetchViewsFromUserPosts(videoId, resolvedUsername, apiKey, apiHost);
+    if (result?.views !== null && result?.views !== undefined) return { views: result.views, videoId };
+    // Return debug info
+    const sampleIds = (result?.foundIds || []).slice(0, 5).join(', ');
+    throw new Error(`Video ID ${videoId} tidak ditemukan. Contoh ID dari API: [${sampleIds || 'kosong'}]. Total video dicek: ${result?.foundIds?.length || 0}`);
   }
 
   throw new Error('Gagal fetch views: tidak ada username dan endpoint direct gagal semua');
