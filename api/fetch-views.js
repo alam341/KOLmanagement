@@ -22,7 +22,10 @@ function sbHeaders() {
 
 async function sbGet(path) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, { headers: sbHeaders() });
-  if (!res.ok) throw new Error(`Supabase GET ${path}: ${res.status}`);
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Supabase GET ${path}: ${res.status} - ${body.slice(0,200)}`);
+  }
   return res.json();
 }
 
