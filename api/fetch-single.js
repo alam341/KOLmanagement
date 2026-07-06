@@ -1,6 +1,7 @@
 // ===== Fetch views untuk 1 KOL secara manual =====
 // Called from browser dengan JWT token
 
+const { randomUUID } = require('crypto');
 const SUPABASE_URL         = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 
@@ -61,7 +62,7 @@ async function fetchViews(videoUrl, apiKey, apiHost) {
   throw new Error('Semua endpoint gagal untuk: ' + fullUrl);
 }
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Headers', 'authorization, content-type');
@@ -125,7 +126,7 @@ export default async function handler(req, res) {
       method: 'POST',
       headers: sbHeaders(SUPABASE_SERVICE_KEY),
       body: JSON.stringify({
-        id: crypto.randomUUID(),
+        id: randomUUID(),
         kol_id: kolId, user_id: userId,
         views, day_number: dayNum,
         fetched_at: new Date().toISOString(),
