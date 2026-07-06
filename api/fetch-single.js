@@ -42,11 +42,11 @@ async function fetchViewsFromUserPosts(videoId, username, apiKey, apiHost) {
   for (let page = 0; page < maxPages; page++) {
     let url;
     if (apiHost.includes('tiktok-scraper7')) {
-      url = `https://${apiHost}/user/posts?unique_id=${encodeURIComponent(username)}&count=20&cursor=${cursor}`;
+      url = `https://${apiHost}/user/posts?unique_id=${encodeURIComponent(username)}&count=35&cursor=${cursor}`;
     } else if (apiHost.includes('tiktok-api23')) {
-      url = `https://${apiHost}/api/user/posts?uniqueId=${encodeURIComponent(username)}&count=20&cursor=${cursor}`;
+      url = `https://${apiHost}/api/user/posts?uniqueId=${encodeURIComponent(username)}&count=35&cursor=${cursor}`;
     } else {
-      url = `https://${apiHost}/user/posts?username=${encodeURIComponent(username)}&count=20&cursor=${cursor}`;
+      url = `https://${apiHost}/user/posts?username=${encodeURIComponent(username)}&count=35&cursor=${cursor}`;
     }
 
     const res = await fetch(url, { headers });
