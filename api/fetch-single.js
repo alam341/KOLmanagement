@@ -35,7 +35,9 @@ function extractViews(vid) {
 async function fetchViewsFromUserPosts(videoId, username, apiKey, apiHost) {
   const headers = { 'X-RapidAPI-Key': apiKey, 'X-RapidAPI-Host': apiHost };
   let cursor = 0;
-  const maxPages = 5; // max 5 halaman (100 video)
+  const maxPages = 5;
+  let allFoundIds = []; // kumpulkan dari semua halaman
+  let lastRawSample = '';
 
   for (let page = 0; page < maxPages; page++) {
     let url;
@@ -49,6 +51,7 @@ async function fetchViewsFromUserPosts(videoId, username, apiKey, apiHost) {
 
     const res = await fetch(url, { headers });
     const rawText = await res.text();
+    lastRawSample = rawText.slice(0, 400);
     let json;
     try { json = JSON.parse(rawText); } catch {
       throw new Error(`Response bukan JSON: ${rawText.slice(0, 200)}`);
@@ -61,13 +64,14 @@ async function fetchViewsFromUserPosts(videoId, username, apiKey, apiHost) {
     const videos = data?.videos || data?.itemList || data?.items || data?.aweme_list || data?.awemeList || data?.post_list || data?.list || [];
 
     if (!videos.length) {
-      return { views: null, foundIds: [], noMore: true, debug: `keys: [${allKeys.join(', ')}] | raw: ${rawText.slice(0, 300)}` };
+      return { views: null, foundIds: allFoundIds, noMore: true, debug: `page ${page} kosong. keys:[${allKeys.join(',')}] raw:${lastRawSample}` };
     }
 
-    // Kumpulkan semua ID yang ada untuk debug
-    const foundIds = videos.map(v =>
-      v?.video_id || v?.id || v?.aweme_id || v?.videoId || v?.video?.id || '?'
+    // Kumpulkan ID dari halaman ini
+    const pageIds = videos.map(v =>
+      String(v?.video_id || v?.id || v?.aweme_id || v?.videoId || v?.video?.id || '?')
     );
+    allFoundIds = allFoundIds.concat(pageIds);
 
     // Cari video dengan ID yang cocok
     const found = videos.find(v => {
@@ -78,19 +82,15 @@ async function fetchViewsFromUserPosts(videoId, username, apiKey, apiHost) {
 
     if (found) {
       const views = extractViews(found);
-      if (views !== null) return { views: Number(views), foundIds };
+      if (views !== null) return { views: Number(views), videoId };
     }
 
-    // Cek apakah ada halaman berikutnya
     const hasMore = json?.data?.hasMore ?? json?.data?.has_more ?? false;
-    if (!hasMore) {
-      // Return debug info supaya bisa diagnosa
-      return { views: null, foundIds, noMore: true };
-    }
+    if (!hasMore) break;
     cursor = json?.data?.cursor || (cursor + 20);
   }
 
-  return { views: null, foundIds: [], noMore: false };
+  return { views: null, foundIds: allFoundIds, debug: `dicek ${allFoundIds.length} video, tidak ada yg cocok. Sampel ID: ${allFoundIds.slice(0,5).join(',')}` };
 }
 
 async function fetchViews(videoUrl, username, apiKey, apiHost) {
