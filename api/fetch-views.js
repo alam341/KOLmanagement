@@ -170,6 +170,24 @@ function calcDayNumber(uploadDate) {
 
 // ===== Main handler =====
 module.exports = async function handler(req, res) {
+  // Mode test: ?test=1 (tanpa auth, untuk debug koneksi)
+  if (req.query.test === '1') {
+    const diag = {
+      env: {
+        SUPABASE_URL: SUPABASE_URL ? SUPABASE_URL.slice(0,30)+'...' : 'MISSING',
+        SUPABASE_SERVICE_KEY: SUPABASE_SERVICE_KEY ? 'SET ('+SUPABASE_SERVICE_KEY.length+' chars)' : 'MISSING',
+        CRON_SECRET: CRON_SECRET ? 'SET' : 'MISSING',
+      }
+    };
+    try {
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/app_settings?limit=1`, { headers: sbHeaders() });
+      diag.supabase_connection = r.ok ? 'OK ('+r.status+')' : 'ERROR '+r.status+': '+(await r.text()).slice(0,100);
+    } catch(e) {
+      diag.supabase_connection = 'EXCEPTION: '+e.message;
+    }
+    return res.status(200).json(diag);
+  }
+
   // Auth check
   const secret = req.headers['x-cron-secret'];
   if (!CRON_SECRET || secret !== CRON_SECRET) {
