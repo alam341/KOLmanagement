@@ -4,6 +4,8 @@ let affiliatorListingCache = {}; // { kolId: listingRecord }
 
 async function initListingAffiliate() {
   await loadAffiliatorListingData();
+  // Pakai kolVideosCache yang sama dari listing.js
+  if (!Object.keys(kolVideosCache).length) await loadKolVideos();
   populateAffiliatorMonthFilter();
   renderAffiliatorListingPage();
 }
@@ -181,12 +183,11 @@ function renderAffiliatorTable(kols) {
       ${chkCell('upload_tt','Upload TikTok')}
       ${chkCell('upload_drive','Upload Drive')}
       <td style="padding:8px;">
-        <input class="listing-input" type="text" value="${esc(rec.catatan||'')}" placeholder="Link konten..."
+        <input class="listing-input" type="text" value="${esc(rec.catatan||'')}" placeholder="Catatan..."
           onchange="updateAffiliatorField('${k.id}','catatan',this.value)" style="width:170px;">
       </td>
-      <td style="padding:8px;">
-        <input class="listing-input" type="text" value="${esc(rec.kode_boost||'')}" placeholder="Kode boost..."
-          onchange="updateAffiliatorField('${k.id}','kode_boost',this.value)" style="width:130px;">
+      <td style="padding:8px;text-align:center;">
+        ${videosBadge(k.id)}
       </td>
       <td style="padding:8px;text-align:center;">
         ${evalBadge(rec, k.id)}
@@ -211,8 +212,8 @@ function renderAffiliatorTable(kols) {
             <th style="padding:10px 8px;text-align:center;font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap;">${icon('video',13)}<br>Draft Video</th>
             <th style="padding:10px 8px;text-align:center;font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap;">${icon('music',13)}<br>Upload TT</th>
             <th style="padding:10px 8px;text-align:center;font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap;">${icon('cloud-upload',13)}<br>Upload Drive</th>
-            <th style="padding:10px 8px;text-align:left;font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap;">Catatan / Link Konten</th>
-            <th style="padding:10px 8px;text-align:left;font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap;">Kode Boost Ads</th>
+            <th style="padding:10px 8px;text-align:left;font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap;">Catatan</th>
+            <th style="padding:10px 8px;text-align:center;font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap;">📹 Video &amp; Kode Boost</th>
             <th style="padding:10px 8px;text-align:center;font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap;">${icon('star',12)} Evaluasi</th>
             <th style="padding:10px 8px;text-align:center;font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap;">Hapus</th>
           </tr>
@@ -299,18 +300,21 @@ async function exportAffiliatorCSV() {
   }
   if (!kols.length) { toast('Belum ada affiliator deal!', 'error'); return; }
 
-  const header = ['No','Nama','WA','TikTok','Kirim Barang','Barang Sampai','Draft Video','Upload TT','Upload Drive','Catatan','Kode Boost'];
-  const rows = kols.map((k, i) => {
-    const rec = affiliatorListingCache[k.id] || {};
-    return [
+  const header = ['No','Nama','WA','TikTok','Kirim Barang','Barang Sampai','Draft Video','Upload TT','Upload Drive','Catatan','Video','Judul Video','Kode Boost'];
+  const rows = kols.flatMap((k, i) => {
+    const rec  = affiliatorListingCache[k.id] || {};
+    const vids = kolVideosCache[k.id] || [];
+    const base = [
       i+1, k.name, k.wa||'', k.tiktok||'',
       rec.kirim_barang  ? '✅' : '❌',
       rec.barang_sampai ? '✅' : '❌',
       rec.draft_video   ? '✅' : '❌',
       rec.upload_tt     ? '✅' : '❌',
       rec.upload_drive  ? '✅' : '❌',
-      rec.catatan||'', rec.kode_boost||''
+      rec.catatan||'',
     ];
+    if (!vids.length) return [[...base, '', '', '']];
+    return vids.map(v => [...base, v.link_video||'', v.judul||'', v.kode_boost||'']);
   });
 
   const csv = [header, ...rows]
