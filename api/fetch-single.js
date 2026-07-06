@@ -52,8 +52,12 @@ async function fetchViewsFromUserPosts(videoId, username, apiKey, apiHost) {
     const json = await res.json();
     if (json?.code !== undefined && json.code !== 0) throw new Error(json?.msg || 'Gagal ambil user posts');
 
-    const videos = json?.data?.videos || json?.data?.itemList || json?.data?.items || json?.data?.aweme_list || [];
-    if (!videos.length) break;
+    const videos = json?.data?.videos || json?.data?.itemList || json?.data?.items || json?.data?.aweme_list || json?.data?.awemeList || json?.data?.post_list || [];
+    if (!videos.length) {
+      // Debug: lihat key apa yang ada
+      const dataKeys = Object.keys(json?.data || json || {});
+      return { views: null, foundIds: [], noMore: true, debug: `data keys: ${dataKeys.join(', ')} | code: ${json?.code}` };
+    }
 
     // Kumpulkan semua ID yang ada untuk debug
     const foundIds = videos.map(v =>
@@ -131,7 +135,8 @@ async function fetchViews(videoUrl, username, apiKey, apiHost) {
     if (result?.views !== null && result?.views !== undefined) return { views: result.views, videoId };
     // Return debug info
     const sampleIds = (result?.foundIds || []).slice(0, 5).join(', ');
-    throw new Error(`Video ID ${videoId} tidak ditemukan. Contoh ID dari API: [${sampleIds || 'kosong'}]. Total video dicek: ${result?.foundIds?.length || 0}`);
+    const debug = result?.debug ? ` | ${result.debug}` : '';
+    throw new Error(`Video ID ${videoId} tidak ditemukan. Contoh ID: [${sampleIds || 'kosong'}]. Total: ${result?.foundIds?.length || 0}${debug}`);
   }
 
   throw new Error('Gagal fetch views: tidak ada username dan endpoint direct gagal semua');
