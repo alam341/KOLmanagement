@@ -48,15 +48,20 @@ async function fetchViewsFromUserPosts(videoId, username, apiKey, apiHost) {
     }
 
     const res = await fetch(url, { headers });
-    if (!res.ok) throw new Error(`HTTP ${res.status} dari user/posts`);
-    const json = await res.json();
-    if (json?.code !== undefined && json.code !== 0) throw new Error(json?.msg || 'Gagal ambil user posts');
+    const rawText = await res.text();
+    let json;
+    try { json = JSON.parse(rawText); } catch {
+      throw new Error(`Response bukan JSON: ${rawText.slice(0, 200)}`);
+    }
+    if (!res.ok) throw new Error(`HTTP ${res.status}: ${json?.message || json?.msg || rawText.slice(0,100)}`);
+    if (json?.code !== undefined && json.code !== 0) throw new Error(`code ${json.code}: ${json?.msg}`);
 
-    const videos = json?.data?.videos || json?.data?.itemList || json?.data?.items || json?.data?.aweme_list || json?.data?.awemeList || json?.data?.post_list || [];
+    const data = json?.data || json;
+    const allKeys = Object.keys(data || {});
+    const videos = data?.videos || data?.itemList || data?.items || data?.aweme_list || data?.awemeList || data?.post_list || data?.list || [];
+
     if (!videos.length) {
-      // Debug: lihat key apa yang ada
-      const dataKeys = Object.keys(json?.data || json || {});
-      return { views: null, foundIds: [], noMore: true, debug: `data keys: ${dataKeys.join(', ')} | code: ${json?.code}` };
+      return { views: null, foundIds: [], noMore: true, debug: `keys: [${allKeys.join(', ')}] | raw: ${rawText.slice(0, 300)}` };
     }
 
     // Kumpulkan semua ID yang ada untuk debug
