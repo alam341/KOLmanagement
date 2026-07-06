@@ -198,27 +198,35 @@ module.exports = async function handler(req, res) {
     return res.status(500).json({ error: 'Supabase env vars missing' });
   }
 
-  const results = { processed: 0, fetched: 0, skipped: 0, errors: [] };
+  const debugMode = req.query.debug === '1';
+  const results = { processed: 0, fetched: 0, skipped: 0, errors: [], _steps: [] };
+  const step = (msg) => { if (debugMode) results._steps.push(msg); };
 
   try {
     // 1. Ambil semua user settings yang punya rapidApiKey
+    step('Fetching app_settings...');
     const allSettings = await sbGet('app_settings?key=like.brand_settings_%&select=key,value');
+    step(`app_settings found: ${allSettings.length}`);
 
     for (const setting of allSettings) {
       const userId     = setting.key.replace('brand_settings_', '');
       const apiKey     = setting.value?.rapidApiKey;
       const apiHost    = setting.value?.rapidApiHost || 'tiktok-scraper7.p.rapidapi.com';
 
-      if (!apiKey) continue;
+      if (!apiKey) { step(`userId ${userId}: no apiKey, skip`); continue; }
+      step(`userId ${userId}: has apiKey, host=${apiHost}`);
 
       // 2. Ambil listing + username TikTok dari kols
       const listings = await sbGet(
         `kol_listing?user_id=eq.${userId}&link_video=not.is.null&upload_date=not.is.null&select=id,kol_id,link_video,upload_date`
       );
+      step(`listings found: ${listings.length}`);
       const kolIds = listings.map(l => l.kol_id).filter(Boolean);
       let kolUsernameMap = {};
       if (kolIds.length) {
+        step(`fetching kols for ids: ${kolIds.slice(0,3).join(',')}`);
         const kolsData = await sbGet(`kols?id=in.(${kolIds.join(',')})&select=id,tiktok`);
+        step(`kols found: ${kolsData.length}`);
         kolsData.forEach(k => { kolUsernameMap[k.id] = (k.tiktok || '').replace('@','').trim(); });
       }
 
