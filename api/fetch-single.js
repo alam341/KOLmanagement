@@ -1,8 +1,6 @@
 // ===== Resolve short URL + fetch TikTok views =====
 // Client yang handle auth & save ke Supabase
 
-const { randomUUID } = require('crypto');
-
 async function resolveShortUrl(shortUrl) {
   const res = await fetch(shortUrl, {
     method: 'HEAD', redirect: 'follow',
