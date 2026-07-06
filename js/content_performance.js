@@ -1,8 +1,8 @@
 // ===== CONTENT PERFORMANCE PAGE =====
 
-let cpViewsLog  = {}; // { kolId: [{ day_number, views, fetched_at }] }
-let cpChart     = null;
-let cpModalKolId = null;
+let cpViewsLog    = {}; // { videoId: [{ day_number, views, fetched_at }] }
+let cpChart       = null;
+let cpModalVideoId = null;
 
 const CP_FETCH_DAYS = [1,2,3,4,5,6,7,14,21,28];
 const CP_DAY_LABELS = {
@@ -11,17 +11,15 @@ const CP_DAY_LABELS = {
 };
 
 async function initContentPerformance() {
-  // Load listing data kalau belum (user belum buka Listing KOL)
   if (typeof listingCache !== 'undefined' && Object.keys(listingCache).length === 0) {
     await loadListingData();
+  }
+  if (typeof kolVideosCache !== 'undefined' && Object.keys(kolVideosCache).length === 0) {
+    await loadKolVideos();
   }
   await loadViewsLog();
   renderCPFilters();
   renderCPPage();
-
-  // Debug info (hapus jika sudah stabil)
-  const hasVideo = DB.kols.filter(k => listingCache[k.id]?.link_video).length;
-  console.log('[CP] listingCache entries:', Object.keys(listingCache).length, '| KOL dgn link_video:', hasVideo, '| DB.kols:', DB.kols.length);
 }
 
 async function loadViewsLog() {
@@ -35,8 +33,9 @@ async function loadViewsLog() {
     if (error) throw error;
     cpViewsLog = {};
     (data || []).forEach(row => {
-      if (!cpViewsLog[row.kol_id]) cpViewsLog[row.kol_id] = [];
-      cpViewsLog[row.kol_id].push(row);
+      const key = row.video_id || ('kol:' + row.kol_id);
+      if (!cpViewsLog[key]) cpViewsLog[key] = [];
+      cpViewsLog[key].push(row);
     });
   } catch(e) {
     console.error('CP load error:', e);
@@ -44,7 +43,6 @@ async function loadViewsLog() {
 }
 
 function renderCPFilters() {
-  // Populate filter toko
   const tokoSel = document.getElementById('cpFilterToko');
   if (tokoSel) {
     tokoSel.innerHTML = '<option value="">🏪 Semua Toko</option>' +
@@ -57,38 +55,36 @@ function renderCPPage() {
   const filterProduk = document.getElementById('cpFilterProduk')?.value || '';
   const q            = (document.getElementById('cpSearch')?.value || '').toLowerCase();
 
-  // Update filter produk berdasarkan toko yang dipilih
   const produkSel = document.getElementById('cpFilterProduk');
   if (produkSel) {
     const produkList = filterToko
-      ? DB.produkList.filter(p => {
-          const toko = DB.tokoList.find(t => t.name === filterToko);
-          return toko && p.toko_id === toko.id;
-        })
+      ? DB.produkList.filter(p => { const t = DB.tokoList.find(t => t.name === filterToko); return t && p.toko_id === t.id; })
       : DB.produkList;
     const currentProduk = produkSel.value;
     produkSel.innerHTML = '<option value="">📦 Semua Produk</option>' +
       produkList.map(p => `<option value="${esc(p.name)}" ${currentProduk===p.name?'selected':''}>${esc(p.name)}</option>`).join('');
   }
 
-  // Ambil KOL yang punya link_video (upload_date boleh null, fallback ke hari ini)
-  let kols = DB.kols.filter(k => {
-    const rec = (typeof listingCache !== 'undefined') ? listingCache[k.id] : null;
-    if (!rec?.link_video) return false;
-    if (filterToko   && rec.toko   !== filterToko)   return false;
-    if (filterProduk && rec.produk !== filterProduk) return false;
-    if (q && !k.name.toLowerCase().includes(q) && !(k.tiktok||'').toLowerCase().includes(q)) return false;
+  // Kumpulkan semua video dari kolVideosCache
+  const allVideos = [];
+  if (typeof kolVideosCache !== 'undefined') {
+    Object.values(kolVideosCache).forEach(vids => vids.forEach(v => allVideos.push(v)));
+  }
+
+  let videos = allVideos.filter(v => {
+    const k   = DB.kols.find(x => x.id === v.kol_id);
+    const rec = (typeof listingCache !== 'undefined') ? listingCache[v.kol_id] : null;
+    if (filterToko   && rec?.toko   !== filterToko)   return false;
+    if (filterProduk && rec?.produk !== filterProduk) return false;
+    if (q && !( (k?.name||'').toLowerCase().includes(q) ||
+                (k?.tiktok||'').toLowerCase().includes(q) ||
+                (v.judul||'').toLowerCase().includes(q) )) return false;
     return true;
   });
 
-  // Stats
-  const total     = kols.length;
-  const aktif     = kols.filter(k => {
-    const rec = listingCache[k.id];
-    const dayNum = rec?.upload_date ? calcDayNumber(rec.upload_date) : 99;
-    return dayNum <= 28;
-  }).length;
-  const selesai   = total - aktif;
+  const total      = videos.length;
+  const aktif      = videos.filter(v => v.upload_date && calcDayNumber(v.upload_date) <= 28).length;
+  const selesai    = total - aktif;
   const totalFetch = Object.values(cpViewsLog).reduce((s, arr) => s + arr.length, 0);
 
   const statsEl = document.getElementById('cpStats');
@@ -97,7 +93,7 @@ function renderCPPage() {
       <div class="stat-icon">🎬</div>
       <div class="stat-label">Total Konten</div>
       <div class="stat-num">${total}</div>
-      <div class="stat-sub">punya link video</div>
+      <div class="stat-sub">video terdaftar</div>
     </div>
     <div class="stat-card s-deal">
       <div class="stat-icon">📡</div>
@@ -122,58 +118,52 @@ function renderCPPage() {
   const wrap = document.getElementById('cpGrid');
   if (!wrap) return;
 
-  if (!kols.length) {
+  if (!videos.length) {
     wrap.innerHTML = `
       <div style="text-align:center;padding:60px 20px;color:var(--muted);grid-column:1/-1;">
         <div style="font-size:48px;margin-bottom:12px;">📊</div>
         <div style="font-size:15px;font-weight:600;margin-bottom:6px;">Belum ada konten yang dilacak</div>
-        <div style="font-size:13px;">Isi Link Video di Listing KOL untuk mulai tracking</div>
+        <div style="font-size:13px;">Tambah video di Listing KOL → tombol 📹 Video</div>
       </div>`;
     return;
   }
 
-  wrap.innerHTML = kols.map(k => cpCard(k)).join('');
-
-  // Render mini charts setelah DOM update
-  requestAnimationFrame(() => {
-    kols.forEach(k => renderMiniChart(k.id));
-  });
+  wrap.innerHTML = videos.map(v => cpCard(v)).join('');
+  requestAnimationFrame(() => videos.forEach(v => renderMiniChart(v.id)));
 }
 
-function cpCard(k) {
-  const rec      = listingCache[k.id] || {};
-  const logs     = cpViewsLog[k.id]   || [];
-  const dayNum   = rec.upload_date ? calcDayNumber(rec.upload_date) : null;
+function cpCard(v) {
+  const k        = DB.kols.find(x => x.id === v.kol_id) || {};
+  const rec      = (typeof listingCache !== 'undefined') ? listingCache[v.kol_id] : {};
+  const logs     = cpViewsLog[v.id] || [];
+  const dayNum   = v.upload_date ? calcDayNumber(v.upload_date) : null;
   const isActive = dayNum !== null && dayNum <= 28;
 
-  // Views terakhir
-  const lastLog  = logs[logs.length - 1];
+  const lastLog     = logs[logs.length - 1];
   const latestViews = lastLog?.views || 0;
+  const nextDay     = CP_FETCH_DAYS.find(d => d > (lastLog?.day_number || 0));
+  const nextLabel   = nextDay ? CP_DAY_LABELS[nextDay] : 'Selesai';
 
-  // Next fetch day
-  const nextDay  = CP_FETCH_DAYS.find(d => d > (lastLog?.day_number || 0));
-  const nextLabel = nextDay ? CP_DAY_LABELS[nextDay] : 'Selesai';
-
-  // Status badge
   const statusBg    = isActive ? 'rgba(6,182,212,.12)' : 'rgba(71,85,105,.15)';
   const statusColor = isActive ? 'var(--accent2)' : 'var(--muted)';
-  const statusText  = isActive ? `Hari ke-${dayNum}` : 'Tracking selesai';
+  const statusText  = isActive ? `Hari ke-${dayNum}` : (dayNum ? 'Tracking selesai' : 'Belum ada tgl upload');
 
   return `
-    <div class="cp-card" onclick="openCPModal('${k.id}')">
+    <div class="cp-card" onclick="openCPModal('${v.id}')">
       <div style="display:flex;align-items:start;justify-content:space-between;margin-bottom:10px;">
         <div>
-          <div style="font-weight:700;font-size:14px;">${esc(k.name)}</div>
+          <div style="font-weight:700;font-size:14px;">${esc(k.name||'?')}</div>
           <div style="font-size:11px;color:var(--muted);margin-top:2px;">🎵 ${esc(k.tiktok||'-')}</div>
+          ${v.judul ? `<div style="font-size:11px;color:var(--accent2);margin-top:2px;font-style:italic;">${esc(v.judul)}</div>` : ''}
         </div>
         <span style="background:${statusBg};color:${statusColor};font-size:11px;font-weight:700;padding:3px 8px;border-radius:8px;white-space:nowrap;">${statusText}</span>
       </div>
 
-      ${rec.toko ? `<div style="font-size:11px;color:var(--muted);margin-bottom:8px;">🏪 ${esc(rec.toko)} · 📦 ${esc(rec.produk||'-')}</div>` : ''}
+      ${rec?.toko ? `<div style="font-size:11px;color:var(--muted);margin-bottom:8px;">🏪 ${esc(rec.toko)} · 📦 ${esc(rec.produk||'-')}</div>` : ''}
 
-      <canvas id="miniChart_${k.id}" height="60" style="width:100%;margin-bottom:10px;"></canvas>
+      <canvas id="miniChart_${v.id}" height="60" style="width:100%;margin-bottom:10px;"></canvas>
 
-      <div style="display:flex;justify-content:space-between;align-items:center;">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
         <div>
           <div style="font-size:11px;color:var(--muted);">Views terakhir</div>
           <div style="font-size:16px;font-weight:800;color:var(--accent2);">${latestViews ? latestViews.toLocaleString('id-ID') : '—'}</div>
@@ -191,14 +181,14 @@ function cpCard(k) {
     </div>`;
 }
 
-function renderMiniChart(kolId) {
-  const canvas = document.getElementById(`miniChart_${kolId}`);
+function renderMiniChart(videoId) {
+  const canvas = document.getElementById(`miniChart_${videoId}`);
   if (!canvas) return;
 
-  const logs = cpViewsLog[kolId] || [];
+  const logs = cpViewsLog[videoId] || [];
   if (!logs.length) {
     const ctx = canvas.getContext('2d');
-    ctx.fillStyle = 'var(--muted)';
+    ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--muted') || '#64748b';
     ctx.font = '11px sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText('Belum ada data views', canvas.width / 2, 30);
@@ -239,40 +229,46 @@ function renderMiniChart(kolId) {
 }
 
 // ===== MODAL DETAIL =====
-async function openCPModal(kolId) {
-  cpModalKolId = kolId;
-  const k   = DB.kols.find(x => x.id === kolId);
-  const rec = (typeof listingCache !== 'undefined') ? listingCache[kolId] : {};
-  if (!k) return;
+async function openCPModal(videoId) {
+  cpModalVideoId = videoId;
 
-  document.getElementById('cpModalName').textContent    = k.name;
+  let video = null;
+  for (const vids of Object.values(kolVideosCache || {})) {
+    video = vids.find(v => v.id === videoId);
+    if (video) break;
+  }
+  if (!video) return;
+
+  const k   = DB.kols.find(x => x.id === video.kol_id) || {};
+  const rec = (typeof listingCache !== 'undefined') ? listingCache[video.kol_id] : {};
+
+  document.getElementById('cpModalName').textContent    = k.name || '?';
   document.getElementById('cpModalTiktok').textContent  = k.tiktok || '-';
   document.getElementById('cpModalToko').textContent    = rec?.toko   || '-';
   document.getElementById('cpModalProduk').textContent  = rec?.produk || '-';
-  document.getElementById('cpModalUpload').textContent  = rec?.upload_date
-    ? new Date(rec.upload_date).toLocaleDateString('id-ID', { day:'2-digit', month:'long', year:'numeric' })
+  document.getElementById('cpModalUpload').textContent  = video.upload_date
+    ? new Date(video.upload_date).toLocaleDateString('id-ID', { day:'2-digit', month:'long', year:'numeric' })
     : '-';
+  const judulEl = document.getElementById('cpModalJudul');
+  if (judulEl) judulEl.textContent = video.judul || '-';
 
-  renderCPModalChart(kolId);
-  renderCPModalTable(kolId);
+  renderCPModalChart(videoId);
+  renderCPModalTable(videoId);
   openModal('modalCP');
 }
 
-function renderCPModalChart(kolId) {
+function renderCPModalChart(videoId) {
   const canvas = document.getElementById('cpModalChart');
   if (!canvas || !window.Chart) return;
 
   if (cpChart) { cpChart.destroy(); cpChart = null; }
 
-  const logs   = cpViewsLog[kolId] || [];
+  const logs   = cpViewsLog[videoId] || [];
   const labels = CP_FETCH_DAYS.map(d => CP_DAY_LABELS[d]);
   const data   = CP_FETCH_DAYS.map(d => {
     const log = logs.find(l => l.day_number === d);
     return log ? log.views : null;
   });
-
-  // Garis putus setelah D7
-  const borderDash = CP_FETCH_DAYS.map((d, i, arr) => d <= 7 ? [] : [5, 3]);
 
   cpChart = new window.Chart(canvas, {
     type: 'line',
@@ -321,8 +317,8 @@ function renderCPModalChart(kolId) {
   });
 }
 
-function renderCPModalTable(kolId) {
-  const logs  = cpViewsLog[kolId] || [];
+function renderCPModalTable(videoId) {
+  const logs  = cpViewsLog[videoId] || [];
   const tbody = document.getElementById('cpModalTableBody');
   if (!tbody) return;
 
@@ -347,7 +343,6 @@ function renderCPModalTable(kolId) {
         </td>
       </tr>`;
     }
-    // Hitung delta dari sebelumnya
     const prevDay = CP_FETCH_DAYS[CP_FETCH_DAYS.indexOf(day) - 1];
     const prevLog = prevDay ? logs.find(l => l.day_number === prevDay) : null;
     const delta   = prevLog ? log.views - prevLog.views : null;
@@ -368,47 +363,49 @@ function renderCPModalTable(kolId) {
 
 // ===== FETCH MANUAL =====
 async function fetchViewsNow() {
-  if (!cpModalKolId) return;
+  if (!cpModalVideoId) return;
 
-  const rec = (typeof listingCache !== 'undefined') ? listingCache[cpModalKolId] : null;
-  if (!rec?.link_video) { toast('Link video belum diisi di Listing KOL', 'error'); return; }
+  let video = null;
+  for (const vids of Object.values(kolVideosCache || {})) {
+    video = vids.find(v => v.id === cpModalVideoId);
+    if (video) break;
+  }
+  if (!video?.link_video) { toast('Data video tidak ditemukan', 'error'); return; }
 
   const apiKey  = localStorage.getItem('kol_rapidapi_key');
   const apiHost = localStorage.getItem('kol_rapidapi_host') || 'tiktok-scraper7.p.rapidapi.com';
   if (!apiKey) { toast('RapidAPI Key belum diisi di Pengaturan', 'error'); return; }
 
-  // Jika upload_date tidak ada, anggap hari ini (hari ke-1)
-  const uploadDate = rec.upload_date || new Date().toISOString().split('T')[0];
+  const uploadDate = video.upload_date || new Date().toISOString().split('T')[0];
 
   const btn = document.getElementById('btnFetchNow');
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Mengambil views...'; }
 
   try {
-    // Cek sudah difetch hari ini
     const dayNum  = calcDayNumber(uploadDate);
-    const already = (cpViewsLog[cpModalKolId] || []).find(l => l.day_number === dayNum);
+    const already = (cpViewsLog[cpModalVideoId] || []).find(l => l.day_number === dayNum);
     if (already) {
       toast(`Hari ke-${dayNum} sudah difetch (${Number(already.views).toLocaleString('id-ID')} views)`, 'success', 4000);
       return;
     }
-
     if (dayNum > 28) { toast('Sudah melewati 28 hari tracking', 'error'); return; }
 
-    // Panggil API untuk resolve URL + fetch views
-    const k = DB.kols.find(x => x.id === cpModalKolId);
+    const k = DB.kols.find(x => x.id === video.kol_id);
     const tiktokUsername = (k?.tiktok || '').replace('@', '').trim();
-    const params = new URLSearchParams({ videoUrl: rec.link_video, uploadDate: uploadDate });
+
+    const params = new URLSearchParams({ videoUrl: video.link_video, uploadDate, videoId: cpModalVideoId });
     if (tiktokUsername) params.set('username', tiktokUsername);
+
     const res = await fetch(`${window.location.origin}/api/fetch-single?${params}`, {
       headers: { 'x-rapidapi-key': apiKey, 'x-rapidapi-host': apiHost }
     });
     const json = await res.json();
     if (!res.ok) throw new Error(json.error || 'Gagal fetch views');
 
-    // Save ke Supabase langsung dari client (pakai auth sendiri)
     const { data: { user } } = await _sb.auth.getUser();
     const { error } = await _sb.from('kol_views_log').insert({
-      kol_id:     cpModalKolId,
+      kol_id:     video.kol_id,
+      video_id:   cpModalVideoId,
       user_id:    user.id,
       views:      json.views,
       day_number: json.dayNumber,
@@ -418,12 +415,10 @@ async function fetchViewsNow() {
 
     toast(`✓ Views hari ke-${json.dayNumber}: ${Number(json.views).toLocaleString('id-ID')}`, 'success', 4000);
 
-    // Reload data & refresh
     await loadViewsLog();
-    renderCPModalChart(cpModalKolId);
-    renderCPModalTable(cpModalKolId);
+    renderCPModalChart(cpModalVideoId);
+    renderCPModalTable(cpModalVideoId);
     renderCPPage();
-
   } catch(e) {
     toast('Gagal: ' + e.message, 'error', 6000);
   } finally {

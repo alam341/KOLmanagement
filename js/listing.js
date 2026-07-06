@@ -1,11 +1,32 @@
 // ===== LISTING KOL (Post-Deal Tracking) =====
 
-let listingCache = {}; // { kolId: listingRecord }
+let listingCache   = {}; // { kolId: listingRecord }
+let kolVideosCache = {}; // { kolId: [ videoRecord, ... ] }
 
 async function initListing() {
   await loadListingData();
+  await loadKolVideos();
   populateMonthFilter();
   renderListingPage();
+}
+
+async function loadKolVideos() {
+  try {
+    const { data: { user } } = await _sb.auth.getUser();
+    const { data, error } = await _sb
+      .from('kol_videos')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: true });
+    if (error) throw error;
+    kolVideosCache = {};
+    (data || []).forEach(row => {
+      if (!kolVideosCache[row.kol_id]) kolVideosCache[row.kol_id] = [];
+      kolVideosCache[row.kol_id].push(row);
+    });
+  } catch(e) {
+    console.error('kolVideos load error:', e);
+  }
 }
 
 function populateMonthFilter() {
@@ -224,10 +245,8 @@ function renderListingTable(dealKols) {
         <input class="listing-input" type="text" value="${esc(rec.catatan||'')}" placeholder="Catatan..."
           onchange="updateListingField('${k.id}','catatan',this.value)" style="width:130px;">
       </td>
-      <td style="padding:8px;">
-        <input class="listing-input" type="text" value="${esc(rec.link_video||'')}" placeholder="Link TikTok..."
-          onchange="saveLinkVideo('${k.id}',this.value)" style="width:150px;"
-          title="${esc(rec.link_video||'')}">
+      <td style="padding:8px;text-align:center;">
+        ${videosBadge(k.id)}
       </td>
       <td style="padding:8px;">
         <input class="listing-input" type="text" value="${esc(rec.kode_boost||'')}" placeholder="Kode boost..."
@@ -270,7 +289,7 @@ function renderListingTable(dealKols) {
             <th style="padding:10px 8px;text-align:center;white-space:nowrap;font-size:12px;color:var(--muted);font-weight:600;">🎵<br>Upload TT</th>
             <th style="padding:10px 8px;text-align:center;white-space:nowrap;font-size:12px;color:var(--muted);font-weight:600;">☁️<br>Upload Drive</th>
             <th style="padding:10px 8px;text-align:left;white-space:nowrap;font-size:12px;color:var(--muted);font-weight:600;">Catatan</th>
-            <th style="padding:10px 8px;text-align:left;white-space:nowrap;font-size:12px;color:var(--muted);font-weight:600;">🎵 Link Video</th>
+            <th style="padding:10px 8px;text-align:center;white-space:nowrap;font-size:12px;color:var(--muted);font-weight:600;">📹 Video</th>
             <th style="padding:10px 8px;text-align:left;white-space:nowrap;font-size:12px;color:var(--muted);font-weight:600;">Kode Boost Ads</th>
             <th style="padding:10px 8px;text-align:center;white-space:nowrap;font-size:12px;color:var(--muted);font-weight:600;">${icon('star',12)} Evaluasi</th>
             <th style="padding:10px 8px;text-align:center;white-space:nowrap;font-size:12px;color:var(--muted);font-weight:600;">Hapus</th>
@@ -422,4 +441,123 @@ async function exportListingCSV() {
   a.download = `listing-kol-${new Date().toISOString().slice(0,10)}.csv`;
   a.click();
   toast('Export CSV berhasil!', 'success');
+}
+
+// ===== VIDEO BADGE =====
+function videosBadge(kolId) {
+  const vids  = kolVideosCache[kolId] || [];
+  const count = vids.length;
+  if (count === 0) {
+    return `<button class="btn btn-outline btn-sm" onclick="openVideosModal('${kolId}')" style="font-size:11px;white-space:nowrap;">
+      📹 Tambah Video
+    </button>`;
+  }
+  return `<button onclick="openVideosModal('${kolId}')"
+    style="border:none;background:rgba(6,182,212,.12);color:var(--accent2);border-radius:8px;padding:4px 10px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">
+    📹 ${count} video
+  </button>`;
+}
+
+// ===== VIDEOS MODAL =====
+let videosModalKolId = null;
+
+function openVideosModal(kolId) {
+  videosModalKolId = kolId;
+  const k = DB.kols.find(x => x.id === kolId);
+  document.getElementById('videosModalKolName').textContent = k?.name || kolId;
+  renderVideosList(kolId);
+  // Reset form
+  const li = document.getElementById('newVideoLink');
+  const ji = document.getElementById('newVideoJudul');
+  const di = document.getElementById('newVideoDate');
+  if (li) li.value = '';
+  if (ji) ji.value = '';
+  if (di) di.value = '';
+  openModal('modalVideos');
+}
+
+function renderVideosList(kolId) {
+  const vids = kolVideosCache[kolId] || [];
+  const wrap = document.getElementById('videosListWrap');
+  if (!wrap) return;
+
+  if (!vids.length) {
+    wrap.innerHTML = `<div style="text-align:center;padding:24px;color:var(--muted);font-size:13px;">Belum ada video. Tambah di bawah.</div>`;
+    return;
+  }
+
+  wrap.innerHTML = vids.map((v, i) => `
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:start;gap:10px;">
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:12px;font-weight:700;color:var(--accent2);margin-bottom:3px;">Video ${i+1}</div>
+        ${v.judul ? `<div style="font-size:13px;font-weight:600;margin-bottom:4px;">${esc(v.judul)}</div>` : ''}
+        <a href="${esc(v.link_video)}" target="_blank"
+           style="font-size:11px;color:var(--accent);word-break:break-all;text-decoration:none;">
+          🔗 ${esc(v.link_video)}
+        </a>
+        ${v.upload_date ? `<div style="font-size:11px;color:var(--muted);margin-top:3px;">
+          📅 ${new Date(v.upload_date).toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'})}
+        </div>` : ''}
+      </div>
+      <button onclick="deleteKolVideo('${v.id}','${kolId}')"
+        style="flex-shrink:0;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:var(--red);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:13px;" title="Hapus">🗑</button>
+    </div>
+  `).join('');
+}
+
+async function addKolVideo() {
+  const kolId      = videosModalKolId;
+  const linkInput  = document.getElementById('newVideoLink');
+  const judulInput = document.getElementById('newVideoJudul');
+  const dateInput  = document.getElementById('newVideoDate');
+
+  const link  = linkInput?.value.trim();
+  const judul = judulInput?.value.trim();
+  const date  = dateInput?.value;
+
+  if (!link) { toast('Link video wajib diisi', 'error'); return; }
+
+  try {
+    const { data: { user } } = await _sb.auth.getUser();
+    const row = {
+      id:          uid(),
+      kol_id:      kolId,
+      user_id:     user.id,
+      link_video:  link,
+      upload_date: date ? new Date(date).toISOString() : null,
+      judul:       judul || null,
+      created_at:  new Date().toISOString(),
+    };
+
+    const { error } = await _sb.from('kol_videos').insert(row);
+    if (error) throw error;
+
+    if (!kolVideosCache[kolId]) kolVideosCache[kolId] = [];
+    kolVideosCache[kolId].push(row);
+
+    if (linkInput)  linkInput.value  = '';
+    if (judulInput) judulInput.value = '';
+    if (dateInput)  dateInput.value  = '';
+
+    renderVideosList(kolId);
+    renderListingTable();
+    toast('Video berhasil ditambahkan!', 'success');
+  } catch(e) {
+    toast('Gagal simpan video: ' + e.message, 'error');
+  }
+}
+
+async function deleteKolVideo(videoId, kolId) {
+  if (!confirm('Hapus video ini? Data views log-nya juga akan ikut terhapus.')) return;
+  try {
+    const { error } = await _sb.from('kol_videos').delete().eq('id', videoId);
+    if (error) throw error;
+
+    kolVideosCache[kolId] = (kolVideosCache[kolId] || []).filter(v => v.id !== videoId);
+    renderVideosList(kolId);
+    renderListingTable();
+    toast('Video dihapus.', 'success');
+  } catch(e) {
+    toast('Gagal hapus: ' + e.message, 'error');
+  }
 }
