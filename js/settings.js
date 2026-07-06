@@ -148,21 +148,27 @@ async function deleteMasterItem(id, name, type) {
 }
 
 function saveSettings() {
+  const apiKey  = document.getElementById('setRapidApiKey').value.trim();
+  const apiHost = document.getElementById('setRapidApiHost').value.trim();
+
+  // Simpan ke localStorage (untuk client-side fetch)
+  if (apiKey)  localStorage.setItem('kol_rapidapi_key', apiKey);
+  else         localStorage.removeItem('kol_rapidapi_key');
+  if (apiHost) localStorage.setItem('kol_rapidapi_host', apiHost);
+  else         localStorage.removeItem('kol_rapidapi_host');
+
+  // Simpan ke Supabase (untuk serverless cron)
   DB.settings = {
     brandName:         document.getElementById('setBrandName').value.trim(),
     defaultProduct:    document.getElementById('setDefaultProduct').value.trim(),
     defaultCommission: document.getElementById('setDefaultCommission').value.trim(),
+    rapidApiKey:       apiKey,
+    rapidApiHost:      apiHost || 'tiktok-scraper7.p.rapidapi.com',
     cpmSangatBagus:    parseFloat(document.getElementById('setCpmSangatBagus').value) || 20000,
     cpmBagus:          parseFloat(document.getElementById('setCpmBagus').value)        || 30000,
     cpmPerlu:          parseFloat(document.getElementById('setCpmPerlu').value)        || 40000,
     cpmBuruk:          parseFloat(document.getElementById('setCpmBuruk').value)        || 60000,
   };
-  const apiKey  = document.getElementById('setRapidApiKey').value.trim();
-  const apiHost = document.getElementById('setRapidApiHost').value.trim();
-  if (apiKey)  localStorage.setItem('kol_rapidapi_key', apiKey);
-  else         localStorage.removeItem('kol_rapidapi_key');
-  if (apiHost) localStorage.setItem('kol_rapidapi_host', apiHost);
-  else         localStorage.removeItem('kol_rapidapi_host');
   toast('Pengaturan disimpan!', 'success');
   initSettings();
 }

@@ -8,6 +8,7 @@ const PAGES = {
   listing:   { title:'Listing KOL', subtitle:'Tracking post-deal: payment, pengiriman & konten', init: () => initListing() },
   affiliator: { title:'Listing Affiliator', subtitle:'Tracking pengiriman & konten affiliator', init: () => initListingAffiliate() },
   priority:   { title:'Talent Prioritas',   subtitle:'KOL & Affiliator terbaik untuk retensi', init: () => initPriority() },
+  content_performance: { title:'Content Performance', subtitle:'Tracking views konten KOL dari hari ke hari', init: () => initContentPerformance() },
   templates: { title:'Template Pesan', subtitle:'Kelola template WA & TikTok DM', init: () => initTemplates() },
   settings:  { title:'Pengaturan', subtitle:'Konfigurasi brand & data', init: () => initSettings() },
   users:     { title:'Manajemen User', subtitle:'Kelola akun & hak akses pengguna', init: () => initUsers() },

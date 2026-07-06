@@ -221,8 +221,13 @@ function renderListingTable(dealKols) {
       ${chkCell('upload_tt','Upload TikTok')}
       ${chkCell('upload_drive','Upload Drive')}
       <td style="padding:8px;">
-        <input class="listing-input" type="text" value="${esc(rec.catatan||'')}" placeholder="Link konten..."
-          onchange="updateListingField('${k.id}','catatan',this.value)" style="width:170px;">
+        <input class="listing-input" type="text" value="${esc(rec.catatan||'')}" placeholder="Catatan..."
+          onchange="updateListingField('${k.id}','catatan',this.value)" style="width:130px;">
+      </td>
+      <td style="padding:8px;">
+        <input class="listing-input" type="text" value="${esc(rec.link_video||'')}" placeholder="Link TikTok..."
+          onchange="saveLinkVideo('${k.id}',this.value)" style="width:150px;"
+          title="${esc(rec.link_video||'')}">
       </td>
       <td style="padding:8px;">
         <input class="listing-input" type="text" value="${esc(rec.kode_boost||'')}" placeholder="Kode boost..."
@@ -264,7 +269,8 @@ function renderListingTable(dealKols) {
             <th style="padding:10px 8px;text-align:center;white-space:nowrap;font-size:12px;color:var(--muted);font-weight:600;">🎬<br>Draft Video</th>
             <th style="padding:10px 8px;text-align:center;white-space:nowrap;font-size:12px;color:var(--muted);font-weight:600;">🎵<br>Upload TT</th>
             <th style="padding:10px 8px;text-align:center;white-space:nowrap;font-size:12px;color:var(--muted);font-weight:600;">☁️<br>Upload Drive</th>
-            <th style="padding:10px 8px;text-align:left;white-space:nowrap;font-size:12px;color:var(--muted);font-weight:600;">Catatan / Link Konten</th>
+            <th style="padding:10px 8px;text-align:left;white-space:nowrap;font-size:12px;color:var(--muted);font-weight:600;">Catatan</th>
+            <th style="padding:10px 8px;text-align:left;white-space:nowrap;font-size:12px;color:var(--muted);font-weight:600;">🎵 Link Video</th>
             <th style="padding:10px 8px;text-align:left;white-space:nowrap;font-size:12px;color:var(--muted);font-weight:600;">Kode Boost Ads</th>
             <th style="padding:10px 8px;text-align:center;white-space:nowrap;font-size:12px;color:var(--muted);font-weight:600;">${icon('star',12)} Evaluasi</th>
             <th style="padding:10px 8px;text-align:center;white-space:nowrap;font-size:12px;color:var(--muted);font-weight:600;">Hapus</th>
@@ -297,6 +303,18 @@ function evalBadge(rec, kolId) {
 async function toggleListing(kolId, field, value) {
   await upsertListing(kolId, { [field]: value });
   renderListingPage();
+}
+
+async function saveLinkVideo(kolId, value) {
+  const url = value.trim();
+  const existing = listingCache[kolId] || {};
+  // Set upload_date hanya kalau baru pertama kali diisi
+  const updates = { link_video: url };
+  if (url && !existing.upload_date) {
+    updates.upload_date = new Date().toISOString();
+  }
+  if (!url) updates.upload_date = null;
+  await upsertListing(kolId, updates);
 }
 
 async function updateListingRatecard(kolId, value) {
