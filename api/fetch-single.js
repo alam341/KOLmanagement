@@ -25,8 +25,12 @@ async function fetchViews(videoUrl, apiKey, apiHost) {
 
   const headers = { 'X-RapidAPI-Key': apiKey, 'X-RapidAPI-Host': apiHost };
   const endpoints = [
-    `https://${apiHost}/video/info?url=${encodeURIComponent(fullUrl)}`,
+    // tiktok-scraper7 (trailing slash)
+    `https://${apiHost}/video/info/?url=${encodeURIComponent(fullUrl)}`,
+    `https://${apiHost}/video/info/?id=${videoId}`,
+    // tiktok-api23 / umum
     `https://${apiHost}/api/video/detail?url=${encodeURIComponent(fullUrl)}`,
+    `https://${apiHost}/video/info?url=${encodeURIComponent(fullUrl)}`,
     `https://${apiHost}/video/detail?id=${videoId}`,
   ];
 
