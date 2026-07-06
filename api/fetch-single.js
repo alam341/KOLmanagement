@@ -30,11 +30,23 @@ async function fetchViews(videoUrl, apiKey, apiHost) {
     `https://${apiHost}/video/detail?id=${videoId}`,
   ];
 
+  const triedErrors = [];
+
   for (const ep of endpoints) {
     try {
       const res = await fetch(ep, { headers });
-      if (!res.ok) continue;
-      const json = await res.json();
+      const text = await res.text();
+      let json;
+      try { json = JSON.parse(text); } catch {
+        triedErrors.push(`${ep} → HTTP ${res.status}: non-JSON response`);
+        continue;
+      }
+
+      if (!res.ok) {
+        triedErrors.push(`${ep} → HTTP ${res.status}: ${json?.message || json?.error || text.slice(0,100)}`);
+        continue;
+      }
+
       const views =
         json?.data?.statistics?.playCount   ??
         json?.data?.stats?.playCount        ??
@@ -44,10 +56,16 @@ async function fetchViews(videoUrl, apiKey, apiHost) {
         json?.statistics?.playCount         ??
         json?.stats?.playCount              ??
         null;
-      if (views !== null) return Number(views);
-    } catch { continue; }
+
+      if (views !== null) return { views: Number(views), videoId };
+
+      triedErrors.push(`${ep} → HTTP ${res.status}: views field tidak ditemukan. Keys: ${JSON.stringify(Object.keys(json?.data || json || {}))}`);
+    } catch(e) {
+      triedErrors.push(`${ep} → Error: ${e.message}`);
+    }
   }
-  throw new Error('Semua endpoint gagal untuk: ' + fullUrl);
+
+  throw new Error('Semua endpoint gagal:\n' + triedErrors.join('\n'));
 }
 
 module.exports = async function handler(req, res) {
@@ -68,9 +86,9 @@ module.exports = async function handler(req, res) {
   if (dayNum > 28) return res.status(400).json({ error: 'Sudah melewati 28 hari tracking.' });
 
   try {
-    const views = await fetchViews(videoUrl, apiKey, apiHost);
-    return res.status(200).json({ ok: true, views, dayNumber: dayNum });
+    const { views, videoId } = await fetchViews(videoUrl, apiKey, apiHost);
+    return res.status(200).json({ ok: true, views, dayNumber: dayNum, videoId });
   } catch(e) {
-    return res.status(500).json({ error: e.message });
+    return res.status(500).json({ error: e.message, apiHost, tip: 'Cek RapidAPI key & host di Pengaturan' });
   }
 };
