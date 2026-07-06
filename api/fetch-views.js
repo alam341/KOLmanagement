@@ -175,7 +175,7 @@ module.exports = async function handler(req, res) {
     const debugResults = { steps: [], errors: [] };
     try {
       debugResults.steps.push('Fetching app_settings...');
-      const allSettings = await sbGet('app_settings?key=like.brand_settings_%&select=key,value');
+      const allSettings = await sbGet('app_settings?key=like.brand_settings_%25&select=key,value');
       debugResults.steps.push(`app_settings: ${allSettings.length} rows`);
       for (const s of allSettings) {
         const userId = s.key.replace('brand_settings_', '');
@@ -226,7 +226,7 @@ module.exports = async function handler(req, res) {
   try {
     // 1. Ambil semua user settings yang punya rapidApiKey
     step('Fetching app_settings...');
-    const allSettings = await sbGet('app_settings?key=like.brand_settings_%&select=key,value');
+    const allSettings = await sbGet('app_settings?key=like.brand_settings_%25&select=key,value');
     step(`app_settings found: ${allSettings.length}`);
 
     for (const setting of allSettings) {
