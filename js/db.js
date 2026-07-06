@@ -214,6 +214,7 @@ function toDbRow(k) {
     penjualan: k.penjualan||0,
     ratecard: k.ratecard||0,
     kol_type: k.kolType||'kol',
+    is_priority: k.isPriority||false,
     user_id: DB._userId,
     updated_at: k.updatedAt||nowWIB(),
     created_at: k.createdAt||nowWIB(),
@@ -236,6 +237,7 @@ function fromDbRow(r) {
     penjualan: Number(r.penjualan)||0,
     ratecard: Number(r.ratecard)||0,
     kolType: r.kol_type||'kol',
+    isPriority: r.is_priority||false,
     createdAt: r.created_at, updatedAt: r.updated_at,
   };
 }

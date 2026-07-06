@@ -218,6 +218,9 @@ function renderListingTable(dealKols) {
           onchange="updateListingField('${k.id}','kode_boost',this.value)" style="width:130px;">
       </td>
       <td style="padding:8px;text-align:center;">
+        ${evalBadge(rec, k.id)}
+      </td>
+      <td style="padding:8px;text-align:center;">
         <button class="btn btn-danger btn-sm" onclick="removeFromListing('${k.id}','${esc(k.name)}')" title="Hapus dari listing">${icon('trash-2',13)}</button>
       </td>
     </tr>`;
@@ -251,6 +254,7 @@ function renderListingTable(dealKols) {
             <th style="padding:10px 8px;text-align:center;white-space:nowrap;font-size:12px;color:var(--muted);font-weight:600;">☁️<br>Upload Drive</th>
             <th style="padding:10px 8px;text-align:left;white-space:nowrap;font-size:12px;color:var(--muted);font-weight:600;">Catatan / Link Konten</th>
             <th style="padding:10px 8px;text-align:left;white-space:nowrap;font-size:12px;color:var(--muted);font-weight:600;">Kode Boost Ads</th>
+            <th style="padding:10px 8px;text-align:center;white-space:nowrap;font-size:12px;color:var(--muted);font-weight:600;">${icon('star',12)} Evaluasi</th>
             <th style="padding:10px 8px;text-align:center;white-space:nowrap;font-size:12px;color:var(--muted);font-weight:600;">Hapus</th>
           </tr>
         </thead>
@@ -259,11 +263,21 @@ function renderListingTable(dealKols) {
           <tr style="background:var(--bg3);border-top:2px solid var(--border);">
             <td colspan="1" style="padding:10px 8px;font-size:12px;color:var(--muted);font-weight:600;">TOTAL</td>
             <td style="padding:10px 8px;font-weight:700;color:var(--accent);">Rp${totalEndors.toLocaleString('id-ID')}</td>
-            <td colspan="11"></td>
+            <td colspan="12"></td>
           </tr>
         </tfoot>
       </table>
     </div>`;
+}
+
+// ===== EVAL BADGE HELPER =====
+function evalBadge(rec, kolId) {
+  const map = { bagus: ['✅','var(--green)','rgba(16,185,129,.12)'], cukup: ['⚡','var(--yellow)','rgba(245,158,11,.12)'], kurang: ['❌','var(--red)','rgba(239,68,68,.12)'] };
+  if (rec?.eval_result && map[rec.eval_result]) {
+    const [emoji, color, bg] = map[rec.eval_result];
+    return `<button onclick="openEvalModal('${kolId}')" style="border:none;background:${bg};color:${color};border-radius:8px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;">${emoji} ${rec.eval_result.charAt(0).toUpperCase()+rec.eval_result.slice(1)}</button>`;
+  }
+  return `<button class="btn btn-outline btn-sm" onclick="openEvalModal('${kolId}')" style="font-size:11px;">${icon('star',12)} Evaluasi</button>`;
 }
 
 // ===== AKSI =====

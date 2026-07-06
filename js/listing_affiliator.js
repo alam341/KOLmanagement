@@ -189,6 +189,9 @@ function renderAffiliatorTable(kols) {
           onchange="updateAffiliatorField('${k.id}','kode_boost',this.value)" style="width:130px;">
       </td>
       <td style="padding:8px;text-align:center;">
+        ${evalBadge(rec, k.id)}
+      </td>
+      <td style="padding:8px;text-align:center;">
         <button class="btn btn-danger btn-sm" onclick="removeAffiliatorFromListing('${k.id}','${esc(k.name)}')" title="Hapus dari listing">${icon('trash-2',13)}</button>
       </td>
     </tr>`;
@@ -210,6 +213,7 @@ function renderAffiliatorTable(kols) {
             <th style="padding:10px 8px;text-align:center;font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap;">${icon('cloud-upload',13)}<br>Upload Drive</th>
             <th style="padding:10px 8px;text-align:left;font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap;">Catatan / Link Konten</th>
             <th style="padding:10px 8px;text-align:left;font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap;">Kode Boost Ads</th>
+            <th style="padding:10px 8px;text-align:center;font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap;">${icon('star',12)} Evaluasi</th>
             <th style="padding:10px 8px;text-align:center;font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap;">Hapus</th>
           </tr>
         </thead>
@@ -218,7 +222,7 @@ function renderAffiliatorTable(kols) {
           <tr style="background:var(--bg3);border-top:2px solid var(--border);">
             <td style="padding:10px 8px;font-size:12px;color:var(--muted);font-weight:600;">TOTAL</td>
             <td style="padding:10px 8px;font-weight:700;color:var(--accent);">${kols.length} Affiliator</td>
-            <td colspan="10"></td>
+            <td colspan="11"></td>
           </tr>
         </tfoot>
       </table>
