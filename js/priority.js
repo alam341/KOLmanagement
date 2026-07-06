@@ -115,7 +115,8 @@ function renderPriorityPage() {
           ${resultLabel ? `<span style="margin-left:4px;">${resultLabel}</span>` : ''}
         </div>
         <div style="display:flex;gap:6px;">
-          <button class="btn btn-outline btn-sm" onclick="openEvalModal('${k.id}')" title="Edit Evaluasi">${icon('pencil',13)} Edit</button>
+          <button class="btn btn-primary btn-sm" onclick="openSend('${k.id}')" title="Hubungi KOL">${icon('send',13)} Hubungi</button>
+          <button class="btn btn-outline btn-sm" onclick="openEvalModal('${k.id}')" title="Edit Evaluasi">${icon('pencil',13)}</button>
           <button class="btn btn-danger btn-sm" onclick="demotePriority('${k.id}','${esc(k.name)}')" title="Hapus dari Prioritas">${icon('star',13)}</button>
         </div>
       </div>
