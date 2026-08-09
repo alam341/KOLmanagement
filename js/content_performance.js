@@ -25,11 +25,9 @@ async function initContentPerformance() {
 async function loadViewsLog() {
   try {
     const { data: { user } } = await _sb.auth.getUser();
-    const { data, error } = await _sb
-      .from('kol_views_log')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('day_number', { ascending: true });
+    let q = _sb.from('kol_views_log').select('*').order('day_number', { ascending: true });
+    if (!DB._isSPV) q = q.eq('user_id', user.id);
+    const { data, error } = await q;
     if (error) throw error;
     cpViewsLog = {};
     (data || []).forEach(row => {

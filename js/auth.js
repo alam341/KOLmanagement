@@ -28,6 +28,16 @@ const AUTH = {
     return p?.role === 'admin';
   },
 
+  async isSPV() {
+    const p = await this.getProfile();
+    return p?.role === 'spv';
+  },
+
+  async isAdminOrSPV() {
+    const p = await this.getProfile();
+    return p?.role === 'admin' || p?.role === 'spv';
+  },
+
   async logout() {
     await _sb.auth.signOut();
     this._profile = null;

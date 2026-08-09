@@ -12,9 +12,18 @@ function nowWIB() {
 const DB = {
   _data: { kols: null, templates: null, history: null, settings: null, masterData: null },
   _userId: null,
+  _isSPV: false,
+  _spvFilterUserId: null, // null = semua user, set ke user ID untuk filter
+  allProfiles: [],        // semua profiles (diisi saat SPV/admin login)
 
   // ===== SYNC GETTERS =====
-  get kols()      { return this._data.kols      ?? []; },
+  get kols() {
+    const all = this._data.kols ?? [];
+    if (this._isSPV && this._spvFilterUserId) {
+      return all.filter(k => k.userId === this._spvFilterUserId);
+    }
+    return all;
+  },
   get templates() { return this._data.templates ?? []; },
   get history()   { return this._data.history   ?? []; },
   get settings()  { return this._data.settings  ?? { brandName:'', defaultProduct:'', defaultCommission:'10', cpmSangatBagus:20000, cpmBagus:30000, cpmPerlu:40000, cpmBuruk:60000 }; },
@@ -33,11 +42,25 @@ const DB = {
     if (!user) throw new Error('Not authenticated');
     this._userId = user.id;
 
+    // Cek role user
+    const { data: prof } = await _sb.from('profiles').select('role').eq('id', user.id).single();
+    this._isSPV = prof?.role === 'spv';
+
+    // Load semua profiles untuk SPV filter bar
+    if (this._isSPV) {
+      const { data: profiles } = await _sb.from('profiles').select('id,name,role').order('name');
+      this.allProfiles = (profiles || []).filter(p => p.role === 'specialist');
+    }
+
     const settingsKey = `brand_settings_${this._userId}`;
+    const histQuery = this._isSPV
+      ? _sb.from('kol_history').select('*').order('created_at', { ascending: false }).limit(1000)
+      : _sb.from('kol_history').select('*').eq('user_id', this._userId).order('created_at', { ascending: false }).limit(500);
+
     const [allKols, tmplRes, histRes, setRes, masterRes] = await Promise.all([
       this._fetchAllKols(),
       _sb.from('templates').select('*').eq('user_id', this._userId).order('created_at'),
-      _sb.from('kol_history').select('*').eq('user_id', this._userId).order('created_at', { ascending: false }).limit(500),
+      histQuery,
       _sb.from('app_settings').select('*').eq('key', settingsKey).maybeSingle(),
       _sb.from('kol_master').select('*').order('created_at'),
     ]);
@@ -65,10 +88,11 @@ const DB = {
     const PAGE = 1000;
     let all = [], from = 0;
     while (true) {
-      const { data, error } = await _sb.from('kols').select('*')
-        .eq('user_id', this._userId)
+      let q = _sb.from('kols').select('*')
         .order('created_at', { ascending: false })
         .range(from, from + PAGE - 1);
+      if (!this._isSPV) q = q.eq('user_id', this._userId);
+      const { data, error } = await q;
       if (error) throw error;
       all = all.concat(data || []);
       if (!data || data.length < PAGE) break;
@@ -262,6 +286,7 @@ function fromDbRow(r) {
     ratecard: Number(r.ratecard)||0,
     kolType: r.kol_type||'kol',
     isPriority: r.is_priority||false,
+    userId: r.user_id||null,
     createdAt: r.created_at, updatedAt: r.updated_at,
   };
 }

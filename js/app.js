@@ -9,6 +9,7 @@ const PAGES = {
   affiliator: { title:'Listing Affiliator', subtitle:'Tracking pengiriman & konten affiliator', init: () => initListingAffiliate() },
   priority:   { title:'Talent Prioritas',   subtitle:'KOL & Affiliator terbaik untuk retensi', init: () => initPriority() },
   content_performance: { title:'Content Performance', subtitle:'Tracking views konten KOL dari hari ke hari', init: () => initContentPerformance() },
+  request_creator: { title:'Request Creator', subtitle:'Request KOL/Affiliator baru dari GMV Tracker', init: () => initRequestCreator() },
   templates: { title:'Template Pesan', subtitle:'Kelola template WA & TikTok DM', init: () => initTemplates() },
   settings:  { title:'Pengaturan', subtitle:'Konfigurasi brand & data', init: () => initSettings() },
   users:     { title:'Manajemen User', subtitle:'Kelola akun & hak akses pengguna', init: () => initUsers() },
@@ -18,8 +19,8 @@ let currentPage = 'dashboard';
 
 async function navigate(page) {
   if (!PAGES[page]) return;
-  if (page === 'users' && !await AUTH.isAdmin()) {
-    toast('Akses ditolak. Halaman ini hanya untuk Admin.', 'error');
+  if (page === 'users' && !await AUTH.isAdminOrSPV()) {
+    toast('Akses ditolak. Halaman ini hanya untuk Admin / SPV.', 'error');
     return;
   }
   currentPage = page;
@@ -46,7 +47,11 @@ async function navigate(page) {
 }
 
 function topbarActions(page) {
-  if (page === 'database') return `
+  const isSPV = DB._isSPV;
+  if (page === 'database') return isSPV ? `
+    <button class="btn btn-outline btn-sm" onclick="exportCSV()">${icon('download',14)} Export CSV</button>
+    <span style="font-size:11px;color:var(--orange);background:rgba(249,115,22,.1);border:1px solid rgba(249,115,22,.3);border-radius:6px;padding:4px 10px;">👁 View Only</span>
+  ` : `
     <button class="btn btn-outline btn-sm" onclick="exportCSV()">${icon('download',14)} Export CSV</button>
     <button class="btn btn-outline btn-sm" style="color:var(--accent2);border-color:var(--accent2);" onclick="openImport()">${icon('upload',14)} Import</button>
     <button class="btn btn-primary btn-sm" onclick="openKOLModal()">${icon('plus',14)} Tambah KOL</button>
@@ -60,10 +65,10 @@ function topbarActions(page) {
   if (page === 'affiliator') return `
     <button class="btn btn-outline btn-sm" onclick="exportAffiliatorCSV()">${icon('download',14)} Export CSV</button>
   `;
-  if (page === 'templates') return `
+  if (page === 'templates') return isSPV ? '' : `
     <button class="btn btn-primary btn-sm" onclick="openTmplModal()">${icon('plus',14)} Buat Template</button>
   `;
-  if (page === 'settings') return `
+  if (page === 'settings') return isSPV ? '' : `
     <button class="btn btn-outline btn-sm" onclick="exportAllData()">${icon('download',14)} Backup</button>
     <button class="btn btn-outline btn-sm" onclick="importAllData()">${icon('upload',14)} Restore</button>
   `;
@@ -103,15 +108,48 @@ function toggleTheme() {
   applyTheme(isLight);
 }
 
+// ===== SPV FILTER =====
+function initSpvBar() {
+  if (!DB._isSPV) return;
+  const bar = document.getElementById('spv-bar');
+  if (bar) bar.style.display = 'flex';
+  const sel = document.getElementById('spv-user-select');
+  if (!sel) return;
+  const profiles = DB.allProfiles || [];
+  sel.innerHTML = '<option value="">👥 Semua Team</option>' +
+    profiles.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join('');
+  updateSpvCount();
+}
+
+function setSpvUserFilter(userId) {
+  DB._spvFilterUserId = userId || null;
+  updateSpvCount();
+  // Re-init current page
+  if (PAGES[currentPage]) PAGES[currentPage].init();
+}
+
+function updateSpvCount() {
+  const el = document.getElementById('spv-kol-count');
+  if (!el) return;
+  const total = (DB._data?.kols ?? []).length;
+  const filtered = DB.kols.length;
+  el.textContent = DB._spvFilterUserId
+    ? `${filtered} KOL (dari total ${total})`
+    : `${total} KOL total`;
+}
+
 // ===== USER INFO =====
 async function renderUserInfo() {
   const profile = await AUTH.getProfile();
   if (!profile) return;
   const user = { name: profile.name, role: profile.role };
   const isAdmin   = user.role === 'admin';
-  const roleLabel = isAdmin ? 'Admin' : 'KOL Spesialis';
+  const isSPV     = user.role === 'spv';
+  const roleLabel = isAdmin ? 'Admin' : isSPV ? 'SPV' : 'KOL Spesialis';
   const roleStyle = isAdmin
     ? 'background:var(--accent);color:#fff;'
+    : isSPV
+    ? 'background:rgba(249,115,22,.15);color:var(--orange);'
     : 'background:rgba(6,182,212,.15);color:var(--accent2);';
 
   // Topbar
@@ -120,7 +158,7 @@ async function renderUserInfo() {
     <div style="display:flex;align-items:center;gap:10px;">
       <div style="text-align:right;line-height:1.3;">
         <div style="font-size:12px;font-weight:700;">${esc(user.name)}</div>
-        <div style="font-size:10px;${isAdmin ? 'color:var(--accent);' : 'color:var(--accent2);'}">${roleLabel}</div>
+        <div style="font-size:10px;${isAdmin ? 'color:var(--accent);' : isSPV ? 'color:var(--orange);' : 'color:var(--accent2);'}">${roleLabel}</div>
       </div>
       <button class="btn btn-outline btn-sm" onclick="AUTH.logout()"
               title="Keluar" style="color:var(--red);border-color:rgba(239,68,68,.3);padding:6px 9px;">${icon('log-out',14)}</button>
@@ -150,6 +188,7 @@ function injectNavIcons() {
     'navicon-affiliator':'users',
     'navicon-priority':  'star',
     'navicon-content_performance': 'trending-up',
+    'navicon-request_creator': 'inbox',
     'navicon-templates': 'message-square',
     'navicon-settings':  'settings',
     'navicon-users':     'shield',
@@ -177,10 +216,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   await renderUserInfo();
 
+  // Load GMV Tracker cross-app data
+  Promise.all([loadKolRequests(), loadCreatorRequests()]).catch(e => console.warn('GMV requests:', e));
+
   if (await AUTH.isAdmin()) {
     const navAdmin = document.getElementById('navAdminSection');
     if (navAdmin) navAdmin.style.display = '';
     await updatePendingBadge();
+  } else if (await AUTH.isSPV()) {
+    const navAdmin = document.getElementById('navAdminSection');
+    if (navAdmin) navAdmin.style.display = '';
+  }
+
+  // Init SPV mode
+  if (DB._isSPV) {
+    initSpvBar();
   }
 
   navigate('dashboard');

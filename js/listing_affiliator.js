@@ -13,10 +13,9 @@ async function initListingAffiliate() {
 async function loadAffiliatorListingData() {
   try {
     const { data: { user } } = await _sb.auth.getUser();
-    const { data, error } = await _sb
-      .from('kol_listing')
-      .select('*')
-      .eq('user_id', user.id);
+    let q = _sb.from('kol_listing').select('*');
+    if (!DB._isSPV) q = q.eq('user_id', user.id);
+    const { data, error } = await q;
     if (error) throw error;
     affiliatorListingCache = {};
     (data || []).forEach(row => { affiliatorListingCache[row.kol_id] = row; });
@@ -187,6 +186,9 @@ function renderAffiliatorTable(kols) {
           onchange="updateAffiliatorField('${k.id}','catatan',this.value)" style="width:170px;">
       </td>
       <td style="padding:8px;text-align:center;">
+        ${advReqBadge(k.id, k.name)}
+      </td>
+      <td style="padding:8px;text-align:center;">
         ${videosBadge(k.id)}
       </td>
       <td style="padding:8px;text-align:center;">
@@ -213,6 +215,7 @@ function renderAffiliatorTable(kols) {
             <th style="padding:10px 8px;text-align:center;font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap;">${icon('music',13)}<br>Upload TT</th>
             <th style="padding:10px 8px;text-align:center;font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap;">${icon('cloud-upload',13)}<br>Upload Drive</th>
             <th style="padding:10px 8px;text-align:left;font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap;">Catatan</th>
+            <th style="padding:10px 8px;text-align:center;font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap;">💬 Catatan Adv</th>
             <th style="padding:10px 8px;text-align:center;font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap;">📹 Video &amp; Kode Boost</th>
             <th style="padding:10px 8px;text-align:center;font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap;">${icon('star',12)} Evaluasi</th>
             <th style="padding:10px 8px;text-align:center;font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap;">Hapus</th>
@@ -223,7 +226,7 @@ function renderAffiliatorTable(kols) {
           <tr style="background:var(--bg3);border-top:2px solid var(--border);">
             <td style="padding:10px 8px;font-size:12px;color:var(--muted);font-weight:600;">TOTAL</td>
             <td style="padding:10px 8px;font-weight:700;color:var(--accent);">${kols.length} Affiliator</td>
-            <td colspan="11"></td>
+            <td colspan="12"></td>
           </tr>
         </tfoot>
       </table>
