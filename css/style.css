@@ -419,3 +419,147 @@ body.light .drp-dropdown { box-shadow:0 8px 32px rgba(0,0,0,.12); }
   .form-row, .form-row-3 { grid-template-columns: 1fr; }
   .stats-grid { grid-template-columns: repeat(2,1fr); }
 }
+
+/* ===== CONTENT PERFORMANCE ===== */
+.cp-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+  cursor: pointer;
+  transition: border-color .2s, transform .15s;
+}
+.cp-card:hover {
+  border-color: var(--accent2);
+  transform: translateY(-2px);
+}
+
+/* ===== GMV NOTIF BELL ===== */
+.gmv-notif-wrap {
+  position: relative;
+}
+#gmv-notif-btn {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 10px;
+  cursor: pointer;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  position: relative;
+}
+#gmv-notif-btn:hover { border-color: var(--accent); }
+#gmv-notif-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: var(--red);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 10px;
+  min-width: 18px;
+  text-align: center;
+  display: none;
+}
+#gmv-notif-dd {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 340px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.35);
+  z-index: 9999;
+  display: none;
+}
+.gmv-notif-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+  transition: background .15s;
+}
+.gmv-notif-item:last-child { border-bottom: none; }
+.gmv-notif-item:hover { background: var(--bg3); }
+.gmv-notif-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+
+/* ===== MODAL KREQ ===== */
+#modal-kreq {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.5);
+  z-index: 9998;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+#modal-kreq.active {
+  display: flex;
+}
+#modal-kreq .kreq-inner {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 520px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0,0,0,.4);
+}
+#kreq-list {
+  overflow-y: auto;
+  flex: 1;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ===== CATATAN ADV BADGE ===== */
+.adv-req-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(239,68,68,.12);
+  color: var(--red);
+  border: 1px solid rgba(239,68,68,.3);
+  border-radius: 8px;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.adv-req-badge:hover { background: rgba(239,68,68,.2); }
+.adv-req-badge.read {
+  background: rgba(16,185,129,.08);
+  color: var(--green);
+  border-color: rgba(16,185,129,.25);
+}
+.adv-req-badge.read:hover { background: rgba(16,185,129,.15); }
+
+/* ===== PAGE: REQUEST CREATOR ===== */
+#page-request_creator .creq-filter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
