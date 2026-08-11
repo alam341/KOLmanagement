@@ -299,7 +299,7 @@ function fromHistoryRow(r) {
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
 
 function esc(s) {
-  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 function formatFollowers(n) {

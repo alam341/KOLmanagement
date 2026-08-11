@@ -13,11 +13,9 @@ async function initListing() {
 async function loadKolVideos() {
   try {
     const { data: { user } } = await _sb.auth.getUser();
-    const { data, error } = await _sb
-      .from('kol_videos')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: true });
+    let q = _sb.from('kol_videos').select('*').order('created_at', { ascending: true });
+    if (!DB._isSPV) q = q.eq('user_id', user.id);
+    const { data, error } = await q;
     if (error) throw error;
     kolVideosCache = {};
     (data || []).forEach(row => {
@@ -60,10 +58,9 @@ function populateMonthFilter() {
 async function loadListingData() {
   try {
     const { data: { user } } = await _sb.auth.getUser();
-    const { data, error } = await _sb
-      .from('kol_listing')
-      .select('*')
-      .eq('user_id', user.id);
+    let q = _sb.from('kol_listing').select('*');
+    if (!DB._isSPV) q = q.eq('user_id', user.id);
+    const { data, error } = await q;
     if (error) throw error;
     listingCache = {};
     (data || []).forEach(row => { listingCache[row.kol_id] = row; });
@@ -191,12 +188,14 @@ function renderListingTable(dealKols) {
         </label>
       </td>`;
 
-    const waLink = k.wa
-      ? `<a href="https://wa.me/${k.wa.replace(/\D/g,'')}" target="_blank" style="color:var(--green);font-size:12px;text-decoration:none;">📱 ${esc(k.wa)}</a>`
+    const waStr = k.wa ? String(k.wa) : '';
+    const waLink = waStr
+      ? `<a href="https://wa.me/${waStr.replace(/\D/g,'')}" target="_blank" style="color:var(--green);font-size:12px;text-decoration:none;">📱 ${esc(waStr)}</a>`
       : `<span style="color:var(--muted);font-size:12px;">-</span>`;
 
-    const ttLink = k.tiktok
-      ? `<a href="https://tiktok.com/@${k.tiktok.replace('@','')}" target="_blank" style="color:var(--accent2);font-size:12px;text-decoration:none;">🎵 ${esc(k.tiktok)}</a>`
+    const ttStr = k.tiktok ? String(k.tiktok) : '';
+    const ttLink = ttStr
+      ? `<a href="https://tiktok.com/@${ttStr.replace('@','')}" target="_blank" style="color:var(--accent2);font-size:12px;text-decoration:none;">🎵 ${esc(ttStr)}</a>`
       : `<span style="color:var(--muted);font-size:12px;">-</span>`;
 
     // Progress bar mini (berapa checklist yang sudah done)
@@ -246,6 +245,9 @@ function renderListingTable(dealKols) {
           onchange="updateListingField('${k.id}','catatan',this.value)" style="width:130px;">
       </td>
       <td style="padding:8px;text-align:center;">
+        ${advReqBadge(k.id, k.name)}
+      </td>
+      <td style="padding:8px;text-align:center;">
         ${videosBadge(k.id)}
       </td>
       <td style="padding:8px;text-align:center;">
@@ -285,6 +287,7 @@ function renderListingTable(dealKols) {
             <th style="padding:10px 8px;text-align:center;white-space:nowrap;font-size:12px;color:var(--muted);font-weight:600;">🎵<br>Upload TT</th>
             <th style="padding:10px 8px;text-align:center;white-space:nowrap;font-size:12px;color:var(--muted);font-weight:600;">☁️<br>Upload Drive</th>
             <th style="padding:10px 8px;text-align:left;white-space:nowrap;font-size:12px;color:var(--muted);font-weight:600;">Catatan</th>
+            <th style="padding:10px 8px;text-align:center;white-space:nowrap;font-size:12px;color:var(--muted);font-weight:600;">💬 Catatan Adv</th>
             <th style="padding:10px 8px;text-align:center;white-space:nowrap;font-size:12px;color:var(--muted);font-weight:600;">📹 Video &amp; Kode Boost</th>
             <th style="padding:10px 8px;text-align:center;white-space:nowrap;font-size:12px;color:var(--muted);font-weight:600;">${icon('star',12)} Evaluasi</th>
             <th style="padding:10px 8px;text-align:center;white-space:nowrap;font-size:12px;color:var(--muted);font-weight:600;">Hapus</th>
@@ -295,11 +298,21 @@ function renderListingTable(dealKols) {
           <tr style="background:var(--bg3);border-top:2px solid var(--border);">
             <td colspan="1" style="padding:10px 8px;font-size:12px;color:var(--muted);font-weight:600;">TOTAL</td>
             <td style="padding:10px 8px;font-weight:700;color:var(--accent);">Rp${totalEndors.toLocaleString('id-ID')}</td>
-            <td colspan="12"></td>
+            <td colspan="13"></td>
           </tr>
         </tfoot>
       </table>
     </div>`;
+}
+
+// ===== ADV REQUEST BADGE HELPER =====
+function advReqBadge(kolId, kolName) {
+  const reqs = (typeof _kolRequestsMap !== 'undefined') ? (_kolRequestsMap[kolId] || []) : [];
+  if (!reqs.length) return `<span style="color:var(--muted);font-size:12px;">—</span>`;
+  const unread = reqs.filter(r => !r.is_read).length;
+  const cls = unread > 0 ? 'adv-req-badge' : 'adv-req-badge read';
+  const label = unread > 0 ? `💬 ${unread} baru` : `💬 ${reqs.length}`;
+  return `<button class="${cls}" onclick="openKolRequestModal('${kolId}','${esc(kolName)}')">${label}</button>`;
 }
 
 // ===== EVAL BADGE HELPER =====

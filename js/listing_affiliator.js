@@ -135,7 +135,9 @@ function renderAffiliatorTable(kols) {
     return;
   }
 
-  const rows = kols.map((k, i) => {
+  let rows;
+  try {
+    rows = kols.map((k, i) => {
     const rec = affiliatorListingCache[k.id] || {};
 
     const chkCell = (field, label) => `
@@ -147,12 +149,14 @@ function renderAffiliatorTable(kols) {
         </label>
       </td>`;
 
-    const waLink = k.wa
-      ? `<a href="https://wa.me/${k.wa.replace(/\D/g,'')}" target="_blank" style="color:var(--green);font-size:12px;text-decoration:none;display:flex;align-items:center;gap:4px;">${icon('phone',12)} ${esc(k.wa)}</a>`
+    const waStr = k.wa ? String(k.wa) : '';
+    const waLink = waStr
+      ? `<a href="https://wa.me/${waStr.replace(/\D/g,'')}" target="_blank" style="color:var(--green);font-size:12px;text-decoration:none;display:flex;align-items:center;gap:4px;">${icon('phone',12)} ${esc(waStr)}</a>`
       : `<span style="color:var(--muted);font-size:12px;">-</span>`;
 
-    const ttLink = k.tiktok
-      ? `<a href="https://tiktok.com/@${k.tiktok.replace('@','')}" target="_blank" style="color:var(--accent2);font-size:12px;text-decoration:none;display:flex;align-items:center;gap:4px;">${icon('music',12)} ${esc(k.tiktok)}</a>`
+    const ttStr = k.tiktok ? String(k.tiktok) : '';
+    const ttLink = ttStr
+      ? `<a href="https://tiktok.com/@${ttStr.replace('@','')}" target="_blank" style="color:var(--accent2);font-size:12px;text-decoration:none;display:flex;align-items:center;gap:4px;">${icon('music',12)} ${esc(ttStr)}</a>`
       : `<span style="color:var(--muted);font-size:12px;">-</span>`;
 
     // Progress (5 checklist: kirim_barang, barang_sampai, draft_video, upload_tt, upload_drive)
@@ -199,6 +203,11 @@ function renderAffiliatorTable(kols) {
       </td>
     </tr>`;
   }).join('');
+  } catch(e) {
+    console.error('renderAffiliatorTable error:', e);
+    wrap.innerHTML = `<div style="text-align:center;padding:40px;color:var(--red);">⚠️ Error render tabel: ${esc(e.message)}</div>`;
+    return;
+  }
 
   wrap.innerHTML = `
     <div class="table-wrap" style="overflow-x:auto;">
