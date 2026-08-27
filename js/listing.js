@@ -466,6 +466,25 @@ function videosBadge(kolId) {
   </button>`;
 }
 
+// ===== HELPER: DRIVE PREVIEW URL =====
+function drivePreviewUrl(url) {
+  if (!url) return null;
+  const m1 = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  if (m1) return `https://drive.google.com/file/d/${m1[1]}/preview`;
+  const m2 = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (m2) return `https://drive.google.com/file/d/${m2[1]}/preview`;
+  return null;
+}
+
+function toggleDrivePreview(videoId) {
+  const wrap = document.getElementById('drivePreview-' + videoId);
+  if (!wrap) return;
+  const isHidden = wrap.style.display === 'none';
+  wrap.style.display = isHidden ? 'block' : 'none';
+  const btn = document.getElementById('drivePreviewBtn-' + videoId);
+  if (btn) btn.textContent = isHidden ? '▲ Sembunyikan' : '▶ Lihat Preview';
+}
+
 // ===== VIDEOS MODAL =====
 let videosModalKolId = null;
 
@@ -479,10 +498,12 @@ function openVideosModal(kolId) {
   const ji = document.getElementById('newVideoJudul');
   const di = document.getElementById('newVideoDate');
   const ki = document.getElementById('newVideoKodeBoost');
+  const dri = document.getElementById('newVideoDrive');
   if (li) li.value = '';
   if (ji) ji.value = '';
   if (di) di.value = '';
   if (ki) ki.value = '';
+  if (dri) dri.value = '';
   openModal('modalVideos');
 }
 
@@ -496,29 +517,43 @@ function renderVideosList(kolId) {
     return;
   }
 
-  wrap.innerHTML = vids.map((v, i) => `
-    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:start;gap:10px;">
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:12px;font-weight:700;color:var(--accent2);margin-bottom:3px;">Video ${i+1}</div>
-        ${v.judul ? `<div style="font-size:13px;font-weight:600;margin-bottom:4px;">${esc(v.judul)}</div>` : ''}
-        <a href="${esc(v.link_video)}" target="_blank"
-           style="font-size:11px;color:var(--accent);word-break:break-all;text-decoration:none;">
-          🔗 ${esc(v.link_video)}
-        </a>
-        ${v.upload_date ? `<div style="font-size:11px;color:var(--muted);margin-top:3px;">
-          📅 ${new Date(v.upload_date).toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'})}
-        </div>` : ''}
-        <div style="margin-top:6px;display:flex;align-items:center;gap:6px;">
-          <span style="font-size:11px;color:var(--muted);flex-shrink:0;">🚀 Kode Boost:</span>
-          <input type="text" value="${esc(v.kode_boost||'')}" placeholder="Belum diisi..."
-            onchange="updateVideoKodeBoost('${v.id}','${kolId}',this.value)"
-            style="font-size:11px;padding:2px 6px;border:1px solid var(--border);border-radius:4px;background:var(--bg2);color:var(--text);width:140px;">
+  wrap.innerHTML = vids.map((v, i) => {
+    const previewUrl = drivePreviewUrl(v.link_drive);
+    return `
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:8px;">
+      <div style="display:flex;align-items:start;gap:10px;">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:12px;font-weight:700;color:var(--accent2);margin-bottom:3px;">Video ${i+1}</div>
+          ${v.judul ? `<div style="font-size:13px;font-weight:600;margin-bottom:4px;">${esc(v.judul)}</div>` : ''}
+          <a href="${esc(v.link_video)}" target="_blank"
+             style="font-size:11px;color:var(--accent);word-break:break-all;text-decoration:none;">
+            🔗 ${esc(v.link_video)}
+          </a>
+          ${v.upload_date ? `<div style="font-size:11px;color:var(--muted);margin-top:3px;">
+            📅 ${new Date(v.upload_date).toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'})}
+          </div>` : ''}
+          <div style="margin-top:6px;display:flex;align-items:center;gap:6px;">
+            <span style="font-size:11px;color:var(--muted);flex-shrink:0;">🚀 Kode Boost:</span>
+            <input type="text" value="${esc(v.kode_boost||'')}" placeholder="Belum diisi..."
+              onchange="updateVideoKodeBoost('${v.id}','${kolId}',this.value)"
+              style="font-size:11px;padding:2px 6px;border:1px solid var(--border);border-radius:4px;background:var(--bg2);color:var(--text);width:140px;">
+          </div>
+          ${previewUrl ? `
+          <div style="margin-top:8px;">
+            <button id="drivePreviewBtn-${v.id}" onclick="toggleDrivePreview('${v.id}')"
+              style="font-size:11px;color:var(--accent2);background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.25);border-radius:5px;padding:3px 10px;cursor:pointer;">
+              ▶ Lihat Preview
+            </button>
+            <div id="drivePreview-${v.id}" style="display:none;margin-top:8px;border-radius:8px;overflow:hidden;border:1px solid var(--border);">
+              <iframe src="${previewUrl}" style="width:100%;aspect-ratio:16/9;border:none;display:block;" allowfullscreen></iframe>
+            </div>
+          </div>` : ''}
         </div>
+        <button onclick="deleteKolVideo('${v.id}','${kolId}')"
+          style="flex-shrink:0;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:var(--red);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:13px;" title="Hapus">🗑</button>
       </div>
-      <button onclick="deleteKolVideo('${v.id}','${kolId}')"
-        style="flex-shrink:0;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:var(--red);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:13px;" title="Hapus">🗑</button>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 }
 
 async function addKolVideo() {
@@ -527,11 +562,13 @@ async function addKolVideo() {
   const judulInput     = document.getElementById('newVideoJudul');
   const dateInput      = document.getElementById('newVideoDate');
   const kodeBoostInput = document.getElementById('newVideoKodeBoost');
+  const driveInput     = document.getElementById('newVideoDrive');
 
   const link      = linkInput?.value.trim();
   const judul     = judulInput?.value.trim();
   const date      = dateInput?.value;
   const kodeBoost = kodeBoostInput?.value.trim();
+  const linkDrive = driveInput?.value.trim();
 
   if (!link) { toast('Link video wajib diisi', 'error'); return; }
 
@@ -545,6 +582,7 @@ async function addKolVideo() {
       upload_date: date ? new Date(date).toISOString() : null,
       judul:       judul || null,
       kode_boost:  kodeBoost || null,
+      link_drive:  linkDrive || null,
       created_at:  new Date().toISOString(),
     };
 
@@ -558,6 +596,7 @@ async function addKolVideo() {
     if (judulInput)     judulInput.value     = '';
     if (dateInput)      dateInput.value      = '';
     if (kodeBoostInput) kodeBoostInput.value = '';
+    if (driveInput)     driveInput.value     = '';
 
     renderVideosList(kolId);
     renderListingTable();
