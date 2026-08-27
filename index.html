@@ -485,7 +485,7 @@
       <select class="filter-select" id="affiliatorFilterBulan" onchange="renderAffiliatorListingPage()">
         <option value="">📅 Semua Bulan</option>
       </select>
-      <input class="search-box" id="affiliatorSearch" placeholder="🔍 Cari nama affiliator..." oninput="renderAffiliatorListingPage()" style="max-width:260px;">
+      <input class="search-box" id="affiliatorSearch" placeholder="🔍 Cari nama affiliator..." oninput="debounce('affiliatorSearch',()=>renderAffiliatorListingPage(),300)" style="max-width:260px;">
     </div>
     <div class="card" style="margin-top:4px;">
       <div class="card-header">
