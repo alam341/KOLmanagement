@@ -524,7 +524,10 @@ function renderVideosList(kolId) {
       <div style="display:flex;align-items:start;gap:10px;">
         <div style="flex:1;min-width:0;">
           <div style="font-size:12px;font-weight:700;color:var(--accent2);margin-bottom:3px;">Video ${i+1}</div>
-          ${v.judul ? `<div style="font-size:13px;font-weight:600;margin-bottom:4px;">${esc(v.judul)}</div>` : ''}
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px;">
+            ${v.judul ? `<span style="font-size:13px;font-weight:600;">${esc(v.judul)}</span>` : ''}
+            ${v.produk ? `<span style="font-size:11px;font-weight:600;color:#4f46e5;background:#ede9fe;padding:2px 8px;border-radius:99px;">${esc(v.produk)}</span>` : ''}
+          </div>
           <a href="${esc(v.link_video)}" target="_blank"
              style="font-size:11px;color:var(--accent);word-break:break-all;text-decoration:none;">
             🔗 ${esc(v.link_video)}
@@ -563,12 +566,14 @@ async function addKolVideo() {
   const dateInput      = document.getElementById('newVideoDate');
   const kodeBoostInput = document.getElementById('newVideoKodeBoost');
   const driveInput     = document.getElementById('newVideoDrive');
+  const produkInput    = document.getElementById('newVideoProduk');
 
   const link      = linkInput?.value.trim();
   const judul     = judulInput?.value.trim();
   const date      = dateInput?.value;
   const kodeBoost = kodeBoostInput?.value.trim();
   const linkDrive = driveInput?.value.trim();
+  const produk    = produkInput?.value || null;
 
   if (!link) { toast('Link video wajib diisi', 'error'); return; }
 
@@ -583,6 +588,7 @@ async function addKolVideo() {
       judul:       judul || null,
       kode_boost:  kodeBoost || null,
       link_drive:  linkDrive || null,
+      produk:      produk || null,
       created_at:  new Date().toISOString(),
     };
 
@@ -597,6 +603,7 @@ async function addKolVideo() {
     if (dateInput)      dateInput.value      = '';
     if (kodeBoostInput) kodeBoostInput.value = '';
     if (driveInput)     driveInput.value     = '';
+    if (produkInput)    produkInput.value    = '';
 
     renderVideosList(kolId);
     renderListingTable();
