@@ -2,6 +2,13 @@
 // Reads: sync dari memory cache (setelah loadAll() dipanggil saat boot)
 // Writes: sync update memory + async write ke Supabase (optimistic)
 
+// ===== DEBOUNCE HELPER =====
+const _debounceTimers = {};
+function debounce(key, fn, delay = 300) {
+  clearTimeout(_debounceTimers[key]);
+  _debounceTimers[key] = setTimeout(fn, delay);
+}
+
 // Semua timestamp pakai WIB (UTC+7)
 function nowWIB() {
   const d = new Date();

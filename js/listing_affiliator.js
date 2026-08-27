@@ -87,14 +87,16 @@ function renderAffiliatorListingPage(resetPage = true) {
     }
   }
 
-  // Stats (hitung dari semua kols, bukan yang di-filter stat)
-  const allKolsDeal  = DB.kols.filter(k => k.status === 'deal' && k.kolType === 'affiliator');
-  const sudahUpload  = allKolsDeal.filter(k => affiliatorListingCache[k.id]?.upload_tt).length;
-  const sudahKirim   = allKolsDeal.filter(k => affiliatorListingCache[k.id]?.kirim_barang).length;
-  const selesaiCount = allKolsDeal.filter(k => {
+  // Stats — single pass
+  const allKolsDeal = DB.kols.filter(k => k.status === 'deal' && k.kolType === 'affiliator');
+  let sudahKirim = 0, sudahUpload = 0, selesaiCount = 0;
+  for (const k of allKolsDeal) {
     const r = affiliatorListingCache[k.id];
-    return r && r.kirim_barang && r.barang_sampai && r.upload_tt;
-  }).length;
+    if (!r) continue;
+    if (r.kirim_barang) sudahKirim++;
+    if (r.upload_tt)    sudahUpload++;
+    if (r.kirim_barang && r.barang_sampai && r.upload_tt) selesaiCount++;
+  }
 
   const cardStyle = (key) => affiliatorStatFilter === key
     ? 'cursor:pointer;outline:2px solid var(--accent);outline-offset:2px;'
@@ -312,7 +314,7 @@ function renderAffiliatorTable(kols) {
 
 async function toggleAffiliatorListing(kolId, field, value) {
   await upsertAffiliatorListing(kolId, { [field]: value });
-  renderAffiliatorListingPage();
+  renderAffiliatorListingPage(false); // jangan reset page saat centang checkbox
 }
 
 async function updateAffiliatorField(kolId, field, value) {
