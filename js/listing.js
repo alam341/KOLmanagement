@@ -552,8 +552,37 @@ function renderVideosList(kolId) {
             </div>
           </div>` : ''}
         </div>
-        <button onclick="deleteKolVideo('${v.id}','${kolId}')"
-          style="flex-shrink:0;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:var(--red);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:13px;" title="Hapus">🗑</button>
+        <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;">
+          <button onclick="toggleVideoEdit('${v.id}')"
+            style="background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.25);color:var(--accent2);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:12px;" title="Edit">✏️</button>
+          <button onclick="deleteKolVideo('${v.id}','${kolId}')"
+            style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:var(--red);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:13px;" title="Hapus">🗑</button>
+        </div>
+      </div>
+      <!-- Edit Panel -->
+      <div id="videoEditPanel-${v.id}" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div>
+            <div style="font-size:11px;color:var(--muted);margin-bottom:3px;">Link Drive</div>
+            <input id="editDrive-${v.id}" type="text" value="${esc(v.link_drive||'')}" placeholder="https://drive.google.com/file/d/..."
+              style="width:100%;font-size:12px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text);">
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--muted);margin-bottom:3px;">Produk</div>
+            <select id="editProduk-${v.id}"
+              style="width:100%;font-size:12px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text);">
+              <option value="">— Pilih Produk —</option>
+              ${['Primagold','Numata','Herbapil','Youzhi Cream','Youzhi Tube','Onaire','Jawara','Koikohi','Mr Prima','Vasco','Notelli','Maksir','Oiri','Noradix','Bajakah','Provitasi','Channabumax']
+                .map(p => `<option ${v.produk===p?'selected':''}>${p}</option>`).join('')}
+            </select>
+          </div>
+          <div style="display:flex;gap:6px;">
+            <button onclick="saveVideoEdit('${v.id}','${kolId}')"
+              style="flex:1;padding:7px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;">Simpan</button>
+            <button onclick="toggleVideoEdit('${v.id}')"
+              style="padding:7px 12px;background:var(--bg4);color:var(--text2);border:none;border-radius:6px;font-size:12px;cursor:pointer;">Batal</button>
+          </div>
+        </div>
       </div>
     </div>`;
   }).join('');
@@ -610,6 +639,34 @@ async function addKolVideo() {
     toast('Video berhasil ditambahkan!', 'success');
   } catch(e) {
     toast('Gagal simpan video: ' + e.message, 'error');
+  }
+}
+
+function toggleVideoEdit(videoId) {
+  const panel = document.getElementById('videoEditPanel-' + videoId);
+  if (!panel) return;
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+}
+
+async function saveVideoEdit(videoId, kolId) {
+  const linkDrive = document.getElementById('editDrive-' + videoId)?.value.trim() || null;
+  const produk    = document.getElementById('editProduk-' + videoId)?.value || null;
+
+  try {
+    const { error } = await _sb.from('kol_videos')
+      .update({ link_drive: linkDrive, produk: produk || null })
+      .eq('id', videoId);
+    if (error) throw error;
+
+    // Update cache
+    const vids = kolVideosCache[kolId] || [];
+    const vid  = vids.find(v => v.id === videoId);
+    if (vid) { vid.link_drive = linkDrive; vid.produk = produk; }
+
+    renderVideosList(kolId);
+    toast('Video diperbarui!', 'success');
+  } catch(e) {
+    toast('Gagal simpan: ' + e.message, 'error');
   }
 }
 

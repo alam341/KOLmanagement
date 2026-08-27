@@ -1,6 +1,8 @@
 // ===== LISTING AFFILIATOR =====
 
 let affiliatorListingCache = {}; // { kolId: listingRecord }
+const AFFILIATOR_PER_PAGE = 20;
+let affiliatorPage = 1;
 
 async function initListingAffiliate() {
   await loadAffiliatorListingData();
@@ -52,7 +54,8 @@ function populateAffiliatorMonthFilter() {
     }).join('');
 }
 
-function renderAffiliatorListingPage() {
+function renderAffiliatorListingPage(resetPage = true) {
+  if (resetPage) affiliatorPage = 1;
   const filterBulan = document.getElementById('affiliatorFilterBulan')?.value || '';
   const q           = (document.getElementById('affiliatorSearch')?.value || '').toLowerCase();
 
@@ -119,11 +122,52 @@ function renderAffiliatorListingPage() {
   `;
 
   renderAffiliatorTable(kols);
+  renderAffiliatorPagination(kols.length);
+}
+
+function renderAffiliatorPagination(total) {
+  const el = document.getElementById('affiliatorPagination');
+  if (!el) return;
+  const totalPages = Math.ceil(total / AFFILIATOR_PER_PAGE);
+  if (totalPages <= 1) { el.innerHTML = ''; return; }
+
+  const btnStyle = (active) => `
+    padding:6px 12px;border-radius:8px;font-size:13px;font-weight:600;cursor:${active?'default':'pointer'};
+    border:1.5px solid ${active?'var(--accent)':'var(--border)'};
+    background:${active?'var(--accent)':'var(--bg2)'};
+    color:${active?'#fff':'var(--text2)'};
+  `;
+
+  let html = `<button style="${btnStyle(false)}opacity:${affiliatorPage===1?'0.4':'1'}" ${affiliatorPage===1?'disabled':''} onclick="goAffiliatorPage(${affiliatorPage-1})">← Prev</button>`;
+  for (let i = 1; i <= totalPages; i++) {
+    if (totalPages > 7 && i > 2 && i < totalPages-1 && Math.abs(i-affiliatorPage) > 1) {
+      if (i === 3 || i === totalPages-2) html += `<span style="color:var(--muted);padding:0 4px;">...</span>`;
+      continue;
+    }
+    html += `<button style="${btnStyle(i===affiliatorPage)}" ${i===affiliatorPage?'disabled':''} onclick="goAffiliatorPage(${i})">${i}</button>`;
+  }
+  html += `<button style="${btnStyle(false)}opacity:${affiliatorPage===totalPages?'0.4':'1'}" ${affiliatorPage===totalPages?'disabled':''} onclick="goAffiliatorPage(${affiliatorPage+1})">Next →</button>`;
+  html += `<span style="font-size:12px;color:var(--muted);margin-left:4px;">${total} affiliator</span>`;
+  el.innerHTML = html;
+}
+
+function goAffiliatorPage(page) {
+  affiliatorPage = page;
+  renderAffiliatorListingPage(false);
+  document.getElementById('affiliatorTableWrap')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function renderAffiliatorTable(kols) {
   const wrap = document.getElementById('affiliatorTableWrap');
   if (!wrap) return;
+
+  // Pastikan page tidak melebihi total
+  const totalPages = Math.ceil(kols.length / AFFILIATOR_PER_PAGE) || 1;
+  if (affiliatorPage > totalPages) affiliatorPage = totalPages;
+
+  // Potong data sesuai halaman
+  const start = (affiliatorPage - 1) * AFFILIATOR_PER_PAGE;
+  const paged = kols.slice(start, start + AFFILIATOR_PER_PAGE);
 
   if (!kols.length) {
     wrap.innerHTML = `
@@ -137,7 +181,8 @@ function renderAffiliatorTable(kols) {
 
   let rows;
   try {
-    rows = kols.map((k, i) => {
+    rows = paged.map((k, i) => {
+    const globalIdx = start + i;
     const rec = affiliatorListingCache[k.id] || {};
 
     const chkCell = (field, label) => `
@@ -167,7 +212,7 @@ function renderAffiliatorTable(kols) {
 
     return `
     <tr id="affiliator-row-${k.id}">
-      <td style="text-align:center;color:var(--muted);font-size:13px;padding:8px;">${i+1}</td>
+      <td style="text-align:center;color:var(--muted);font-size:13px;padding:8px;">${globalIdx+1}</td>
       <td style="padding:8px;">
         <div style="font-weight:600;font-size:13px;">${esc(k.name)}</div>
         <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">${esc(k.niche||'')}</div>
