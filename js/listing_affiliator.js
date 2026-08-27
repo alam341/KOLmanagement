@@ -3,6 +3,7 @@
 let affiliatorListingCache = {}; // { kolId: listingRecord }
 const AFFILIATOR_PER_PAGE = 20;
 let affiliatorPage = 1;
+let affiliatorStatFilter = '';
 
 async function initListingAffiliate() {
   await loadAffiliatorListingData();
@@ -86,40 +87,54 @@ function renderAffiliatorListingPage(resetPage = true) {
     }
   }
 
-  // Stats
-  const sudahUpload = kols.filter(k => affiliatorListingCache[k.id]?.upload_tt).length;
-  const selesai     = kols.filter(k => {
+  // Stats (hitung dari semua kols, bukan yang di-filter stat)
+  const allKolsDeal  = DB.kols.filter(k => k.status === 'deal' && k.kolType === 'affiliator');
+  const sudahUpload  = allKolsDeal.filter(k => affiliatorListingCache[k.id]?.upload_tt).length;
+  const sudahKirim   = allKolsDeal.filter(k => affiliatorListingCache[k.id]?.kirim_barang).length;
+  const selesaiCount = allKolsDeal.filter(k => {
     const r = affiliatorListingCache[k.id];
     return r && r.kirim_barang && r.barang_sampai && r.upload_tt;
   }).length;
 
+  const cardStyle = (key) => affiliatorStatFilter === key
+    ? 'cursor:pointer;outline:2px solid var(--accent);outline-offset:2px;'
+    : 'cursor:pointer;opacity:0.85;';
+
   const statsEl = document.getElementById('affiliatorStats');
   if (statsEl) statsEl.innerHTML = `
-    <div class="stat-card s-deal">
+    <div class="stat-card s-deal" style="${cardStyle('')}" onclick="setAffiliatorStatFilter('')">
       <div class="stat-icon">${icon('users',22)}</div>
       <div class="stat-label">Total Affiliator Deal</div>
-      <div class="stat-num">${kols.length}</div>
+      <div class="stat-num">${allKolsDeal.length}</div>
       <div class="stat-sub">Status deal aktif</div>
     </div>
-    <div class="stat-card s-contacted">
+    <div class="stat-card s-contacted" style="${cardStyle('kirim_barang')}" onclick="setAffiliatorStatFilter('kirim_barang')">
       <div class="stat-icon">${icon('package',22)}</div>
       <div class="stat-label">Barang Dikirim</div>
-      <div class="stat-num">${kols.filter(k => affiliatorListingCache[k.id]?.kirim_barang).length}</div>
-      <div class="stat-sub">dari ${kols.length} affiliator</div>
+      <div class="stat-num">${sudahKirim}</div>
+      <div class="stat-sub">dari ${allKolsDeal.length} affiliator</div>
     </div>
-    <div class="stat-card s-contacted">
+    <div class="stat-card s-contacted" style="${cardStyle('upload_tt')}" onclick="setAffiliatorStatFilter('upload_tt')">
       <div class="stat-icon">${icon('video',22)}</div>
       <div class="stat-label">Sudah Upload TT</div>
       <div class="stat-num">${sudahUpload}</div>
       <div class="stat-sub">konten live di TikTok</div>
     </div>
-    <div class="stat-card s-replied">
+    <div class="stat-card s-replied" style="${cardStyle('selesai')}" onclick="setAffiliatorStatFilter('selesai')">
       <div class="stat-icon">${icon('check-circle',22)}</div>
       <div class="stat-label">Selesai</div>
-      <div class="stat-num">${selesai}</div>
+      <div class="stat-num">${selesaiCount}</div>
       <div class="stat-sub">semua checklist done</div>
     </div>
   `;
+
+  // Apply stat filter ke kols setelah stats dirender
+  if (affiliatorStatFilter === 'kirim_barang') kols = kols.filter(k => affiliatorListingCache[k.id]?.kirim_barang);
+  else if (affiliatorStatFilter === 'upload_tt') kols = kols.filter(k => affiliatorListingCache[k.id]?.upload_tt);
+  else if (affiliatorStatFilter === 'selesai') kols = kols.filter(k => {
+    const r = affiliatorListingCache[k.id];
+    return r && r.kirim_barang && r.barang_sampai && r.upload_tt;
+  });
 
   renderAffiliatorTable(kols);
   renderAffiliatorPagination(kols.length);
@@ -149,6 +164,12 @@ function renderAffiliatorPagination(total) {
   html += `<button style="${btnStyle(false)}opacity:${affiliatorPage===totalPages?'0.4':'1'}" ${affiliatorPage===totalPages?'disabled':''} onclick="goAffiliatorPage(${affiliatorPage+1})">Next →</button>`;
   html += `<span style="font-size:12px;color:var(--muted);margin-left:4px;">${total} affiliator</span>`;
   el.innerHTML = html;
+}
+
+function setAffiliatorStatFilter(key) {
+  affiliatorStatFilter = affiliatorStatFilter === key ? '' : key; // toggle
+  affiliatorPage = 1;
+  renderAffiliatorListingPage(false);
 }
 
 function goAffiliatorPage(page) {

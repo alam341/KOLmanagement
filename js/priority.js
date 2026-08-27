@@ -4,6 +4,13 @@ function initPriority() {
   renderPriorityPage();
 }
 
+function setPriorityFilter(val) {
+  const sel = document.getElementById('priorityFilter');
+  if (!sel) return;
+  sel.value = sel.value === val ? '' : val; // toggle
+  renderPriorityPage();
+}
+
 function renderPriorityPage() {
   const filter = document.getElementById('priorityFilter')?.value || '';
   const q = (document.getElementById('prioritySearch')?.value || '').toLowerCase();
@@ -18,21 +25,26 @@ function renderPriorityPage() {
   const totalKOL = DB.kols.filter(k => k.isPriority && k.kolType !== 'affiliator').length;
   const totalAff = DB.kols.filter(k => k.isPriority && k.kolType === 'affiliator').length;
 
+  const activeFilter = document.getElementById('priorityFilter')?.value || '';
+  const cardStyle = (val) => activeFilter === val
+    ? 'cursor:pointer;outline:2px solid var(--accent);outline-offset:2px;'
+    : 'cursor:pointer;opacity:0.85;';
+
   const statsEl = document.getElementById('priorityStats');
   if (statsEl) statsEl.innerHTML = `
-    <div class="stat-card s-deal">
+    <div class="stat-card s-deal" style="${cardStyle('')}" onclick="setPriorityFilter('')">
       <div class="stat-icon">${icon('star',22)}</div>
       <div class="stat-label">Total Prioritas</div>
       <div class="stat-num">${totalKOL + totalAff}</div>
       <div class="stat-sub">Talent terpilih</div>
     </div>
-    <div class="stat-card s-replied">
+    <div class="stat-card s-replied" style="${cardStyle('kol')}" onclick="setPriorityFilter('kol')">
       <div class="stat-icon">${icon('users',22)}</div>
       <div class="stat-label">KOL Prioritas</div>
       <div class="stat-num">${totalKOL}</div>
       <div class="stat-sub">kreator berbayar</div>
     </div>
-    <div class="stat-card s-contacted">
+    <div class="stat-card s-contacted" style="${cardStyle('affiliator')}" onclick="setPriorityFilter('affiliator')">
       <div class="stat-icon">${icon('trending-up',22)}</div>
       <div class="stat-label">Affiliator Prioritas</div>
       <div class="stat-num">${totalAff}</div>

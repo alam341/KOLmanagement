@@ -3,12 +3,18 @@
 let cpViewsLog    = {}; // { videoId: [{ day_number, views, fetched_at }] }
 let cpChart       = null;
 let cpModalVideoId = null;
+let cpStatFilter  = ''; // '' | 'aktif' | 'selesai'
 
 const CP_FETCH_DAYS = [1,2,3,4,5,6,7,14,21,28];
 const CP_DAY_LABELS = {
   1:'D1', 2:'D2', 3:'D3', 4:'D4', 5:'D5', 6:'D6', 7:'D7',
   14:'W2', 21:'W3', 28:'W4'
 };
+
+function setCPStatFilter(key) {
+  cpStatFilter = cpStatFilter === key ? '' : key; // toggle
+  renderCPPage();
+}
 
 async function initContentPerformance() {
   if (typeof listingCache !== 'undefined' && Object.keys(listingCache).length === 0) {
@@ -85,33 +91,41 @@ function renderCPPage() {
   const selesai    = total - aktif;
   const totalFetch = Object.values(cpViewsLog).reduce((s, arr) => s + arr.length, 0);
 
+  const cardStyle = (key) => cpStatFilter === key
+    ? 'cursor:pointer;outline:2px solid var(--accent);outline-offset:2px;'
+    : 'cursor:pointer;opacity:0.85;';
+
   const statsEl = document.getElementById('cpStats');
   if (statsEl) statsEl.innerHTML = `
-    <div class="stat-card s-total">
+    <div class="stat-card s-total" style="${cardStyle('')}" onclick="setCPStatFilter('')">
       <div class="stat-icon">🎬</div>
       <div class="stat-label">Total Konten</div>
       <div class="stat-num">${total}</div>
       <div class="stat-sub">video terdaftar</div>
     </div>
-    <div class="stat-card s-deal">
+    <div class="stat-card s-deal" style="${cardStyle('aktif')}" onclick="setCPStatFilter('aktif')">
       <div class="stat-icon">📡</div>
       <div class="stat-label">Sedang Dipantau</div>
       <div class="stat-num">${aktif}</div>
       <div class="stat-sub">dalam 28 hari</div>
     </div>
-    <div class="stat-card s-replied">
+    <div class="stat-card s-replied" style="${cardStyle('selesai')}" onclick="setCPStatFilter('selesai')">
       <div class="stat-icon">✅</div>
       <div class="stat-label">Selesai Tracking</div>
       <div class="stat-num">${selesai}</div>
       <div class="stat-sub">sudah hari ke-28</div>
     </div>
-    <div class="stat-card s-contacted">
+    <div class="stat-card s-contacted" style="opacity:0.85;">
       <div class="stat-icon">📊</div>
       <div class="stat-label">Total Data Views</div>
       <div class="stat-num">${totalFetch}</div>
       <div class="stat-sub">titik data terkumpul</div>
     </div>
   `;
+
+  // Apply stat filter ke videos
+  if (cpStatFilter === 'aktif')   videos = videos.filter(v => v.upload_date && calcDayNumber(v.upload_date) <= 28);
+  else if (cpStatFilter === 'selesai') videos = videos.filter(v => !v.upload_date || calcDayNumber(v.upload_date) > 28);
 
   const wrap = document.getElementById('cpGrid');
   if (!wrap) return;
