@@ -1,6 +1,8 @@
 // ===== DATABASE KOL PAGE =====
 let importRows = [];
 let selectedDBKOLs = new Set();
+const DB_PER_PAGE = 30;
+let dbPage = 1;
 
 // ── WIB helpers ──
 function _wibNowMs()       { return Date.now() + 7 * 3600 * 1000; }
@@ -220,7 +222,14 @@ function formatDate(iso) {
 }
 
 // ===== TABLE =====
-function renderTable() {
+function goDBPage(page) {
+  dbPage = page;
+  renderTable();
+  document.getElementById('dbTableBody')?.closest('.table-wrap')?.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+function renderTable(resetPage = false) {
+  if (resetPage) dbPage = 1;
   const q  = (document.getElementById('dbSearch')?.value || '').toLowerCase();
   const sf = document.getElementById('dbFilterStatus')?.value   || '';
   const pf = document.getElementById('dbFilterPlatform')?.value || '';
@@ -241,10 +250,18 @@ function renderTable() {
 
   if (!kols.length) {
     body.innerHTML = '<tr class="empty-row"><td colspan="9">Tidak ada data. Import dari Kalodata atau tambah manual.</td></tr>';
+    document.getElementById('dbPagination').innerHTML = '';
     updateBulkBar(); return;
   }
 
-  body.innerHTML = kols.map(k => `
+  // Pagination
+  const totalPages = Math.ceil(kols.length / DB_PER_PAGE);
+  if (dbPage > totalPages) dbPage = totalPages;
+  const start = (dbPage - 1) * DB_PER_PAGE;
+  const paged = kols.slice(start, start + DB_PER_PAGE);
+  renderSimplePagination('dbPagination', dbPage, kols.length, DB_PER_PAGE, 'goDBPage');
+
+  body.innerHTML = paged.map(k => `
     <tr>
       <td style="padding:8px 6px;text-align:center;width:36px;">
         <input type="checkbox" data-id="${k.id}" ${selectedDBKOLs.has(k.id)?'checked':''}

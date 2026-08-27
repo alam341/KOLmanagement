@@ -9,6 +9,32 @@ function debounce(key, fn, delay = 300) {
   _debounceTimers[key] = setTimeout(fn, delay);
 }
 
+// ===== PAGINATION HELPER =====
+function renderSimplePagination(containerId, currentPage, total, perPage, goFn) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  const totalPages = Math.ceil(total / perPage);
+  if (totalPages <= 1) { el.innerHTML = ''; return; }
+  const btn = (label, page, active, disabled) =>
+    `<button onclick="${goFn}(${page})" ${disabled?'disabled':''} style="
+      padding:5px 11px;border-radius:7px;font-size:12px;font-weight:600;cursor:${disabled?'default':'pointer'};
+      border:1.5px solid ${active?'var(--accent)':'var(--border)'};
+      background:${active?'var(--accent)':'var(--bg2)'};
+      color:${active?'#fff':'var(--text2)'};opacity:${disabled&&!active?'0.4':'1'};"
+    >${label}</button>`;
+  let html = btn('←', currentPage-1, false, currentPage===1);
+  for (let i = 1; i <= totalPages; i++) {
+    if (totalPages > 7 && i > 2 && i < totalPages-1 && Math.abs(i-currentPage) > 1) {
+      if (i === 3 || i === totalPages-2) html += `<span style="color:var(--muted);padding:0 3px;">…</span>`;
+      continue;
+    }
+    html += btn(i, i, i===currentPage, i===currentPage);
+  }
+  html += btn('→', currentPage+1, false, currentPage===totalPages);
+  html += `<span style="font-size:12px;color:var(--muted);margin-left:6px;">${total} data</span>`;
+  el.innerHTML = html;
+}
+
 // Semua timestamp pakai WIB (UTC+7)
 function nowWIB() {
   const d = new Date();

@@ -1,5 +1,7 @@
 // ===== ANALISIS KOL =====
 let analysisCharts = {};
+const ANALYSIS_PER_PAGE = 30;
+let analysisPage = 1;
 
 function initAnalysis() {
   renderAnalysisStats();
@@ -146,7 +148,14 @@ function renderAnalysisCharts() {
   }
 }
 
-function renderScoreTable() {
+function goAnalysisPage(page) {
+  analysisPage = page;
+  renderScoreTable();
+  document.getElementById('analysisTableBody')?.closest('.card')?.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+function renderScoreTable(resetPage = false) {
+  if (resetPage) analysisPage = 1;
   const sortBy = document.getElementById('analysisSortBy')?.value || 'score';
   const filterTier = document.getElementById('analysisFilterTier')?.value || '';
   let kols = DB.kols.filter(k => !filterTier || k.tier === filterTier);
@@ -161,15 +170,26 @@ function renderScoreTable() {
 
   const body = document.getElementById('analysisTableBody');
   if (!body) return;
-  if (!kols.length) { body.innerHTML = '<tr class="empty-row"><td colspan="9">Belum ada data. Import KOL terlebih dahulu.</td></tr>'; return; }
+  if (!kols.length) {
+    body.innerHTML = '<tr class="empty-row"><td colspan="9">Belum ada data. Import KOL terlebih dahulu.</td></tr>';
+    document.getElementById('analysisPagination').innerHTML = '';
+    return;
+  }
 
-  body.innerHTML = kols.map((k,i) => {
+  const totalPages = Math.ceil(kols.length / ANALYSIS_PER_PAGE);
+  if (analysisPage > totalPages) analysisPage = totalPages;
+  const start = (analysisPage - 1) * ANALYSIS_PER_PAGE;
+  const paged = kols.slice(start, start + ANALYSIS_PER_PAGE);
+  renderSimplePagination('analysisPagination', analysisPage, kols.length, ANALYSIS_PER_PAGE, 'goAnalysisPage');
+
+  body.innerHTML = paged.map((k,i) => {
+    const globalIdx = start + i;
     const score = k.score || 0;
     const barClass = score >= 70 ? 'score-high' : score >= 40 ? 'score-mid' : 'score-low';
     const priority = score >= 70 ? '🔥 Prioritas' : score >= 40 ? '⚡ Potensial' : '📌 Biasa';
     return `
     <tr>
-      <td><strong style="color:var(--muted);">#${i+1}</strong></td>
+      <td><strong style="color:var(--muted);">#${globalIdx+1}</strong></td>
       <td>
         <div style="font-weight:600;">${esc(k.name)}</div>
         <div style="font-size:11px;color:var(--muted);">${esc(k.tiktok||'')}</div>

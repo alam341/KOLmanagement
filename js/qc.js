@@ -2,6 +2,9 @@
 
 let activeQCKolId = null;
 let qcCache = {}; // { kolId: qcRecord }
+const QC_PER_PAGE = 20;
+let qcEligiblePage = 1;
+let qcDonePage = 1;
 
 async function initQC() {
   await loadQCData();
@@ -106,8 +109,13 @@ function renderQCTable() {
   if (eligibleEl) {
     if (!eligible.length) {
       eligibleEl.innerHTML = '<tr class="empty-row"><td colspan="5" style="text-align:center;color:var(--muted);padding:32px;">Tidak ada KOL dengan status "Dihubungi" yang belum di-QC.</td></tr>';
+      document.getElementById('qcEligiblePagination').innerHTML = '';
     } else {
-      eligibleEl.innerHTML = eligible.map(k => `
+      if (qcEligiblePage > Math.ceil(eligible.length / QC_PER_PAGE)) qcEligiblePage = 1;
+      const eStart = (qcEligiblePage - 1) * QC_PER_PAGE;
+      const ePaged = eligible.slice(eStart, eStart + QC_PER_PAGE);
+      renderSimplePagination('qcEligiblePagination', qcEligiblePage, eligible.length, QC_PER_PAGE, 'goQCEligiblePage');
+      eligibleEl.innerHTML = ePaged.map(k => `
         <tr>
           <td>
             <div style="font-weight:600;font-size:13px;">${esc(k.name)}</div>
@@ -131,8 +139,13 @@ function renderQCTable() {
   if (doneEl) {
     if (!done.length) {
       doneEl.innerHTML = '<tr class="empty-row"><td colspan="7" style="text-align:center;color:var(--muted);padding:32px;">Belum ada QC yang selesai.</td></tr>';
+      document.getElementById('qcDonePagination').innerHTML = '';
     } else {
-      doneEl.innerHTML = done.map(k => {
+      if (qcDonePage > Math.ceil(done.length / QC_PER_PAGE)) qcDonePage = 1;
+      const dStart = (qcDonePage - 1) * QC_PER_PAGE;
+      const dPaged = done.slice(dStart, dStart + QC_PER_PAGE);
+      renderSimplePagination('qcDonePagination', qcDonePage, done.length, QC_PER_PAGE, 'goQCDonePage');
+      doneEl.innerHTML = dPaged.map(k => {
         const qc = qcCache[k.id];
         return `
           <tr>
@@ -159,6 +172,18 @@ function renderQCTable() {
       }).join('');
     }
   }
+}
+
+function goQCEligiblePage(page) {
+  qcEligiblePage = page;
+  renderQCTable();
+  document.getElementById('qcEligibleBody')?.closest('.card')?.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+function goQCDonePage(page) {
+  qcDonePage = page;
+  renderQCTable();
+  document.getElementById('qcDoneBody')?.closest('.card')?.scrollIntoView({ behavior:'smooth', block:'start' });
 }
 
 // ===== TANDAI DEAL DARI QC =====
