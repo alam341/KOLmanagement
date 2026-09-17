@@ -290,8 +290,10 @@ async function confirmDeal() {
   const savedIsAffiliate = _dealIsAffiliate;
   const savedEditOnly    = _dealEditOnly;
 
-  // Kunci agar tidak bisa dipanggil 2x sekaligus
+  // Kunci agar tidak bisa dipanggil 2x sekaligus + blokir backdrop dari menutup modal
   _dealInProgress = true;
+  const overlay = document.getElementById('modalDeal');
+  if (overlay) overlay.classList.add('saving');
   const btn = document.querySelector('#modalDeal .btn-deal');
   if (btn) { btn.disabled = true; btn.textContent = 'Menyimpan...'; }
 
@@ -355,6 +357,7 @@ async function confirmDeal() {
     closeModal('modalDeal');
   } finally {
     _dealInProgress = false;
+    if (overlay) overlay.classList.remove('saving');
     if (btn) { btn.disabled = false; btn.textContent = '🤝 Konfirmasi Deal'; }
   }
 }

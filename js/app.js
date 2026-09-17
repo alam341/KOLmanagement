@@ -81,9 +81,10 @@ function topbarActions(page) {
 function openModal(id) { document.getElementById(id)?.classList.add('active'); }
 function closeModal(id) { document.getElementById(id)?.classList.remove('active'); }
 
-// Close on backdrop click
+// Close on backdrop click — skip kalau modal sedang proses saving
 document.addEventListener('click', e => {
-  if (e.target.classList.contains('overlay')) e.target.classList.remove('active');
+  if (e.target.classList.contains('overlay') && !e.target.classList.contains('saving'))
+    e.target.classList.remove('active');
 });
 
 // Mobile sidebar toggle
