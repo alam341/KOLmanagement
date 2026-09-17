@@ -233,9 +233,24 @@ function renderAffiliatorTable(kols) {
     const pct     = Math.round(doneCnt / fields.length * 100);
     const barColor = pct === 100 ? 'var(--green)' : pct >= 50 ? 'var(--yellow)' : 'var(--accent)';
 
+    const tokoVal  = esc(rec.toko   || '');
+    const produkVal = esc(rec.produk || '');
+
     return `
     <tr id="affiliator-row-${k.id}">
       <td style="text-align:center;color:var(--muted);font-size:13px;padding:8px;">${globalIdx+1}</td>
+      <td style="padding:8px;min-width:130px;">
+        ${tokoVal
+          ? `<div style="font-weight:600;font-size:12px;color:var(--accent2);">${tokoVal}</div>`
+          : ''}
+        ${produkVal
+          ? `<div style="font-size:11px;color:var(--text2);margin-top:2px;">${produkVal}</div>`
+          : ''}
+        <button onclick="openEditTokoModal('${k.id}')"
+          style="margin-top:4px;font-size:10px;padding:2px 7px;border:1px solid var(--border);border-radius:5px;background:var(--bg3);color:var(--muted);cursor:pointer;">
+          ${tokoVal ? '✏️ Edit' : '➕ Isi Toko'}
+        </button>
+      </td>
       <td style="padding:8px;">
         <div style="font-weight:600;font-size:13px;">${esc(k.name)}</div>
         <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">${esc(k.niche||'')}</div>
@@ -283,6 +298,7 @@ function renderAffiliatorTable(kols) {
         <thead>
           <tr style="background:var(--bg3);">
             <th style="padding:10px 8px;text-align:center;font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap;">No</th>
+            <th style="padding:10px 8px;text-align:left;font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap;">Toko / Produk</th>
             <th style="padding:10px 8px;text-align:left;font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap;">Nama</th>
             <th style="padding:10px 8px;text-align:left;font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap;">Nomer WA</th>
             <th style="padding:10px 8px;text-align:left;font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap;">Username TikTok</th>
@@ -303,7 +319,7 @@ function renderAffiliatorTable(kols) {
           <tr style="background:var(--bg3);border-top:2px solid var(--border);">
             <td style="padding:10px 8px;font-size:12px;color:var(--muted);font-weight:600;">TOTAL</td>
             <td style="padding:10px 8px;font-weight:700;color:var(--accent);">${kols.length} Affiliator</td>
-            <td colspan="12"></td>
+            <td colspan="13"></td>
           </tr>
         </tfoot>
       </table>

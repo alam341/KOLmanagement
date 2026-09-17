@@ -189,33 +189,63 @@ function goQCDonePage(page) {
 // ===== TANDAI DEAL DARI QC =====
 let _dealKolId = null;
 let _dealIsAffiliate = false;
+let _dealEditOnly = false;
 
 function markDealFromQC(kolId) {
-  openDealModal(kolId, false);
+  openDealModal(kolId, false, false);
 }
 
-function openDealModal(kolId, isAffiliate = false) {
+function openEditTokoModal(kolId) {
+  openDealModal(kolId, true, true);
+}
+
+function openDealModal(kolId, isAffiliate = false, editOnly = false) {
   const k = DB.kols.find(x => x.id === kolId);
   if (!k) return;
   _dealKolId = kolId;
   _dealIsAffiliate = isAffiliate;
+  _dealEditOnly = editOnly;
 
-  document.getElementById('dealKolName').textContent = k.name;
+  const title = document.getElementById('dealKolName');
+  title.textContent = k.name;
+
+  // Update judul modal sesuai mode
+  const modalTitle = document.querySelector('#modalDeal .modal-title');
+  if (modalTitle) {
+    modalTitle.innerHTML = editOnly
+      ? `✏️ Edit Toko & Produk — <span style="color:var(--accent2);">${esc(k.name)}</span>`
+      : `🤝 Tandai Deal — <span style="color:var(--accent2);">${esc(k.name)}</span>`;
+  }
 
   // Populate Toko dropdown (value = toko.id)
   const tokoSel  = document.getElementById('dealToko');
   const tokoList = DB.tokoList;
+
+  // Ambil nilai existing kalau edit mode
+  const existingRec = (typeof affiliatorListingCache !== 'undefined' && affiliatorListingCache[kolId])
+    || (typeof listingCache !== 'undefined' && listingCache[kolId]) || {};
+  const existingToko  = existingRec.toko  || '';
+  const existingProduk = existingRec.produk || '';
+
   if (!tokoList.length) {
     tokoSel.innerHTML = '<option value="">— Belum ada toko (isi di Pengaturan) —</option>';
   } else {
     tokoSel.innerHTML = '<option value="">— Pilih Toko —</option>' +
-      tokoList.map(t => `<option value="${t.id}">${esc(t.name)}</option>`).join('');
+      tokoList.map(t => `<option value="${t.id}" ${t.name === existingToko ? 'selected' : ''}>${esc(t.name)}</option>`).join('');
   }
 
-  // Reset produk (kosong dulu, diisi setelah toko dipilih)
+  // Populate produk kalau ada existing toko
   const produkSel = document.getElementById('dealProduk');
-  produkSel.innerHTML = '<option value="">— Pilih toko dulu —</option>';
-  produkSel.disabled = true;
+  const matchToko = tokoList.find(t => t.name === existingToko);
+  if (matchToko) {
+    const produkList = DB.produkByToko(matchToko.id);
+    produkSel.disabled = false;
+    produkSel.innerHTML = '<option value="">— Pilih Produk —</option>' +
+      produkList.map(p => `<option value="${esc(p.name)}" ${p.name === existingProduk ? 'selected' : ''}>${esc(p.name)}</option>`).join('');
+  } else {
+    produkSel.innerHTML = '<option value="">— Pilih toko dulu —</option>';
+    produkSel.disabled = true;
+  }
 
   openModal('modalDeal');
 }
@@ -254,21 +284,26 @@ async function confirmDeal() {
   const k = DB.kols.find(x => x.id === _dealKolId);
   if (!k) return;
 
-  const kolType = _dealIsAffiliate ? 'affiliator' : 'kol';
-  const idx = DB.kols.findIndex(x => x.id === _dealKolId);
-  if (idx >= 0) DB.kols[idx].kolType = kolType;
-  _sb.from('kols').update({ kol_type: kolType }).eq('id', _dealKolId).then(() => {});
-
-  // Update status ke deal
-  DB.updateStatus(_dealKolId, 'deal', `Deal dikonfirmasi dari QC — Toko: ${toko}, Produk: ${produk}`);
+  if (!_dealEditOnly) {
+    const kolType = _dealIsAffiliate ? 'affiliator' : 'kol';
+    const idx = DB.kols.findIndex(x => x.id === _dealKolId);
+    if (idx >= 0) DB.kols[idx].kolType = kolType;
+    _sb.from('kols').update({ kol_type: kolType }).eq('id', _dealKolId).then(() => {});
+    DB.updateStatus(_dealKolId, 'deal', `Deal dikonfirmasi — Toko: ${toko}, Produk: ${produk}`);
+  }
 
   // Simpan toko & produk ke kol_listing
   try {
     const { data: { user } } = await _sb.auth.getUser();
-    const existing = (typeof listingCache !== 'undefined') ? (listingCache[_dealKolId] || {}) : {};
-    const qcRec    = qcCache[_dealKolId];
-    const kolRec   = DB.kols.find(x => x.id === _dealKolId);
 
+    // Affiliator pakai affiliatorListingCache, KOL pakai listingCache
+    const cache = (_dealIsAffiliate && typeof affiliatorListingCache !== 'undefined')
+      ? affiliatorListingCache
+      : (typeof listingCache !== 'undefined' ? listingCache : {});
+    const existing = cache[_dealKolId] || {};
+
+    const qcRec = (typeof qcCache !== 'undefined') ? qcCache[_dealKolId] : null;
+    const kolRec = DB.kols.find(x => x.id === _dealKolId);
     const ratecard = existing.ratecard > 0 ? existing.ratecard
       : (qcRec?.rekomendasiRatecard > 0 ? qcRec.rekomendasiRatecard : (kolRec?.ratecard || 0));
 
@@ -284,19 +319,25 @@ async function confirmDeal() {
     };
     if (!existing.id) record.created_at = new Date().toISOString();
 
-    if (typeof listingCache !== 'undefined') listingCache[_dealKolId] = record;
+    cache[_dealKolId] = record;
     await _sb.from('kol_listing').upsert(record);
   } catch(e) {
     console.error('Gagal simpan toko/produk ke listing:', e.message);
   }
 
   closeModal('modalDeal');
-  const dealLabel = _dealIsAffiliate ? 'Affiliator Deal' : 'Deal';
-  toast(`${k.name} ditandai ${dealLabel} ✓ — Toko: ${toko} · Produk: ${produk}`, 'success', 5000);
-  if (_dealIsAffiliate) {
-    if (typeof renderTable === 'function') renderTable();
+
+  if (_dealEditOnly) {
+    toast(`Toko & Produk ${k.name} diperbarui ✓`, 'success', 4000);
+    if (typeof renderAffiliatorListingPage === 'function') renderAffiliatorListingPage(false);
   } else {
-    renderQCTable();
+    const dealLabel = _dealIsAffiliate ? 'Affiliator Deal' : 'Deal';
+    toast(`${k.name} ditandai ${dealLabel} ✓ — Toko: ${toko} · Produk: ${produk}`, 'success', 5000);
+    if (_dealIsAffiliate) {
+      if (typeof renderTable === 'function') renderTable();
+    } else {
+      renderQCTable();
+    }
   }
 }
 
