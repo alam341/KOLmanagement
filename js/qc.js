@@ -207,7 +207,7 @@ function openDealModal(kolId, isAffiliate = false, editOnly = false) {
   _dealEditOnly = editOnly;
 
   const title = document.getElementById('dealKolName');
-  title.textContent = k.name;
+  if (title) title.textContent = k.name;
 
   // Update judul modal sesuai mode
   const modalTitle = document.querySelector('#modalDeal .modal-title');
