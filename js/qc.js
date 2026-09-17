@@ -188,15 +188,17 @@ function goQCDonePage(page) {
 
 // ===== TANDAI DEAL DARI QC =====
 let _dealKolId = null;
+let _dealIsAffiliate = false;
 
 function markDealFromQC(kolId) {
-  openDealModal(kolId);
+  openDealModal(kolId, false);
 }
 
-function openDealModal(kolId) {
+function openDealModal(kolId, isAffiliate = false) {
   const k = DB.kols.find(x => x.id === kolId);
   if (!k) return;
   _dealKolId = kolId;
+  _dealIsAffiliate = isAffiliate;
 
   document.getElementById('dealKolName').textContent = k.name;
 
@@ -252,10 +254,10 @@ async function confirmDeal() {
   const k = DB.kols.find(x => x.id === _dealKolId);
   if (!k) return;
 
-  // Pastikan tipe = kol (bukan affiliator)
+  const kolType = _dealIsAffiliate ? 'affiliator' : 'kol';
   const idx = DB.kols.findIndex(x => x.id === _dealKolId);
-  if (idx >= 0) DB.kols[idx].kolType = 'kol';
-  _sb.from('kols').update({ kol_type: 'kol' }).eq('id', _dealKolId).then(() => {});
+  if (idx >= 0) DB.kols[idx].kolType = kolType;
+  _sb.from('kols').update({ kol_type: kolType }).eq('id', _dealKolId).then(() => {});
 
   // Update status ke deal
   DB.updateStatus(_dealKolId, 'deal', `Deal dikonfirmasi dari QC — Toko: ${toko}, Produk: ${produk}`);
@@ -289,8 +291,13 @@ async function confirmDeal() {
   }
 
   closeModal('modalDeal');
-  toast(`${k.name} ditandai Deal ✓ — Toko: ${toko} · Produk: ${produk}`, 'success', 5000);
-  renderQCTable();
+  const dealLabel = _dealIsAffiliate ? 'Affiliator Deal' : 'Deal';
+  toast(`${k.name} ditandai ${dealLabel} ✓ — Toko: ${toko} · Produk: ${produk}`, 'success', 5000);
+  if (_dealIsAffiliate) {
+    if (typeof renderTable === 'function') renderTable();
+  } else {
+    renderQCTable();
+  }
 }
 
 // ===== CPM BADGE =====

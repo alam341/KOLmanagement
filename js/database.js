@@ -483,23 +483,7 @@ function markAsAffiliate(kolId) {
   if (k.status === 'deal' && k.kolType === 'affiliator') {
     toast(`${k.name} sudah berstatus Affiliator Deal.`, 'info'); return;
   }
-  if (!confirm(`Tandai "${k.name}" sebagai Affiliator?\n\nStatus langsung jadi Deal dan masuk ke Listing Affiliator.`)) return;
-
-  // Update memory
-  const idx = DB.kols.findIndex(x => x.id === kolId);
-  if (idx >= 0) {
-    DB.kols[idx].kolType = 'affiliator';
-    DB.kols[idx].status  = 'deal';
-    DB.kols[idx].updatedAt = new Date().toISOString();
-  }
-
-  // Sync ke Supabase
-  _sb.from('kols').update({ kol_type: 'affiliator', status: 'deal', updated_at: new Date().toISOString() })
-    .eq('id', kolId)
-    .then(({ error }) => { if (error) toast('Sync error: ' + error.message, 'error'); });
-
-  toast(`${k.name} ditandai Affiliator Deal ✓`, 'success');
-  renderTable();
+  openDealModal(kolId, true);
 }
 
 // ===== IMPORT =====
